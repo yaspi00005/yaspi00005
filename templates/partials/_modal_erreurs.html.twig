@@ -1,0 +1,18 @@
+{# Fenêtre récapitulant les erreurs de la page (remplie par public/js/sotrama.js). #}
+<div class="modal fade" id="modal-erreurs" tabindex="-1" aria-labelledby="modal-erreurs-titre" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-danger" id="modal-erreurs-titre"><i class="fas fa-exclamation-triangle me-2"></i><span class="js-erreurs-titre">Vérifiez le formulaire</span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted mb-3 js-erreurs-intro">Cliquez sur une erreur pour aller au champ concerné.</p>
+                <ol class="list-unstyled mb-0 js-erreurs-liste"></ol>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Corriger</button>
+            </div>
+        </div>
+    </div>
+</div>

@@ -29,12 +29,14 @@ class ArticleType extends AbstractType
         $builder
             ->add('typeMarchandise', ChoiceType::class, $this->optionsType($noms))
             ->add('poidsVolume', NumberType::class, [
+                'invalid_message' => 'Saisissez un nombre valide (ex. : 2,5).',
                 'label' => 'Poids (kg)',
                 'scale' => 2,
                 'html5' => true,
                 'attr' => ['step' => '0.01', 'min' => '0.01', 'class' => 'js-poids'],
             ])
             ->add('prix', MoneyType::class, [
+                'invalid_message' => 'Saisissez un montant valide (ex. : 12,50).',
                 'label' => 'Prix',
                 'divisor' => 100,
                 'currency' => false,
@@ -66,6 +68,7 @@ class ArticleType extends AbstractType
             'label' => 'Marchandise',
             'choices' => array_combine($noms, $noms),
             'placeholder' => 'Choisir',
+            'invalid_message' => 'Choisissez un type de marchandise dans la liste.',
             'attr' => ['class' => 'js-type-marchandise'],
         ];
     }

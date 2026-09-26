@@ -17,6 +17,7 @@ class TypeMarchandiseType extends AbstractType
         $builder
             ->add('nom', TextType::class, ['label' => 'Nom'])
             ->add('prixUnitaire', MoneyType::class, [
+                'invalid_message' => 'Saisissez un montant valide (ex. : 12,50).',
                 'label' => 'Tarif indicatif au kg',
                 'divisor' => 100,
                 'currency' => false,

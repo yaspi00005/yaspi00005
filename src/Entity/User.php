@@ -32,8 +32,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?int $id = null;
 
     #[ORM\Column(length: 80, unique: true)]
-    #[Assert\NotBlank]
-    #[Assert\Length(min: 3, max: 80)]
+    #[Assert\NotBlank(message: "Indiquez l'identifiant de connexion.")]
+    #[Assert\Length(min: 3, max: 80, minMessage: "L'identifiant doit faire au moins 3 caractères.")]
     private ?string $username = null;
 
     /** @var list<string> */
@@ -44,11 +44,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $password = null;
 
     #[ORM\Column(length: 80)]
-    #[Assert\NotBlank]
+    #[Assert\NotBlank(message: "Indiquez le prénom.")]
     private ?string $prenom = null;
 
     #[ORM\Column(length: 80)]
-    #[Assert\NotBlank]
+    #[Assert\NotBlank(message: "Indiquez le nom.")]
     private ?string $nom = null;
 
     #[ORM\Column(length: 180, nullable: true)]
@@ -86,9 +86,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->username;
     }
 
-    public function setUsername(string $username): static
+    public function setUsername(?string $username): static
     {
-        $this->username = mb_strtolower(trim($username));
+        $this->username = null === $username ? null : mb_strtolower(trim($username));
 
         return $this;
     }
@@ -169,9 +169,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->prenom;
     }
 
-    public function setPrenom(string $prenom): static
+    public function setPrenom(?string $prenom): static
     {
-        $this->prenom = mb_convert_case(trim($prenom), MB_CASE_TITLE, 'UTF-8');
+        $this->prenom = null === $prenom ? null : mb_convert_case(trim($prenom), MB_CASE_TITLE, 'UTF-8');
 
         return $this;
     }
@@ -181,9 +181,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->nom;
     }
 
-    public function setNom(string $nom): static
+    public function setNom(?string $nom): static
     {
-        $this->nom = mb_strtoupper(trim($nom), 'UTF-8');
+        $this->nom = null === $nom ? null : mb_strtoupper(trim($nom), 'UTF-8');
 
         return $this;
     }

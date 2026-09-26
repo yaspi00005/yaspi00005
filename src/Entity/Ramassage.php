@@ -119,9 +119,9 @@ class Ramassage
         return $this->statut;
     }
 
-    public function setStatut(StatutRamassage $statut): static
+    public function setStatut(?StatutRamassage $statut): static
     {
-        $this->statut = $statut;
+        $this->statut = $statut ?? StatutRamassage::EnAttente;
 
         return $this;
     }

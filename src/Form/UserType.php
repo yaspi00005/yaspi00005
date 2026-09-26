@@ -32,7 +32,7 @@ class UserType extends AbstractType
             ->add('username', TextType::class, ['label' => 'Identifiant de connexion'])
             ->add('email', EmailType::class, ['label' => 'E-mail', 'required' => false])
             ->add('telephone', TelType::class, ['label' => 'Téléphone', 'required' => false])
-            ->add('rolePrincipal', ChoiceType::class, ['label' => 'Rôle', 'choices' => User::ROLES, 'expanded' => true])
+            ->add('rolePrincipal', ChoiceType::class, ['label' => 'Rôle', 'choices' => User::ROLES, 'expanded' => true, 'constraints' => [new Assert\NotBlank(message: 'Choisissez un rôle.')]])
             ->add('pays', EnumType::class, [
                 'label' => 'Pays (représentants)',
                 'class' => Destination::class,

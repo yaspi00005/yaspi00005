@@ -21,6 +21,7 @@ class BonusType extends AbstractType
                 'data' => 1,
             ])
             ->add('montant', MoneyType::class, [
+                'invalid_message' => 'Saisissez un montant valide (ex. : 12,50).',
                 'label' => 'Montant',
                 'divisor' => 100,
                 'currency' => false,

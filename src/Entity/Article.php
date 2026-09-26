@@ -20,19 +20,20 @@ class Article
     private ?Colis $colis = null;
 
     #[ORM\Column(length: 100)]
-    #[Assert\NotBlank(message: 'Type de marchandise obligatoire.')]
+    #[Assert\NotBlank(message: 'Choisissez le type de marchandise.')]
     private ?string $typeMarchandise = null;
 
     /** Poids (kg) ou volume (m³) selon le mode de transport. */
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
-    #[Assert\NotBlank]
+    #[Assert\NotBlank(message: 'Indiquez le poids.')]
     #[Assert\Positive(message: 'Le poids doit être supérieur à 0.')]
     private ?string $poidsVolume = null;
 
     /** Prix de l'article en centimes. */
     #[ORM\Column]
-    #[Assert\PositiveOrZero]
-    private int $prix = 0;
+    #[Assert\NotNull(message: "Indiquez le prix de l'article.")]
+    #[Assert\PositiveOrZero(message: 'Le prix ne peut pas être négatif.')]
+    private ?int $prix = 0;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $observations = null;
@@ -83,10 +84,16 @@ class Article
 
     public function getPrix(): int
     {
+        return $this->prix ?? 0;
+    }
+
+    /** Valeur brute du formulaire (null si le champ est vide). */
+    public function getPrixSaisi(): ?int
+    {
         return $this->prix;
     }
 
-    public function setPrix(int $prix): static
+    public function setPrix(?int $prix): static
     {
         $this->prix = $prix;
 

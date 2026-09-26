@@ -18,6 +18,7 @@ class EncaissementType extends AbstractType
     {
         $builder
             ->add('montant', MoneyType::class, [
+                'invalid_message' => 'Saisissez un montant valide (ex. : 12,50).',
                 'label' => 'Montant encaissé',
                 'divisor' => 100,
                 'currency' => false,
@@ -26,6 +27,7 @@ class EncaissementType extends AbstractType
                 'constraints' => [new Assert\NotNull(), new Assert\PositiveOrZero()],
             ])
             ->add('remise', MoneyType::class, [
+                'invalid_message' => 'Saisissez un montant valide (ex. : 12,50).',
                 'label' => 'Remise',
                 'divisor' => 100,
                 'currency' => false,

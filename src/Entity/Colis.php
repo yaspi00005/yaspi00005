@@ -236,9 +236,9 @@ class Colis
         return $this->typeExpedition;
     }
 
-    public function setTypeExpedition(TypeExpedition $typeExpedition): static
+    public function setTypeExpedition(?TypeExpedition $typeExpedition): static
     {
-        $this->typeExpedition = $typeExpedition;
+        $this->typeExpedition = $typeExpedition ?? TypeExpedition::Standard;
 
         return $this;
     }

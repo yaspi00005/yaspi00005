@@ -17,7 +17,7 @@ class TypeMarchandise
     private ?int $id = null;
 
     #[ORM\Column(length: 100, unique: true)]
-    #[Assert\NotBlank]
+    #[Assert\NotBlank(message: "Indiquez le nom du type de marchandise.")]
     private ?string $nom = null;
 
     /** Tarif indicatif au kg en centimes, pré-rempli lors de la saisie d'un article. */

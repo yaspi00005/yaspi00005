@@ -21,15 +21,15 @@ class Client
     private ?int $id = null;
 
     #[ORM\Column(length: 80)]
-    #[Assert\NotBlank]
+    #[Assert\NotBlank(message: "Indiquez le nom du client.")]
     private ?string $nom = null;
 
     #[ORM\Column(length: 80)]
-    #[Assert\NotBlank]
+    #[Assert\NotBlank(message: "Indiquez le prénom du client.")]
     private ?string $prenom = null;
 
     #[ORM\Column(length: 30)]
-    #[Assert\NotBlank]
+    #[Assert\NotBlank(message: "Indiquez le téléphone du client.")]
     #[Assert\Regex('/^\+?[0-9 .\-]{6,20}$/', message: 'Numéro de téléphone invalide.')]
     private ?string $telephone = null;
 
@@ -190,9 +190,9 @@ class Client
         return $this->pays;
     }
 
-    public function setPays(string $pays): static
+    public function setPays(?string $pays): static
     {
-        $this->pays = $pays;
+        $this->pays = $pays ?: 'France';
 
         return $this;
     }

@@ -249,3 +249,79 @@
     pays.addEventListener('change', function () { dernier = ''; chercher(); });
     ville.addEventListener('input', function () { delete ville.dataset.auto; });
 })();
+
+/* ---------- Fenêtre récapitulative des erreurs ---------- */
+(function () {
+    'use strict';
+    // Contrôles faits par le serveur : toutes les erreurs arrivent d'un coup dans la fenêtre,
+    // au lieu des bulles du navigateur une par une.
+    document.querySelectorAll('.content-body form[method="post"], .content-body form[name]').forEach(f => { f.noValidate = true; });
+    const modalEl = document.getElementById('modal-erreurs');
+    if (!modalEl || typeof bootstrap === 'undefined') {
+        return;
+    }
+    const texte = el => (el ? el.textContent.replace(/\s+/g, ' ').replace(/\*$/, '').trim() : '');
+
+    // Où se trouve le champ : « Section › Article n° 2 › Prix ».
+    const localiser = function (el) {
+        const morceaux = [];
+        const carte = el.closest('.card');
+        const titreCarte = carte ? texte(carte.querySelector('.card-header .card-title')) : '';
+        if (titreCarte) { morceaux.push(titreCarte); }
+        const article = el.closest('.article-ligne');
+        if (article) { morceaux.push('Article n° ' + (texte(article.querySelector('.numero-article')) || '?')); }
+        const bloc = el.closest('.mb-3, fieldset, .form-group');
+        const libelle = bloc ? texte(bloc.querySelector('label, legend')) : '';
+        if (libelle && libelle !== titreCarte) { morceaux.push(libelle); }
+        return { lieu: morceaux.join(' › ') || 'Formulaire', champ: bloc ? bloc.querySelector('.is-invalid, input:not([type=hidden]), select, textarea') : null };
+    };
+
+    const erreurs = [];
+    document.querySelectorAll('form .invalid-feedback, form .form-error-message').forEach(function (fb) {
+        const message = texte(fb);
+        if (!message || getComputedStyle(fb).display === 'none') { return; }
+        const { lieu, champ } = localiser(fb);
+        erreurs.push({ lieu, message, champ });
+    });
+    // Erreurs générales du formulaire et opérations refusées (messages rouges).
+    document.querySelectorAll('.content-body form > .alert-danger, .content-body > .container-fluid > .alert-danger').forEach(function (a) {
+        const message = texte(a).replace(/×$/, '').trim();
+        if (message) { erreurs.push({ lieu: a.closest('form') ? 'Formulaire' : 'Opération refusée', message, champ: null }); }
+    });
+    if (!erreurs.length) {
+        return;
+    }
+
+    const liste = modalEl.querySelector('.js-erreurs-liste');
+    const formulaire = erreurs.some(e => e.champ);
+    modalEl.querySelector('.js-erreurs-titre').textContent = formulaire
+        ? (erreurs.length > 1 ? erreurs.length + ' erreurs à corriger' : 'Une erreur à corriger')
+        : 'Opération impossible';
+    modalEl.querySelector('.js-erreurs-intro').classList.toggle('d-none', !formulaire);
+
+    const modal = new bootstrap.Modal(modalEl);
+    erreurs.forEach(function (e) {
+        const li = document.createElement('li');
+        const bouton = document.createElement('button');
+        bouton.type = 'button';
+        bouton.className = 'erreur-item';
+        bouton.innerHTML = '<span class="erreur-lieu"></span><span class="erreur-message"></span>';
+        bouton.querySelector('.erreur-lieu').textContent = e.lieu;
+        bouton.querySelector('.erreur-message').textContent = e.message;
+        bouton.addEventListener('click', function () {
+            modal.hide();
+            if (!e.champ) { return; }
+            modalEl.addEventListener('hidden.bs.modal', function () {
+                const cible = e.champ.classList.contains('select2-hidden-accessible') ? e.champ.nextElementSibling : e.champ;
+                cible.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                cible.classList.remove('champ-signale'); void cible.offsetWidth; cible.classList.add('champ-signale');
+                setTimeout(() => (e.champ.classList.contains('select2-hidden-accessible') ? jQuery(e.champ).select2('open') : e.champ.focus({ preventScroll: true })), 400);
+            }, { once: true });
+        });
+        li.appendChild(bouton);
+        liste.appendChild(li);
+    });
+    // Après l'écran de chargement du thème, sinon il masque la fenêtre.
+    const afficher = () => setTimeout(() => modal.show(), 350);
+    if (document.readyState === 'complete') { afficher(); } else { window.addEventListener('load', afficher, { once: true }); }
+})();
