@@ -12,6 +12,8 @@
         "doctrine/orm": "^3.7",
         "dompdf/dompdf": "^3.1",
         "endroid/qr-code": "^6.1",
+        "minishlink/web-push": "^11.0",
+        "nyholm/psr7": "^1.8",
         "symfony/asset": "7.4.*",
         "symfony/asset-mapper": "7.4.*",
         "symfony/console": "7.4.*",

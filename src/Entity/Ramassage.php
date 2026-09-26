@@ -43,6 +43,14 @@ class Ramassage
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
 
+    /** Date d'envoi du rappel de la veille (null = pas encore envoyé). */
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $rappelVeilleEnvoyeLe = null;
+
+    /** Date d'envoi du rappel « 1 h avant » (null = pas encore envoyé). */
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $rappelProcheEnvoyeLe = null;
+
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
@@ -72,6 +80,11 @@ class Ramassage
 
     public function setDatePrevue(?\DateTimeImmutable $datePrevue): static
     {
+        // Rendez-vous déplacé : les rappels seront renvoyés pour la nouvelle date.
+        if ($this->datePrevue != $datePrevue) {
+            $this->rappelVeilleEnvoyeLe = null;
+            $this->rappelProcheEnvoyeLe = null;
+        }
         $this->datePrevue = $datePrevue;
 
         return $this;
@@ -128,5 +141,29 @@ class Ramassage
     public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;
+    }
+
+    public function getRappelVeilleEnvoyeLe(): ?\DateTimeImmutable
+    {
+        return $this->rappelVeilleEnvoyeLe;
+    }
+
+    public function setRappelVeilleEnvoyeLe(?\DateTimeImmutable $date): static
+    {
+        $this->rappelVeilleEnvoyeLe = $date;
+
+        return $this;
+    }
+
+    public function getRappelProcheEnvoyeLe(): ?\DateTimeImmutable
+    {
+        return $this->rappelProcheEnvoyeLe;
+    }
+
+    public function setRappelProcheEnvoyeLe(?\DateTimeImmutable $date): static
+    {
+        $this->rappelProcheEnvoyeLe = $date;
+
+        return $this;
     }
 }

@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Form\MotDePasseType;
+use App\Service\NotificationPush;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -14,7 +15,7 @@ use Symfony\Component\Routing\Attribute\Route;
 class ProfilController extends AbstractController
 {
     #[Route('/profil', name: 'app_profil', methods: ['GET', 'POST'])]
-    public function profil(Request $request, UserPasswordHasherInterface $hasher, EntityManagerInterface $em): Response
+    public function profil(Request $request, UserPasswordHasherInterface $hasher, EntityManagerInterface $em, NotificationPush $push): Response
     {
         /** @var User $user */
         $user = $this->getUser();
@@ -29,6 +30,6 @@ class ProfilController extends AbstractController
             return $this->redirectToRoute('app_profil', [], Response::HTTP_SEE_OTHER);
         }
 
-        return $this->render('profil/index.html.twig', ['form' => $form]);
+        return $this->render('profil/index.html.twig', ['form' => $form, 'nbNavigateurs' => $push->nombreAbonnements($user)]);
     }
 }

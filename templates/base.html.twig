@@ -13,7 +13,7 @@
     <link href="{{ asset('theme/css/style.css') }}" rel="stylesheet">
     <link href="{{ asset('css/sotrama.css') }}" rel="stylesheet">
 </head>
-<body>
+<body data-push-cle="{{ push_cle_publique }}" data-push-token="{{ csrf_token('push') }}" data-push-abonner="{{ path('push_abonner') }}" data-push-desabonner="{{ path('push_desabonner') }}" data-push-test="{{ path('push_test') }}">
     <div id="preloader">
         <div class="lds-ripple"><div></div><div></div></div>
     </div>
@@ -53,6 +53,13 @@
                             {% if is_granted('ROLE_RAMASSAGE') %}
                             <li class="nav-item d-none d-md-flex align-items-center">
                                 <a href="{{ path('colis_new') }}" class="btn btn-primary btn-rounded btn-sm"><i class="fas fa-plus me-1"></i> Nouveau colis</a>
+                            </li>
+                            {% endif %}
+                            {% if push_cle_publique %}
+                            <li class="nav-item d-flex align-items-center">
+                                <button type="button" class="btn btn-outline-primary btn-rounded btn-sm js-push-bouton d-none" title="Recevoir les rappels des ramassages dans ce navigateur">
+                                    <i class="fas fa-bell"></i> <span class="js-push-libelle d-none d-lg-inline">Activer les notifications</span>
+                                </button>
                             </li>
                             {% endif %}
                             <li class="nav-item dropdown header-profile">

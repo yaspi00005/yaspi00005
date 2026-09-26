@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="fr">
+<body style="margin:0;background:#f4f5f7;font-family:Arial,sans-serif;color:#222">
+<table width="100%" cellpadding="0" cellspacing="0" style="padding:24px 0"><tr><td align="center">
+<table width="560" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:12px;overflow:hidden">
+    <tr><td style="background:#00A15D;color:#fff;padding:20px 28px;font-size:20px;font-weight:bold">{{ app_nom }} — Rappel de ramassage</td></tr>
+    <tr><td style="padding:28px">
+        <p>Bonjour {{ agent.prenom }},</p>
+        <p style="font-size:18px;margin:18px 0"><strong>{{ quand }}</strong> : ramassage chez <strong>{{ ramassage.client.nomComplet }}</strong>.</p>
+        <table cellpadding="6" style="font-size:14px">
+            <tr><td style="color:#777">Date</td><td>{{ ramassage.datePrevue|format_datetime(pattern: "EEEE d MMMM 'à' HH:mm", locale: 'fr') }}</td></tr>
+            <tr><td style="color:#777">Adresse</td><td>{{ adresse }}</td></tr>
+            <tr><td style="color:#777">Téléphone</td><td><a href="tel:{{ ramassage.client.telephone }}">{{ ramassage.client.telephone }}</a></td></tr>
+            {% if ramassage.commentaire %}<tr><td style="color:#777">Commentaire</td><td>{{ ramassage.commentaire }}</td></tr>{% endif %}
+        </table>
+        <p style="margin:26px 0"><a href="{{ lien }}" style="background:#00A15D;color:#fff;text-decoration:none;padding:12px 22px;border-radius:24px">Voir le ramassage</a></p>
+        <p style="color:#777;font-size:12px">Message automatique envoyé la veille puis une heure avant chaque ramassage en attente.</p>
+    </td></tr>
+</table>
+</td></tr></table>
+</body>
+</html>

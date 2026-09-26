@@ -102,3 +102,88 @@
         recalculer();
     }
 })(jQuery);
+
+/* ---------- Notifications du navigateur (rappels des ramassages) ---------- */
+(function () {
+    'use strict';
+    const corps = document.body.dataset;
+    const boutons = document.querySelectorAll('.js-push-bouton');
+    if (!corps.pushCle || !boutons.length || !('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+        return;
+    }
+
+    const cleServeur = (function (base64) {
+        const b = (base64 + '='.repeat((4 - base64.length % 4) % 4)).replace(/-/g, '+').replace(/_/g, '/');
+        return Uint8Array.from(atob(b), c => c.charCodeAt(0));
+    })(corps.pushCle);
+
+    const envoyer = (url, donnees) => fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': corps.pushToken },
+        body: JSON.stringify(donnees || {})
+    }).then(r => r.json().then(j => { if (!r.ok) { throw new Error(j.error || 'Erreur'); } return j; }));
+
+    const messageErreur = function (e) {
+        const m = (e && e.message) || '';
+        if (/push service not available|not supported|incognito/i.test(m)) {
+            return 'Ce navigateur ne prend pas en charge les notifications (navigation privée ?). Utilisez Chrome, Edge ou Firefox en mode normal.';
+        }
+        if ((e && e.name === 'NotAllowedError') || /permission denied/i.test(m)) {
+            return 'Autorisation refusée : autorisez les notifications pour ce site dans les réglages du navigateur.';
+        }
+        return m || 'Impossible d\'activer les notifications.';
+    };
+
+    const afficher = function (abonne) {
+        boutons.forEach(b => {
+            b.classList.remove('d-none');
+            const enTete = !b.closest('.card');
+            b.classList.toggle('btn-primary', !abonne && !enTete);
+            b.classList.toggle('btn-outline-primary', !abonne && enTete);
+            b.classList.toggle('btn-success', abonne);
+            const lib = b.querySelector('.js-push-libelle');
+            if (lib) { lib.textContent = abonne ? 'Notifications activées' : 'Activer les notifications'; }
+            b.title = abonne ? 'Cliquer pour désactiver les notifications dans ce navigateur' : 'Recevoir les rappels des ramassages dans ce navigateur';
+        });
+        document.querySelectorAll('.js-push-tester').forEach(b => b.classList.toggle('d-none', !abonne));
+        document.querySelectorAll('.js-push-etat').forEach(e => {
+            e.textContent = Notification.permission === 'denied'
+                ? 'Les notifications sont bloquées pour ce site : autorisez-les dans les réglages du navigateur (icône à gauche de l\'adresse).'
+                : (abonne ? 'Ce navigateur reçoit les rappels.' : 'Ce navigateur ne reçoit pas encore les rappels.');
+        });
+    };
+
+    navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        return reg.pushManager.getSubscription().then(function (abonnement) {
+            // Réenregistre l'abonnement (clés renouvelées, changement d'utilisateur sur le poste).
+            if (abonnement) { envoyer(corps.pushAbonner, abonnement.toJSON()).catch(() => {}); }
+            afficher(!!abonnement);
+
+            boutons.forEach(b => b.addEventListener('click', function () {
+                reg.pushManager.getSubscription().then(function (actuel) {
+                    if (actuel) {
+                        return envoyer(corps.pushDesabonner, { endpoint: actuel.endpoint })
+                            .then(() => actuel.unsubscribe())
+                            .then(() => { afficher(false); toastr.info('Notifications désactivées pour ce navigateur.'); });
+                    }
+                    return Notification.requestPermission().then(function (permission) {
+                        if (permission !== 'granted') {
+                            afficher(false);
+                            throw new Error('Autorisation refusée : activez les notifications pour ce site dans le navigateur.');
+                        }
+                        return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: cleServeur });
+                    }).then(function (nouveau) {
+                        return envoyer(corps.pushAbonner, nouveau.toJSON()).then(() => {
+                            afficher(true);
+                            toastr.success('Notifications activées : vous recevrez les rappels des ramassages.');
+                        });
+                    });
+                }).catch(e => toastr.error(messageErreur(e)));
+            }));
+        });
+    }).catch(() => {});
+
+    document.querySelectorAll('.js-push-tester').forEach(b => b.addEventListener('click', function () {
+        envoyer(corps.pushTest).then(r => toastr.success(r.envoyees + ' notification(s) envoyée(s).')).catch(e => toastr.error(e.message));
+    }));
+})();

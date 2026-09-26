@@ -13,6 +13,7 @@ class Notification
     public const CANAL_SMS = 'sms';
     public const CANAL_EMAIL = 'email';
     public const CANAL_WHATSAPP = 'whatsapp';
+    public const CANAL_PUSH = 'push';
 
     #[ORM\Id]
     #[ORM\GeneratedValue]

@@ -83,11 +83,39 @@ Données de démonstration : `php bin/console doctrine:fixtures:load` (comptes `
 | `APP_SECRET` | clé secrète Symfony (chaîne aléatoire). Elle sert aussi à chiffrer les identifiants des URL : la changer rend invalides les liens et favoris déjà enregistrés. |
 | `MAILER_DSN` | serveur d'envoi d'e-mails, ex. `smtp://user:mdp@smtp.exemple.com:587` |
 | `APP_NOM`, `APP_DEVISE`, `APP_EMAIL_EXPEDITEUR`, `APP_TELEPHONE_AGENCE` | personnalisation |
+| `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | clés des notifications du navigateur (`app:generer-cles-push`) |
 | `SMS_TRANSPORT` | `log` (n'envoie rien, écrit dans les logs) ou `orange` |
 | `ORANGE_SMS_CLIENT_ID`, `ORANGE_SMS_CLIENT_SECRET`, `ORANGE_SMS_SENDER`, `ORANGE_SMS_SENDER_NAME` | API Orange SMS |
 
 Ne jamais mettre de mots de passe ou de clés dans `.env` (versionné) : uniquement dans `.env.local`
 ou dans les variables d'environnement du serveur.
+
+## Rappels des ramassages (navigateur et e-mail)
+
+Pour chaque ramassage « En attente », un rappel est envoyé **la veille** puis **environ 1 h avant**,
+à l'agent assigné (ou à tous les agents de ramassage si personne n'est assigné), par notification
+du navigateur et par e-mail. Chaque rappel n'est envoyé qu'une fois ; il repart si le rendez-vous est déplacé.
+
+Mise en place (une seule fois) :
+
+```bash
+php bin/console app:generer-cles-push      # copier les 3 lignes VAPID_… affichées dans .env.local
+```
+
+Puis une tâche planifiée (cron) toutes les 10 minutes :
+
+```
+*/10 * * * * cd /chemin/vers/sotrama && php bin/console app:rappels-ramassages --env=prod >> var/log/rappels.log 2>&1
+```
+
+Chaque agent clique ensuite sur **« Activer les notifications »** (en haut de page ou dans *Mon profil*)
+sur l'ordinateur ou le téléphone où il veut les recevoir ; *Mon profil* permet d'envoyer une notification de test.
+
+- Les notifications du navigateur exigent un site en **HTTPS** (sauf `localhost`) et un navigateur en mode
+  normal (Chrome, Edge, Firefox, Safari sur iPhone après « Ajouter à l'écran d'accueil »).
+- Ne changez pas les clés VAPID une fois en service : tous les navigateurs devraient se réabonner.
+- L'extension PHP `gmp` est recommandée (calculs plus rapides), mais pas obligatoire.
+- Les envois (e-mail et navigateur) apparaissent dans *Administration → SMS & e-mails envoyés*.
 
 ## Reprise des données de l'ancienne application
 
