@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
     <title>{% block title %}Tableau de bord{% endblock %} · {{ app_nom }}</title>
-    <link rel="shortcut icon" type="image/png" href="{{ asset('theme/images/favicon.png') }}">
+    <link rel="shortcut icon" type="image/png" href="{{ logo_existe() ? asset('images/logo-sotrama.png') : asset('theme/images/favicon.png') }}">
     <link href="{{ asset('theme/vendor/jquery-nice-select/css/nice-select.css') }}" rel="stylesheet">
     <link href="{{ asset('theme/vendor/select2/css/select2.min.css') }}" rel="stylesheet">
     <link href="{{ asset('theme/vendor/toastr/css/toastr.min.css') }}" rel="stylesheet">

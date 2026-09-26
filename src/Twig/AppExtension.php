@@ -13,12 +13,18 @@ final class AppExtension extends AbstractExtension
     public function __construct(
         #[Autowire('%app.devise%')] private readonly string $devise,
         private readonly IdChiffreur $chiffreur,
+        #[Autowire('%kernel.project_dir%/public/images/logo-sotrama.png')] private readonly string $cheminLogo,
     ) {
     }
 
     public function getFunctions(): array
     {
-        return [new TwigFunction('hid', fn (?int $id) => null === $id ? '' : $this->chiffreur->encode($id))];
+        return [
+            new TwigFunction('hid', fn (?int $id) => null === $id ? '' : $this->chiffreur->encode($id)),
+            // Logo de l'entreprise : public/images/logo-sotrama.png (facultatif, sinon icône par défaut).
+            new TwigFunction('logo_existe', fn () => is_file($this->cheminLogo)),
+            new TwigFunction('logo_data_uri', fn () => is_file($this->cheminLogo) ? 'data:image/png;base64,'.base64_encode((string) file_get_contents($this->cheminLogo)) : null),
+        ];
     }
 
     public function getFilters(): array

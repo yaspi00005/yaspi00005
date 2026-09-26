@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}{{ app_nom }}{% endblock %}</title>
-    <link rel="shortcut icon" type="image/png" href="{{ asset('theme/images/favicon.png') }}">
+    <link rel="shortcut icon" type="image/png" href="{{ logo_existe() ? asset('images/logo-sotrama.png') : asset('theme/images/favicon.png') }}">
     <link href="{{ asset('theme/css/style.css') }}" rel="stylesheet">
     <link href="{{ asset('css/sotrama.css') }}" rel="stylesheet">
 </head>

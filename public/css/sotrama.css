@@ -49,3 +49,7 @@
     .dlabnav, .nav-header, .header, .footer, .no-print { display: none !important; }
     .content-body { margin-left: 0 !important; padding-top: 0 !important; }
 }
+
+/* Logo de l'entreprise (public/images/logo-sotrama.png) */
+.nav-header .logo-sotrama { object-fit: contain; background: transparent; }
+.auth-form .logo-sotrama { width: 72px; height: 72px; object-fit: contain; }

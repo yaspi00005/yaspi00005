@@ -28,6 +28,25 @@ class RamassageRepository extends ServiceEntityRepository
             ->getQuery()->getResult();
     }
 
+    /** @return Ramassage[] ramassages filtrés par statut et période (bornes incluses), triés par date */
+    public function pourExport(?StatutRamassage $statut, ?\DateTimeImmutable $du, ?\DateTimeImmutable $au): array
+    {
+        $qb = $this->createQueryBuilder('r')
+            ->addSelect('c', 'a')->join('r.client', 'c')->leftJoin('r.agent', 'a')
+            ->orderBy('r.datePrevue', 'ASC');
+        if ($statut) {
+            $qb->andWhere('r.statut = :s')->setParameter('s', $statut);
+        }
+        if ($du) {
+            $qb->andWhere('r.datePrevue >= :du')->setParameter('du', $du->setTime(0, 0));
+        }
+        if ($au) {
+            $qb->andWhere('r.datePrevue <= :au')->setParameter('au', $au->setTime(23, 59, 59));
+        }
+
+        return $qb->getQuery()->getResult();
+    }
+
     /** @return Ramassage[] */
     public function aVenir(int $limit = 5): array
     {

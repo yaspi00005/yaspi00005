@@ -9,6 +9,7 @@ use App\Form\RamassageType;
 use App\Repository\ClientRepository;
 use App\Repository\RamassageRepository;
 use App\Security\IdChiffreur;
+use App\Service\DocumentService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -34,6 +35,39 @@ class RamassageController extends AbstractController
         ]);
     }
 
+    #[Route('/export.pdf', name: 'ramassage_export', methods: ['GET'])]
+    public function export(Request $request, RamassageRepository $ramassages, DocumentService $documents): Response
+    {
+        $statut = StatutRamassage::tryFrom($request->query->getString('statut'));
+        $du = $this->date($request->query->getString('du'));
+        $au = $this->date($request->query->getString('au'));
+        if ($du && $au && $au < $du) {
+            [$du, $au] = [$au, $du];
+        }
+        $liste = $ramassages->pourExport($statut, $du, $au);
+
+        $parStatut = [];
+        foreach (StatutRamassage::cases() as $s) {
+            $parStatut[$s->label()] = \count(array_filter($liste, fn (Ramassage $r) => $r->getStatut() === $s));
+        }
+
+        $pdf = $documents->pdf('pdf/ramassages.html.twig', [
+            'ramassages' => $liste,
+            'statut' => $statut,
+            'du' => $du,
+            'au' => $au,
+            'parStatut' => $parStatut,
+            'genereLe' => new \DateTimeImmutable(),
+        ], 'landscape');
+
+        $nom = 'ramassages'.($statut ? '-'.$statut->value : '').($du ? '-du-'.$du->format('Y-m-d') : '').($au ? '-au-'.$au->format('Y-m-d') : '').'.pdf';
+
+        return new Response($pdf, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="'.$nom.'"',
+        ]);
+    }
+
     #[Route('/evenements.json', name: 'ramassage_events', methods: ['GET'])]
     public function events(Request $request, RamassageRepository $ramassages): JsonResponse
     {
@@ -46,8 +80,9 @@ class RamassageController extends AbstractController
 
         return $this->json(array_map(fn (Ramassage $r) => [
             'title' => $r->getClient()->getNomComplet(),
-            'start' => $r->getDatePrevue()->format(\DATE_ATOM),
-            'end' => $r->getDatePrevue()->modify('+1 hour')->format(\DATE_ATOM),
+            // Heures « locales » sans fuseau : affichées telles que saisies, quel que soit le pays de l'agent.
+            'start' => $r->getDatePrevue()->format('Y-m-d\TH:i:s'),
+            'end' => $r->getDatePrevue()->modify('+1 hour')->format('Y-m-d\TH:i:s'),
             'url' => $this->generateUrl('ramassage_edit', ['id' => $r->getId()]),
             'className' => 'bg-'.$r->getStatut()->badge(),
             'extendedProps' => ['deplacer' => $this->generateUrl('ramassage_deplacer', ['id' => $r->getId()]), 'statut' => $r->getStatut()->label(), 'telephone' => $r->getClient()->getTelephone()],
@@ -84,7 +119,13 @@ class RamassageController extends AbstractController
             return $this->json(['error' => 'Jeton invalide'], 403);
         }
         try {
-            $ramassage->setDatePrevue(new \DateTimeImmutable($request->getPayload()->getString('start')));
+            // Le calendrier travaille en heure « flottante » : on ignore tout suffixe de fuseau.
+            $debut = substr($request->getPayload()->getString('start'), 0, 19);
+            $date = \DateTimeImmutable::createFromFormat('Y-m-d\TH:i:s', $debut) ?: \DateTimeImmutable::createFromFormat('Y-m-d\TH:i', substr($debut, 0, 16));
+            if (!$date) {
+                throw new \InvalidArgumentException();
+            }
+            $ramassage->setDatePrevue($date);
         } catch (\Exception) {
             return $this->json(['error' => 'Date invalide'], 400);
         }
@@ -103,6 +144,15 @@ class RamassageController extends AbstractController
         }
 
         return $this->redirectToRoute('ramassage_index', [], Response::HTTP_SEE_OTHER);
+    }
+
+    private function date(string $valeur): ?\DateTimeImmutable
+    {
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $valeur)) {
+            return null;
+        }
+
+        return \DateTimeImmutable::createFromFormat('!Y-m-d', $valeur) ?: null;
     }
 
     private function formulaire(Request $request, Ramassage $ramassage, EntityManagerInterface $em): Response

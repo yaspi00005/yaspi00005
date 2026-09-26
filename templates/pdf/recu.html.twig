@@ -24,6 +24,7 @@
 <table class="entete">
     <tr>
         <td>
+            {% if logo_data_uri() %}<img src="{{ logo_data_uri() }}" alt="" style="height:60px;float:left;margin-right:10px">{% endif %}
             <h1 class="vert">{{ app_nom }}</h1>
             <div class="petit">Reçu de dépôt de colis{% if app_telephone_agence %} · {{ app_telephone_agence }}{% endif %}</div>
         </td>

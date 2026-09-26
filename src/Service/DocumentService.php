@@ -30,6 +30,20 @@ final class DocumentService
         return $this->qrCodeDataUri($this->notifications->lienSuivi($colis));
     }
 
+    /** Rend un template Twig en PDF A4. */
+    public function pdf(string $template, array $contexte, string $orientation = 'portrait'): string
+    {
+        $options = new Options();
+        $options->set('defaultFont', 'DejaVu Sans');
+        $options->set('isRemoteEnabled', false);
+        $dompdf = new Dompdf($options);
+        $dompdf->loadHtml($this->twig->render($template, $contexte), 'UTF-8');
+        $dompdf->setPaper('A4', $orientation);
+        $dompdf->render();
+
+        return (string) $dompdf->output();
+    }
+
     public function recuPdf(Colis $colis): string
     {
         $photos = [];

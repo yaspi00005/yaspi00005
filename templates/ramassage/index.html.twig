@@ -34,6 +34,24 @@
             </div>
         </div>
         <div class="card">
+            <div class="card-header"><h4 class="card-title"><i class="fas fa-file-pdf text-primary me-2"></i>Export PDF</h4></div>
+            <div class="card-body">
+                <form method="get" action="{{ path('ramassage_export') }}" target="_blank" data-multi-submit>
+                    <label class="form-label" for="export-statut">Statut</label>
+                    <select name="statut" id="export-statut" class="form-select form-control mb-2">
+                        <option value="">Tous les statuts</option>
+                        {% for s in statuts %}<option value="{{ s.value }}" {{ s.value == 'en_attente' ? 'selected' }}>{{ s.label }}</option>{% endfor %}
+                    </select>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6"><label class="form-label" for="export-du">Du</label><input type="date" name="du" id="export-du" class="form-control" value="{{ 'now'|date('Y-m-d') }}"></div>
+                        <div class="col-6"><label class="form-label" for="export-au">Au</label><input type="date" name="au" id="export-au" class="form-control"></div>
+                    </div>
+                    <button class="btn btn-primary w-100"><i class="fas fa-download me-1"></i> Exporter en PDF</button>
+                </form>
+                <p class="fs-12 text-muted mt-2 mb-0">Laissez les dates vides pour tout exporter.</p>
+            </div>
+        </div>
+        <div class="card">
             <div class="card-body">
                 {% for s in statuts %}<span class="badge badge-{{ s.badge }} me-1 mb-1">{{ s.label }}</span>{% endfor %}
                 <p class="fs-12 text-muted mt-2 mb-0">Cliquez sur un jour pour planifier, glissez un rendez-vous pour le déplacer.</p>
@@ -54,6 +72,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const el = document.getElementById('calendrier');
     const calendrier = new FullCalendar.Calendar(el, {
         locale: 'fr',
+        timeZone: 'UTC', // heures « flottantes » : pas de conversion selon le fuseau du navigateur
         initialView: window.innerWidth < 768 ? 'listWeek' : 'dayGridMonth',
         headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,listWeek' },
         events: el.dataset.events,
@@ -64,7 +83,7 @@ document.addEventListener('DOMContentLoaded', function () {
             fetch(info.event.extendedProps.deplacer, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': el.dataset.token },
-                body: JSON.stringify({ start: info.event.start.toISOString() })
+                body: JSON.stringify({ start: info.event.startStr })
             }).then(r => { if (!r.ok) { info.revert(); toastr.error('Déplacement impossible'); } else { toastr.success('Ramassage déplacé'); } });
         }
     });
