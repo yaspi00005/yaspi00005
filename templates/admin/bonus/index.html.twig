@@ -1,0 +1,134 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Suivi des bonus{% endblock %}
+
+{% macro stat(icone, couleur, valeur, libelle, detail) %}
+    <div class="col-xl-3 col-6">
+        <div class="card stat-card">
+            <div class="card-body d-flex flex-column flex-sm-row align-items-sm-center gap-2 gap-sm-3">
+                <span class="stat-icon bgl-{{ couleur }} text-{{ couleur }}"><i class="{{ icone }}"></i></span>
+                <div>
+                    <div class="stat-value">{{ valeur }}</div>
+                    <span class="text-muted fs-14">{{ libelle }}</span>
+                    {% if detail %}<div class="fs-12 text-muted">{{ detail }}</div>{% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endmacro %}
+{% import _self as m %}
+
+{% block body %}
+{% set badges = {gain: 'success', utilisation: 'info', credit: 'primary', debit: 'danger'} %}
+
+<div class="row">
+    {{ m.stat('fas fa-gift', 'success', totaux.gagne|money, 'Bonus distribués', filtreActif ? 'sur la sélection' : 'depuis le début') }}
+    {{ m.stat('fas fa-hand-holding-usd', 'info', totaux.utilise|money, 'Bonus utilisés', totaux.gagne ? (totaux.utilise * 100 / totaux.gagne)|round ~ ' % des bonus distribués' : null) }}
+    {{ m.stat('fas fa-piggy-bank', 'warning', global.solde|money, 'À utiliser par les clients', 'soldes actuels') }}
+    {{ m.stat('fas fa-users', 'primary', global.clients, 'Clients avec du bonus', null) }}
+</div>
+
+<div class="row">
+    <div class="col-xl-8">
+        <div class="card">
+            <div class="card-header border-0 pb-0"><h4 class="card-title">Bonus gagnés et utilisés par mois ({{ app_devise }})</h4></div>
+            <div class="card-body"><canvas id="chart-bonus" height="110" role="img" aria-label="Bonus gagnés et utilisés par mois"></canvas></div>
+        </div>
+    </div>
+    <div class="col-xl-4">
+        <div class="card">
+            <div class="card-header border-0"><h4 class="card-title">Plus gros soldes</h4></div>
+            <div class="card-body pt-0">
+                {% for c in meilleurs %}
+                    <a href="{{ path('client_show', {id: c.id}) }}" class="d-flex justify-content-between align-items-center py-2 border-bottom text-decoration-none">
+                        <span class="d-flex align-items-center gap-2 text-black"><span class="avatar-initiales avatar-sm">{{ c.initiales }}</span>{{ c.nomComplet }}</span>
+                        <strong class="text-success">{{ c.soldeBonus|money }}</strong>
+                    </a>
+                {% else %}
+                    <div class="empty-state"><i class="fas fa-piggy-bank"></i>Aucun client n'a de bonus à utiliser.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header flex-wrap gap-2">
+        <h4 class="card-title">Historique des mouvements ({{ mouvements.total }})</h4>
+        <a href="?{{ app.request.query.all|merge({export: 'csv', page: null})|url_encode }}" class="btn btn-outline-primary btn-sm btn-rounded"><i class="fas fa-file-excel me-1"></i> Export Excel</a>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-2 filtres mb-3">
+            <div class="col-md-3"><input type="search" name="q" value="{{ filtres.q }}" class="form-control" placeholder="Client, téléphone, n° de colis" aria-label="Rechercher"></div>
+            <div class="col-md-3">
+                <select name="type" class="form-select form-control" aria-label="Type de mouvement">
+                    <option value="">Tous les mouvements</option>
+                    {% for cle, libelle in types %}<option value="{{ cle }}" {{ filtres.type == cle ? 'selected' }}>{{ libelle }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="col-6 col-md-2"><input type="date" name="du" value="{{ filtres.du }}" class="form-control" aria-label="Du"></div>
+            <div class="col-6 col-md-2"><input type="date" name="au" value="{{ filtres.au }}" class="form-control" aria-label="Au"></div>
+            <div class="col-md-2 d-flex gap-1">
+                <button class="btn btn-primary w-100" aria-label="Filtrer"><i class="fas fa-filter"></i></button>
+                <a href="{{ path('admin_bonus_index') }}" class="btn btn-light" title="Réinitialiser" aria-label="Réinitialiser"><i class="fas fa-times"></i></a>
+            </div>
+        </form>
+
+        {% if filtreActif %}
+        <div class="d-flex flex-wrap gap-3 mb-3 fs-14">
+            <span>Gagnés : <strong class="text-success">{{ totaux.gagne|money }}</strong></span>
+            <span>Utilisés : <strong class="text-info">{{ totaux.utilise|money }}</strong></span>
+            <span>Crédits manuels : <strong>{{ totaux.credits|money }}</strong></span>
+            <span>Débits manuels : <strong class="text-danger">{{ totaux.debits|money }}</strong></span>
+        </div>
+        {% endif %}
+
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead><tr><th>Date</th><th>Client</th><th>Type</th><th>Détail</th><th>Colis</th><th class="num">Montant</th><th>Par</th></tr></thead>
+                <tbody>
+                {% for mv in mouvements %}
+                    {% set type = mv.gainColis ? 'gain' : (mv.montant < 0 and mv.colis ? 'utilisation' : (mv.montant >= 0 ? 'credit' : 'debit')) %}
+                    <tr>
+                        <td class="text-nowrap">{{ mv.createdAt|date('d/m/Y H:i') }}</td>
+                        <td><a href="{{ path('client_show', {id: mv.client.id}) }}" class="text-black font-w600">{{ mv.client.nomComplet }}</a><br><small class="text-muted">{{ mv.client.telephone|tel }}</small></td>
+                        <td><span class="badge light badge-{{ badges[type] }}">{{ types[type] }}</span></td>
+                        <td class="fs-13">{{ mv.libelle }}</td>
+                        <td>{% if mv.colis %}<a href="{{ path('colis_show', {id: mv.colis.id}) }}">{{ mv.colis.numeroSuivi }}</a>{% else %}<span class="text-muted">—</span>{% endif %}</td>
+                        <td class="num font-w600 {{ mv.montant < 0 ? 'text-danger' : 'text-success' }}">{{ mv.montant < 0 ? '−' : '+' }}{{ (mv.montant|abs)|money }}</td>
+                        <td>{{ mv.auteur ? mv.auteur.nomComplet : 'Automatique' }}</td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="7"><div class="empty-state"><i class="fas fa-gift"></i>Aucun mouvement de bonus pour ces critères.</div></td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% include 'partials/_pagination.html.twig' with {pagination: mouvements} %}
+    </div>
+</div>
+{% endblock %}
+
+{% block vendor_javascripts %}
+    <script src="{{ asset('theme/vendor/chart.js/Chart.bundle.min.js') }}"></script>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+new Chart(document.getElementById('chart-bonus'), {
+    type: 'bar',
+    data: {
+        labels: {{ chart.labels|json_encode|raw }},
+        datasets: [
+            { label: 'Gagnés', data: {{ chart.gagne|json_encode|raw }}, backgroundColor: '#00A15D', barPercentage: .7 },
+            { label: 'Utilisés', data: {{ chart.utilise|json_encode|raw }}, backgroundColor: '#D653C1', barPercentage: .7 }
+        ]
+    },
+    options: {
+        legend: { position: 'bottom', labels: { boxWidth: 12 } },
+        tooltips: { callbacks: { label: (i, d) => d.datasets[i.datasetIndex].label + ' : ' + i.yLabel.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' {{ app_devise }}' } },
+        scales: { yAxes: [{ ticks: { beginAtZero: true } }], xAxes: [{ gridLines: { display: false } }] }
+    }
+});
+</script>
+{% endblock %}

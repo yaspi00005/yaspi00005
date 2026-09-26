@@ -34,6 +34,26 @@ class ClientRepository extends ServiceEntityRepository
         return $this->rechercheQb($q)->setMaxResults($limit)->getQuery()->getResult();
     }
 
+    /** @return array{solde: int, clients: int} bonus encore disponible chez les clients */
+    public function soldeBonusGlobal(): array
+    {
+        $r = $this->createQueryBuilder('c')
+            ->select('COALESCE(SUM(c.soldeBonus), 0) AS solde, SUM(CASE WHEN c.soldeBonus > 0 THEN 1 ELSE 0 END) AS clients')
+            ->getQuery()->getSingleResult();
+
+        return ['solde' => (int) $r['solde'], 'clients' => (int) $r['clients']];
+    }
+
+    /** @return Client[] clients ayant le plus de bonus à utiliser */
+    public function meilleursSoldes(int $n = 10): array
+    {
+        return $this->createQueryBuilder('c')
+            ->andWhere('c.soldeBonus > 0')
+            ->orderBy('c.soldeBonus', 'DESC')->addOrderBy('c.nom', 'ASC')
+            ->setMaxResults($n)
+            ->getQuery()->getResult();
+    }
+
     public function findDoublon(Client $client): ?Client
     {
         $qb = $this->createQueryBuilder('c')
