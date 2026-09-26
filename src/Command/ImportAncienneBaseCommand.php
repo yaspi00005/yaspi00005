@@ -362,6 +362,7 @@ final class ImportAncienneBaseCommand extends Command
                 ->setStatut(match (true) {
                     str_contains($statut, 'annul') => StatutRamassage::Annule,
                     str_contains($statut, 'recup'), str_contains($statut, 'effect') => StatutRamassage::Effectue,
+                    str_contains($statut, 'confirm') => StatutRamassage::Confirme,
                     default => StatutRamassage::EnAttente,
                 }));
         }

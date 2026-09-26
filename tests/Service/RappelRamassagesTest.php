@@ -100,4 +100,13 @@ final class RappelRamassagesTest extends KernelTestCase
         $this->assertSame(['veille' => 0, 'proche' => 1], $this->rappels->executer(new \DateTimeImmutable('2030-09-10 09:20')));
         $this->assertSame(['veille' => 0, 'proche' => 0], $this->rappels->executer(new \DateTimeImmutable('2030-09-10 09:40')));
     }
+
+    public function testRamassageConfirmeRecoitAussiLesRappels(): void
+    {
+        $r = $this->ramassage('2030-10-10 10:00', $this->agent());
+        $r->setStatut(StatutRamassage::Confirme);
+        $this->em->flush();
+        $this->assertSame(['veille' => 1, 'proche' => 0], $this->rappels->executer(new \DateTimeImmutable('2030-10-09 12:00')));
+        $this->assertStringContainsString('confirmé par le client', $this->getMailerMessage()->getHtmlBody());
+    }
 }

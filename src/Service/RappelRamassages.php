@@ -16,7 +16,7 @@ use Symfony\Component\Mime\Address;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 /**
- * Rappels des ramassages « En attente » : la veille, puis environ 1 h avant.
+ * Rappels des ramassages à faire (« En attente » ou « Confirmé par le client ») : la veille, puis environ 1 h avant.
  * Destinataires : l'agent assigné, sinon tous les agents de ramassage actifs.
  * Canaux : notification du navigateur et e-mail. Chaque rappel n'est envoyé qu'une fois
  * (réinitialisé si le rendez-vous est déplacé).
@@ -54,7 +54,7 @@ final class RappelRamassages
 
         $aVenir = $this->ramassages->createQueryBuilder('r')
             ->addSelect('c', 'a')->join('r.client', 'c')->leftJoin('r.agent', 'a')
-            ->andWhere('r.statut = :s')->setParameter('s', StatutRamassage::EnAttente)
+            ->andWhere('r.statut IN (:s)')->setParameter('s', StatutRamassage::aFaire())
             ->andWhere('r.datePrevue > :debut AND r.datePrevue <= :fin')
             ->setParameter('debut', $maintenant->modify('-15 minutes'))
             ->setParameter('fin', $maintenant->modify('+1 day'))
@@ -104,7 +104,8 @@ final class RappelRamassages
             : 'À '.$ramassage->getDatePrevue()->format('H:i');
         $titre = 'Ramassage : '.$client->getNomComplet();
         $adresse = trim($ramassage->getAdresse() ?: $client->getAdresse().' '.$client->getCodePostal().' '.$client->getVille());
-        $corps = $quand.' — '.$adresse.' — '.$client->getTelephone();
+        $corps = $quand.' — '.$adresse.' — '.$client->getTelephone()
+            .(StatutRamassage::Confirme === $ramassage->getStatut() ? ' — ✔ confirmé par le client' : '');
         $url = $this->urls->generate('ramassage_edit', ['id' => $ramassage->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
 
         foreach ($this->destinataires($ramassage) as $user) {

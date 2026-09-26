@@ -25,7 +25,7 @@
             <div class="card-body">
                 {% for r in aVenir %}
                     <a href="{{ path('ramassage_edit', {id: r.id}) }}" class="d-block border-bottom py-2 text-decoration-none">
-                        <span class="d-flex justify-content-between"><strong class="text-black">{{ r.client.nomComplet }}</strong><span class="text-primary">{{ r.datePrevue|date('d/m H:i') }}</span></span>
+                        <span class="d-flex justify-content-between"><strong class="text-black">{{ r.client.nomComplet }}{% if r.statut.value == 'confirme' %} <i class="fas fa-check-circle text-info" title="Confirmé par le client"></i>{% endif %}</strong><span class="text-primary">{{ r.datePrevue|date('d/m H:i') }}</span></span>
                         <small class="text-muted">{{ r.adresse ?: r.client.adresse }} {{ r.client.ville }}</small>
                     </a>
                 {% else %}
@@ -54,7 +54,7 @@
         <div class="card">
             <div class="card-body">
                 {% for s in statuts %}<span class="badge badge-{{ s.badge }} me-1 mb-1">{{ s.label }}</span>{% endfor %}
-                <p class="fs-12 text-muted mt-2 mb-0">Cliquez sur un jour pour planifier, glissez un rendez-vous pour le déplacer.</p>
+                <p class="fs-12 text-muted mt-2 mb-0">Cliquez sur un jour pour planifier, glissez un rendez-vous pour le déplacer. Après avoir appelé le client, passez le ramassage en « Confirmé par le client ».</p>
             </div>
         </div>
     </div>

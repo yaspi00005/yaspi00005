@@ -8,6 +8,17 @@
         <div class="card">
             <div class="card-header"><h4 class="card-title">{{ block('title') }}</h4></div>
             <div class="card-body">
+                {% if ramassage.id and ramassage.statut.value == 'en_attente' %}
+                <div class="alert alert-warning d-flex flex-wrap align-items-center justify-content-between gap-2">
+                    <span><i class="fas fa-phone-alt me-1"></i> Rendez-vous pas encore confirmé : appelez {{ ramassage.client.nomComplet }} au <a href="tel:{{ ramassage.client.telephone }}">{{ ramassage.client.telephone|tel }}</a>.</span>
+                    <form method="post" action="{{ path('ramassage_confirmer', {id: ramassage.id}) }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('confirmer-ramassage-' ~ ramassage.id) }}">
+                        <button class="btn btn-info btn-sm"><i class="fas fa-check me-1"></i> Le client a confirmé</button>
+                    </form>
+                </div>
+                {% elseif ramassage.statut.value == 'confirme' %}
+                <div class="alert alert-info"><i class="fas fa-check-circle me-1"></i> Rendez-vous confirmé par le client.</div>
+                {% endif %}
                 {{ form_start(form) }}
                 {{ form_row(form.client) }}
                 <div class="row">

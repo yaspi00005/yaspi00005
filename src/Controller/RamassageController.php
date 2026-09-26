@@ -134,6 +134,19 @@ class RamassageController extends AbstractController
         return $this->json(['ok' => true]);
     }
 
+    #[Route('/{id}/confirmer', name: 'ramassage_confirmer', requirements: ['id' => self::ID], methods: ['POST'])]
+    public function confirmer(Request $request, Ramassage $ramassage, EntityManagerInterface $em): Response
+    {
+        if ($this->isCsrfTokenValid('confirmer-ramassage-'.$ramassage->getId(), $request->getPayload()->getString('_token'))
+            && StatutRamassage::EnAttente === $ramassage->getStatut()) {
+            $ramassage->setStatut(StatutRamassage::Confirme);
+            $em->flush();
+            $this->addFlash('success', 'Ramassage confirmé par '.$ramassage->getClient()->getNomComplet().'.');
+        }
+
+        return $this->redirectToRoute('ramassage_edit', ['id' => $ramassage->getId()], Response::HTTP_SEE_OTHER);
+    }
+
     #[Route('/{id}/supprimer', name: 'ramassage_delete', requirements: ['id' => self::ID], methods: ['POST'])]
     public function delete(Request $request, Ramassage $ramassage, EntityManagerInterface $em): Response
     {

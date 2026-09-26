@@ -43,7 +43,7 @@ final class ExportRamassagesTest extends WebTestCase
 
         $this->assertNotEmpty($enAttente);
         $this->assertNotEmpty($effectues);
-        $this->assertCount(\count($tous), array_merge($enAttente, $effectues, $repo->pourExport(StatutRamassage::Annule, null, null)));
+        $this->assertCount(\count($tous), array_merge(...array_map(fn ($s) => $repo->pourExport($s, null, null), StatutRamassage::cases())));
         foreach ($enAttente as $r) {
             $this->assertSame(StatutRamassage::EnAttente, $r->getStatut());
         }

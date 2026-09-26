@@ -53,7 +53,7 @@ class RamassageRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('r')
             ->addSelect('c')->join('r.client', 'c')
             ->andWhere('r.datePrevue >= :now')->setParameter('now', new \DateTimeImmutable('today'))
-            ->andWhere('r.statut = :s')->setParameter('s', StatutRamassage::EnAttente)
+            ->andWhere('r.statut IN (:s)')->setParameter('s', StatutRamassage::aFaire())
             ->orderBy('r.datePrevue', 'ASC')
             ->setMaxResults($limit)
             ->getQuery()->getResult();

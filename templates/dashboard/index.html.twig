@@ -132,7 +132,7 @@
             <div class="card-body pt-0">
                 {% for r in ramassages %}
                     <a href="{{ path('ramassage_edit', {id: r.id}) }}" class="d-flex justify-content-between py-2 border-bottom text-decoration-none">
-                        <span class="text-black">{{ r.client.nomComplet }}<br><small class="text-muted">{{ r.client.ville }}</small></span>
+                        <span class="text-black">{{ r.client.nomComplet }}{% if r.statut.value == 'confirme' %} <i class="fas fa-check-circle text-info" title="Confirmé par le client"></i>{% endif %}<br><small class="text-muted">{{ r.client.ville }}</small></span>
                         <span class="text-end text-primary font-w600">{{ r.datePrevue|date('d/m') }}<br><small class="text-muted">{{ r.datePrevue|date('H:i') }}</small></span>
                     </a>
                 {% endfor %}

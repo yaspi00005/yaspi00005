@@ -16,6 +16,7 @@
     .badge-warning { background: #fff3d6; color: #b07800; }
     .badge-success { background: #dff5e7; color: #0a7a35; }
     .badge-danger { background: #fde2e2; color: #b3261e; }
+    .badge-info { background: #f7e3f4; color: #9c2f8a; }
     .resume td { padding: 2px 10px 2px 0; }
     .coche { width: 14px; height: 14px; border: 1px solid #999; display: inline-block; }
     .pied { position: fixed; bottom: -26px; left: 0; right: 0; font-size: 8px; color: #999; }
@@ -59,7 +60,7 @@
             <th style="width:12%">Agent</th>
             <th style="width:17%">Commentaire</th>
             <th style="width:8%">Statut</th>
-            {% if not statut or statut.value == 'en_attente' %}<th style="width:4%">Fait</th>{% endif %}
+            {% if not statut or statut.estAFaire %}<th style="width:4%">Fait</th>{% endif %}
         </tr>
     </thead>
     <tbody>
@@ -77,8 +78,8 @@
             <td>{{ r.adresse ?: (r.client.adresse ~ ' ' ~ r.client.codePostal ~ ' ' ~ r.client.ville) }}</td>
             <td>{{ r.agent ? r.agent.nomComplet : '—' }}</td>
             <td>{{ r.commentaire }}</td>
-            <td><span class="badge badge-{{ r.statut.badge }}">{{ r.statut.label }}</span></td>
-            {% if not statut or statut.value == 'en_attente' %}<td style="text-align:center">{% if r.statut.value == 'en_attente' %}<span class="coche"></span>{% endif %}</td>{% endif %}
+            <td><span class="badge badge-{{ r.statut.badge }}">{{ r.statut.value == 'confirme' ? '✔ Confirmé' : r.statut.label }}</span></td>
+            {% if not statut or statut.estAFaire %}<td style="text-align:center">{% if r.statut.estAFaire %}<span class="coche"></span>{% endif %}</td>{% endif %}
         </tr>
     {% else %}
         <tr><td colspan="8" style="text-align:center;padding:30px;color:#999">Aucun ramassage pour ces critères.</td></tr>
