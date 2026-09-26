@@ -68,6 +68,14 @@ jobs:
           echo "Site : $SOTRAMA_URL — version $VERSION_NAME"
           ls -la sotrama.apk
 
+      # Vérifie que l'APK est installable (signature valide) et affiche l'empreinte de la clé :
+      # elle doit être identique à APP_ANDROID_SHA256 sur le serveur.
+      - name: Vérification de la signature
+        run: |
+          APKSIGNER=$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)apksigner
+          "$APKSIGNER" verify --verbose --print-certs sotrama.apk | grep -E "Verified using|Signer #1 certificate (DN|SHA-256)|WARNING" || true
+          "$APKSIGNER" verify sotrama.apk
+
       # À télécharger en bas de la page de l'exécution (« Artifacts ») puis à déposer
       # sur le serveur dans le dossier apk/ du projet (voir apk/LISEZMOI.txt).
       - uses: actions/upload-artifact@v4
