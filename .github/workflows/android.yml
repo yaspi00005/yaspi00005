@@ -1,5 +1,6 @@
-# Compile l'application Android SOTRAMA (Trusted Web Activity) et publie sotrama.apk
-# dans les « Releases » du dépôt : le lien de téléchargement de l'application pointe vers la dernière.
+# Compile l'application Android SOTRAMA (Trusted Web Activity). Le fichier sotrama.apk est à
+# télécharger dans « Artifacts » en bas de l'exécution, puis à déposer sur le serveur dans apk/
+# (le site l'héberge lui-même : page /application).
 #
 # Réglages (Settings → Secrets and variables → Actions) :
 #   - variable  SOTRAMA_URL            adresse HTTPS du site, ex. https://app.sotrama.com
@@ -20,7 +21,7 @@ on:
       - '.github/workflows/android.yml'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   apk:
@@ -53,7 +54,7 @@ jobs:
             echo "KEYSTORE_PASSWORD=$KEYSTORE_PWD" >> "$GITHUB_ENV"
             echo "signee=oui" >> "$GITHUB_OUTPUT"
           else
-            echo "::warning::Clé de signature absente : APK de test signé avec une clé de débogage, non publié."
+            echo "::warning::Clé de signature absente : APK de test signé avec une clé de débogage (ne pas distribuer)."
             echo "signee=non" >> "$GITHUB_OUTPUT"
           fi
 
@@ -67,17 +68,10 @@ jobs:
           echo "Site : $SOTRAMA_URL — version $VERSION_NAME"
           ls -la sotrama.apk
 
+      # À télécharger en bas de la page de l'exécution (« Artifacts ») puis à déposer
+      # sur le serveur dans le dossier apk/ du projet (voir apk/LISEZMOI.txt).
       - uses: actions/upload-artifact@v4
         with:
-          name: sotrama-apk
+          name: sotrama-apk-1.${{ github.run_number }}
           path: sotrama.apk
-
-      - name: Publication (lien de téléchargement)
-        if: steps.cle.outputs.signee == 'oui' && env.SOTRAMA_URL != 'https://sotrama.example.com'
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: android-v${{ github.run_number }}
-          name: SOTRAMA Android 1.${{ github.run_number }}
-          body: "Application Android SOTRAMA pour ${{ env.SOTRAMA_URL }}. Téléchargez sotrama.apk ci-dessous."
-          files: sotrama.apk
-          make_latest: 'true'
+          retention-days: 30

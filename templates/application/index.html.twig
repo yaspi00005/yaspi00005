@@ -16,8 +16,12 @@
 
     <div class="row align-items-center g-4">
         <div class="col-md-6 text-center">
-            <a href="{{ apk }}" class="btn btn-primary btn-lg w-100 mb-2" download><i class="fab fa-android me-2"></i>Télécharger l'application</a>
-            <div class="fs-12 text-muted">Fichier APK · Android 7 ou plus récent</div>
+            {% if apk %}
+                <a href="{{ apk }}" class="btn btn-primary btn-lg w-100 mb-2" download><i class="fab fa-android me-2"></i>Télécharger l'application</a>
+            {% else %}
+                <button type="button" class="btn btn-primary btn-lg w-100 mb-2" disabled><i class="fab fa-android me-2"></i>Bientôt disponible</button>
+            {% endif %}
+            <div class="fs-12 text-muted">Fichier APK{% if apkTaille %} · {{ (apkTaille / 1048576)|number_format(1, ',') }} Mo · version du {{ apkDate|date('d/m/Y') }}{% endif %} · Android 7 ou plus récent</div>
         </div>
         <div class="col-md-6 text-center d-none d-md-block">
             <img src="{{ qr }}" alt="QR code vers cette page" width="170" height="170">

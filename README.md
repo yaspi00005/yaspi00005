@@ -123,9 +123,10 @@ L'application Android (dossier `android/`) est une *Trusted Web Activity* : elle
 en plein écran avec le moteur de Chrome (notifications des rappels, caméra pour le scan des QR codes,
 photos des colis). Toute évolution du site est immédiatement disponible dans l'application.
 
-Elle est compilée et publiée par **GitHub Actions** (`.github/workflows/android.yml`) ; la page
-`/application` du site (menu « Application mobile », lien sur la page de connexion) propose le
-téléchargement de la dernière version et les étapes d'installation.
+Elle est compilée par **GitHub Actions** (`.github/workflows/android.yml`) et **hébergée par le site** :
+le fichier `sotrama.apk` est déposé sur le serveur dans le dossier `apk/` du projet (hors Git). La page
+`/application` (menu « Application mobile », lien sur la page de connexion) propose alors son
+téléchargement, avec sa taille et sa date, et les étapes d'installation.
 
 Mise en place (une seule fois), dans GitHub → *Settings → Secrets and variables → Actions* :
 
@@ -135,8 +136,9 @@ Mise en place (une seule fois), dans GitHub → *Settings → Secrets and variab
 | Secret | `ANDROID_KEYSTORE_BASE64` | contenu du fichier `sotrama.jks.base64.txt` (clé de signature) |
 | Secret | `ANDROID_KEYSTORE_PASSWORD` | mot de passe de la clé |
 
-Puis *Actions → Application Android → Run workflow* : `sotrama.apk` est publié dans les *Releases*,
-et le lien de téléchargement (`APP_APK_URL`) pointe toujours vers la dernière version.
+Puis *Actions → Application Android → Run workflow*. À la fin de l'exécution, téléchargez l'archive
+`sotrama-apk-1.N` (section *Artifacts*, conservée 30 jours), décompressez-la et déposez `sotrama.apk`
+sur le serveur dans `apk/sotrama.apk` (FTP ou `scp`). Même opération à chaque nouvelle version.
 
 Sur le serveur, dans `.env.local` : `APP_ANDROID_SHA256=<empreinte SHA-256 de la clé>`. Le site publie
 alors `/.well-known/assetlinks.json`, ce qui permet à l'application de s'afficher sans barre d'adresse.

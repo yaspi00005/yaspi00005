@@ -11,8 +11,34 @@ final class ApplicationTest extends WebTestCase
         $client = static::createClient();
         $client->request('GET', '/application');
         $this->assertResponseIsSuccessful();
-        $this->assertSelectorExists('a[href$="sotrama.apk"]');
+        // Sans apk/sotrama.apk ni APP_APK_URL : bouton désactivé.
+        $this->assertSelectorExists('button[disabled]:contains("Bientôt disponible")');
         $this->assertSelectorTextContains('body', 'Installation');
+    }
+
+    public function testApkHebergeParLeSite(): void
+    {
+        $client = static::createClient();
+        $fichier = static::getContainer()->getParameter('app.apk_fichier');
+        $this->assertFileDoesNotExist($fichier, 'Retirez apk/sotrama.apk avant de lancer les tests.');
+
+        $client->request('GET', '/application/sotrama.apk');
+        $this->assertResponseStatusCodeSame(404);
+
+        file_put_contents($fichier, 'PK-faux-apk');
+        try {
+            $crawler = $client->request('GET', '/application');
+            $lien = $crawler->filter('a[download]')->attr('href');
+            $this->assertStringStartsWith('/application/sotrama.apk?v=', $lien);
+            $this->assertSelectorTextContains('body', 'version du');
+
+            $client->request('GET', $lien);
+            $this->assertResponseIsSuccessful();
+            $this->assertResponseHeaderSame('Content-Type', 'application/vnd.android.package-archive');
+            $this->assertStringContainsString('attachment; filename=sotrama.apk', (string) $client->getResponse()->headers->get('Content-Disposition'));
+        } finally {
+            unlink($fichier);
+        }
     }
 
     public function testManifesteEtLienDepuisLaConnexion(): void

@@ -1,0 +1,13 @@
+Application Android SOTRAMA
+===========================
+
+Déposez ici le fichier de l'application, nommé exactement :  sotrama.apk
+
+Le site le propose alors au téléchargement sur la page /application
+(bouton « Télécharger l'application »), avec sa taille et sa date.
+
+- Ce dossier n'est pas accessible directement depuis le web : le fichier est servi
+  par l'application (adresse /application/sotrama.apk).
+- Le fichier .apk n'est pas enregistré dans Git (voir .gitignore) : il faut le déposer
+  sur le serveur (FTP ou scp) à chaque nouvelle version.
+- Tant qu'aucun fichier n'est présent, le bouton utilise l'adresse APP_APK_URL.

@@ -23,4 +23,6 @@
 # Thème Workload sous licence ThemeForest : installé via « php bin/console app:installer-theme <chemin/xhtml> »
 /public/theme/
 /var/uploads/
+# Application Android : fichier déposé sur le serveur, hors Git
+/apk/*.apk
 ###< sotrama ###
