@@ -18,6 +18,9 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted(User::ROLE_ADMIN)]
 class UtilisateurController extends AbstractController
 {
+    /** Identifiant chiffré (voir App\\Security\\IdChiffreur). */
+    private const ID = '[A-Za-z0-9_-]{22}';
+
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly UserPasswordHasherInterface $hasher,
@@ -39,7 +42,7 @@ class UtilisateurController extends AbstractController
         return $this->traiter($request, $form, $user, 'Utilisateur créé.');
     }
 
-    #[Route('/{id}', name: 'admin_user_edit', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
+    #[Route('/{id}', name: 'admin_user_edit', requirements: ['id' => self::ID], methods: ['GET', 'POST'])]
     public function edit(Request $request, User $user): Response
     {
         $form = $this->createForm(UserType::class, $user);

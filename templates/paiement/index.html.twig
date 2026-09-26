@@ -14,11 +14,11 @@
                 </select></div>
             <div class="col-6 col-md-2"><label class="form-label fs-12 mb-1" for="caissier">Caissier</label>
                 <select name="caissier" id="caissier" class="form-select form-control"><option value="">Tous</option>
-                    {% for u in caissiers %}<option value="{{ u.id }}" {{ filtres.caissier == u.id ? 'selected' }}>{{ u.nomComplet }}</option>{% endfor %}
+                    {% for u in caissiers %}<option value="{{ hid(u.id) }}" {{ filtres.caissier == u.id ? 'selected' }}>{{ u.nomComplet }}</option>{% endfor %}
                 </select></div>
             <div class="col-md-2"><label class="form-label fs-12 mb-1" for="expedition">Expédition</label>
                 <select name="expedition" id="expedition" class="form-select form-control"><option value="">Toutes</option>
-                    {% for e in expeditions %}<option value="{{ e.id }}" {{ filtres.expedition == e.id ? 'selected' }}>{{ e.numero }} · {{ e.destination.label }}</option>{% endfor %}
+                    {% for e in expeditions %}<option value="{{ hid(e.id) }}" {{ filtres.expedition == e.id ? 'selected' }}>{{ e.numero }} · {{ e.destination.label }}</option>{% endfor %}
                 </select></div>
             <div class="col-md-2 d-flex align-items-end gap-1">
                 <button class="btn btn-primary w-100"><i class="fas fa-filter me-1"></i> Filtrer</button>

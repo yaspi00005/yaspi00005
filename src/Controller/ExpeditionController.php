@@ -11,6 +11,7 @@ use App\Form\ExpeditionType;
 use App\Repository\ColisRepository;
 use App\Repository\ExpeditionRepository;
 use App\Repository\PaiementRepository;
+use App\Security\IdChiffreur;
 use App\Service\ExpeditionService;
 use App\Util\Csv;
 use App\Util\Pagination;
@@ -24,6 +25,9 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[Route('/expeditions')]
 class ExpeditionController extends AbstractController
 {
+    /** Identifiant chiffré (voir App\\Security\\IdChiffreur). */
+    private const ID = '[A-Za-z0-9_-]{22}';
+
     #[Route('', name: 'expedition_index', methods: ['GET'])]
     public function index(Request $request, ExpeditionRepository $expeditions): Response
     {
@@ -61,7 +65,7 @@ class ExpeditionController extends AbstractController
         return $this->render('expedition/form.html.twig', ['form' => $form, 'expedition' => $expedition]);
     }
 
-    #[Route('/{id}', name: 'expedition_show', requirements: ['id' => '\d+'], methods: ['GET'])]
+    #[Route('/{id}', name: 'expedition_show', requirements: ['id' => self::ID], methods: ['GET'])]
     public function show(Request $request, Expedition $expedition, ColisRepository $colisRepository, PaiementRepository $paiements): Response
     {
         $this->verifierAcces($expedition);
@@ -99,7 +103,7 @@ class ExpeditionController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}/modifier', name: 'expedition_edit', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
+    #[Route('/{id}/modifier', name: 'expedition_edit', requirements: ['id' => self::ID], methods: ['GET', 'POST'])]
     #[IsGranted(User::ROLE_ADMIN)]
     public function edit(Request $request, Expedition $expedition, EntityManagerInterface $em): Response
     {
@@ -116,7 +120,7 @@ class ExpeditionController extends AbstractController
         return $this->render('expedition/form.html.twig', ['form' => $form, 'expedition' => $expedition]);
     }
 
-    #[Route('/{id}/statut', name: 'expedition_statut', requirements: ['id' => '\d+'], methods: ['POST'])]
+    #[Route('/{id}/statut', name: 'expedition_statut', requirements: ['id' => self::ID], methods: ['POST'])]
     #[IsGranted(User::ROLE_ADMIN)]
     public function statut(Request $request, Expedition $expedition, ExpeditionService $service): Response
     {
@@ -132,9 +136,9 @@ class ExpeditionController extends AbstractController
         return $this->redirectToRoute('expedition_show', ['id' => $expedition->getId()], Response::HTTP_SEE_OTHER);
     }
 
-    #[Route('/{id}/affecter', name: 'expedition_affecter', requirements: ['id' => '\d+'], methods: ['POST'])]
+    #[Route('/{id}/affecter', name: 'expedition_affecter', requirements: ['id' => self::ID], methods: ['POST'])]
     #[IsGranted(User::ROLE_ADMIN)]
-    public function affecter(Request $request, Expedition $expedition, ColisRepository $colisRepository, EntityManagerInterface $em): Response
+    public function affecter(Request $request, Expedition $expedition, ColisRepository $colisRepository, EntityManagerInterface $em, IdChiffreur $chiffreur): Response
     {
         $this->verifierCsrf($request, 'affecter-expedition-'.$expedition->getId());
         if (!$expedition->getStatut()->accepteNouveauxColis()) {
@@ -142,7 +146,7 @@ class ExpeditionController extends AbstractController
 
             return $this->redirectToRoute('expedition_show', ['id' => $expedition->getId()]);
         }
-        $ids = array_map('intval', $request->getPayload()->all('colis'));
+        $ids = array_values(array_filter(array_map(fn ($v) => $chiffreur->decodeOptionnel($v), $request->getPayload()->all('colis'))));
         $n = 0;
         foreach ($ids ? $colisRepository->findBy(['id' => $ids, 'expedition' => null]) : [] as $colis) {
             $colis->setExpedition($expedition);
@@ -154,7 +158,7 @@ class ExpeditionController extends AbstractController
         return $this->redirectToRoute('expedition_show', ['id' => $expedition->getId()], Response::HTTP_SEE_OTHER);
     }
 
-    #[Route('/{id}/retirer/{colis}', name: 'expedition_retirer', requirements: ['id' => '\d+', 'colis' => '\d+'], methods: ['POST'])]
+    #[Route('/{id}/retirer/{colis}', name: 'expedition_retirer', requirements: ['id' => self::ID, 'colis' => self::ID], methods: ['POST'])]
     #[IsGranted(User::ROLE_ADMIN)]
     public function retirer(Request $request, Expedition $expedition, Colis $colis, EntityManagerInterface $em): Response
     {
@@ -168,7 +172,7 @@ class ExpeditionController extends AbstractController
         return $this->redirectToRoute('expedition_show', ['id' => $expedition->getId()], Response::HTTP_SEE_OTHER);
     }
 
-    #[Route('/{id}/supprimer', name: 'expedition_delete', requirements: ['id' => '\d+'], methods: ['POST'])]
+    #[Route('/{id}/supprimer', name: 'expedition_delete', requirements: ['id' => self::ID], methods: ['POST'])]
     #[IsGranted(User::ROLE_ADMIN)]
     public function delete(Request $request, Expedition $expedition, EntityManagerInterface $em): Response
     {

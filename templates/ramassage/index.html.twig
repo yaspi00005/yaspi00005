@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', function () {
         eventDurationEditable: false,
         dateClick: info => { window.location = el.dataset.nouveau + '?date=' + encodeURIComponent(info.dateStr); },
         eventDrop: function (info) {
-            fetch('{{ path('ramassage_index') }}/' + info.event.id + '/deplacer', {
+            fetch(info.event.extendedProps.deplacer, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': el.dataset.token },
                 body: JSON.stringify({ start: info.event.start.toISOString() })

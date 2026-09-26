@@ -14,6 +14,7 @@ use App\Repository\ColisRepository;
 use App\Repository\ExpeditionRepository;
 use App\Repository\TypeMarchandiseRepository;
 use App\Security\ColisVoter;
+use App\Security\IdChiffreur;
 use App\Service\ColisService;
 use App\Service\DocumentService;
 use App\Service\PaiementService;
@@ -31,10 +32,14 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[Route('/colis')]
 class ColisController extends AbstractController
 {
+    /** Identifiant chiffré (voir App\\Security\\IdChiffreur). */
+    private const ID = '[A-Za-z0-9_-]{22}';
+
     public function __construct(
         private readonly ColisService $colisService,
         private readonly PaiementService $paiementService,
         private readonly PhotoUploader $photos,
+        private readonly IdChiffreur $chiffreur,
     ) {
     }
 
@@ -45,7 +50,7 @@ class ColisController extends AbstractController
             'q' => $request->query->getString('q'),
             'statut' => $request->query->getString('statut'),
             'paiement' => $request->query->getString('paiement'),
-            'expedition' => $request->query->getInt('expedition') ?: null,
+            'expedition' => $this->chiffreur->decodeOptionnel($request->query->get('expedition')),
             'du' => $request->query->getString('du'),
             'au' => $request->query->getString('au'),
         ];
@@ -84,7 +89,7 @@ class ColisController extends AbstractController
     public function new(Request $request, ClientRepository $clients, ColisRepository $colisRepository, TypeMarchandiseRepository $types): Response
     {
         $colis = new Colis();
-        if ($request->query->getInt('client') && $client = $clients->find($request->query->getInt('client'))) {
+        if (($clientId = $this->chiffreur->decodeOptionnel($request->query->get('client'))) && $client = $clients->find($clientId)) {
             $colis->setClient($client);
         }
         $form = $this->createForm(ColisType::class, $colis);
@@ -122,7 +127,7 @@ class ColisController extends AbstractController
         return $this->renderForm($form, $colis, $types, bin2hex(random_bytes(8)));
     }
 
-    #[Route('/{id}', name: 'colis_show', requirements: ['id' => '\d+'], methods: ['GET'])]
+    #[Route('/{id}', name: 'colis_show', requirements: ['id' => self::ID], methods: ['GET'])]
     public function show(Colis $colis, DocumentService $documents): Response
     {
         $this->denyAccessUnlessGranted(ColisVoter::VOIR, $colis);
@@ -142,7 +147,7 @@ class ColisController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}/modifier', name: 'colis_edit', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
+    #[Route('/{id}/modifier', name: 'colis_edit', requirements: ['id' => self::ID], methods: ['GET', 'POST'])]
     public function edit(Request $request, Colis $colis, EntityManagerInterface $em, TypeMarchandiseRepository $types): Response
     {
         $this->denyAccessUnlessGranted(ColisVoter::MODIFIER, $colis);
@@ -175,7 +180,7 @@ class ColisController extends AbstractController
         return $this->renderForm($form, $colis, $types, null);
     }
 
-    #[Route('/{id}/supprimer', name: 'colis_delete', requirements: ['id' => '\d+'], methods: ['POST'])]
+    #[Route('/{id}/supprimer', name: 'colis_delete', requirements: ['id' => self::ID], methods: ['POST'])]
     public function delete(Request $request, Colis $colis): Response
     {
         $this->denyAccessUnlessGranted(ColisVoter::MODIFIER, $colis);
@@ -195,7 +200,7 @@ class ColisController extends AbstractController
         return $this->redirectToRoute('colis_index', [], Response::HTTP_SEE_OTHER);
     }
 
-    #[Route('/{id}/recu.pdf', name: 'colis_recu', requirements: ['id' => '\d+'], methods: ['GET'])]
+    #[Route('/{id}/recu.pdf', name: 'colis_recu', requirements: ['id' => self::ID], methods: ['GET'])]
     public function recu(Colis $colis, DocumentService $documents): Response
     {
         $this->denyAccessUnlessGranted(ColisVoter::VOIR, $colis);
@@ -206,7 +211,7 @@ class ColisController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}/encaisser', name: 'colis_encaisser', requirements: ['id' => '\d+'], methods: ['POST'])]
+    #[Route('/{id}/encaisser', name: 'colis_encaisser', requirements: ['id' => self::ID], methods: ['POST'])]
     public function encaisser(Request $request, Colis $colis): Response
     {
         $this->denyAccessUnlessGranted(ColisVoter::ENCAISSER, $colis);
@@ -230,7 +235,7 @@ class ColisController extends AbstractController
         return $this->redirectToRoute('colis_show', ['id' => $colis->getId()], Response::HTTP_SEE_OTHER);
     }
 
-    #[Route('/{id}/bonus', name: 'colis_bonus', requirements: ['id' => '\d+'], methods: ['POST'])]
+    #[Route('/{id}/bonus', name: 'colis_bonus', requirements: ['id' => self::ID], methods: ['POST'])]
     public function bonus(Request $request, Colis $colis): Response
     {
         $this->denyAccessUnlessGranted(ColisVoter::ENCAISSER, $colis);
@@ -245,7 +250,7 @@ class ColisController extends AbstractController
         return $this->redirectToRoute('colis_show', ['id' => $colis->getId()], Response::HTTP_SEE_OTHER);
     }
 
-    #[Route('/{id}/statut', name: 'colis_statut', requirements: ['id' => '\d+'], methods: ['POST'])]
+    #[Route('/{id}/statut', name: 'colis_statut', requirements: ['id' => self::ID], methods: ['POST'])]
     public function statut(Request $request, Colis $colis): Response
     {
         $this->denyAccessUnlessGranted(ColisVoter::LIVRER, $colis);
@@ -267,7 +272,7 @@ class ColisController extends AbstractController
         return $this->redirectToRoute('colis_show', ['id' => $colis->getId()], Response::HTTP_SEE_OTHER);
     }
 
-    #[Route('/{id}/remettre', name: 'colis_remettre', requirements: ['id' => '\d+'], methods: ['POST'])]
+    #[Route('/{id}/remettre', name: 'colis_remettre', requirements: ['id' => self::ID], methods: ['POST'])]
     public function remettre(Request $request, Colis $colis): Response
     {
         $this->denyAccessUnlessGranted(ColisVoter::LIVRER, $colis);
@@ -284,7 +289,7 @@ class ColisController extends AbstractController
         return $this->redirectToRoute('colis_show', ['id' => $colis->getId()], Response::HTTP_SEE_OTHER);
     }
 
-    #[Route('/{id}/tarif', name: 'colis_tarif', requirements: ['id' => '\d+'], methods: ['POST'])]
+    #[Route('/{id}/tarif', name: 'colis_tarif', requirements: ['id' => self::ID], methods: ['POST'])]
     #[IsGranted(User::ROLE_ADMIN)]
     public function tarif(Request $request, Colis $colis): Response
     {

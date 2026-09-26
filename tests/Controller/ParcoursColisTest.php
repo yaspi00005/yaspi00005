@@ -8,6 +8,7 @@ use App\Repository\ClientRepository;
 use App\Repository\ColisRepository;
 use App\Repository\ExpeditionRepository;
 use App\Repository\UserRepository;
+use App\Security\IdChiffreur;
 use App\Enum\StatutExpedition;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -51,7 +52,7 @@ final class ParcoursColisTest extends WebTestCase
         $this->client->followRedirect();
         $this->assertSelectorTextContains('.alert-success', 'enregistré');
 
-        $id = (int) preg_replace('#.*/colis/(\d+).*#', '$1', $this->client->getRequest()->getUri());
+        $id = static::getContainer()->get(IdChiffreur::class)->decode(preg_replace('#.*/colis/([A-Za-z0-9_-]{22}).*#', '$1', $this->client->getRequest()->getUri()));
 
         return static::getContainer()->get(ColisRepository::class)->find($id);
     }
@@ -104,7 +105,7 @@ final class ParcoursColisTest extends WebTestCase
     public function testEncaissementRemiseEtSuiviPublic(): void
     {
         $colis = $this->creerColis();
-        $id = $colis->getId();
+        $id = static::getContainer()->get(IdChiffreur::class)->encode($colis->getId());
 
         // Encaissement partiel au ramassage
         $crawler = $this->client->request('GET', "/colis/$id");
@@ -114,10 +115,10 @@ final class ParcoursColisTest extends WebTestCase
 
         // Admin : l'expédition arrive
         $this->connecte('admin');
-        $expeditionId = static::getContainer()->get(ColisRepository::class)->find($id)->getExpedition()->getId();
+        $expeditionId = static::getContainer()->get(IdChiffreur::class)->encode(static::getContainer()->get(ColisRepository::class)->find($colis->getId())->getExpedition()->getId());
         $crawler = $this->client->request('GET', "/expeditions/$expeditionId");
         $this->client->submit($crawler->selectButton('Mettre à jour')->form(['statut' => 'arrivee']));
-        $colis = static::getContainer()->get(ColisRepository::class)->find($id);
+        $colis = static::getContainer()->get(ColisRepository::class)->find($colis->getId());
         $this->assertSame(StatutColis::Arrive, $colis->getStatut());
 
         // Représentant : remise refusée tant que le colis n'est pas soldé
@@ -134,7 +135,7 @@ final class ParcoursColisTest extends WebTestCase
         $this->assertSelectorTextContains('.alert-success', 'soldé');
         $this->client->submit($crawler->selectButton('Remettre au destinataire')->form(['recuperePar' => 'Awa Test']));
         $this->client->followRedirect();
-        $colis = static::getContainer()->get(ColisRepository::class)->find($id);
+        $colis = static::getContainer()->get(ColisRepository::class)->find($colis->getId());
         $this->assertSame(StatutColis::Recupere, $colis->getStatut());
         $this->assertSame('Awa Test', $colis->getRecupererPar());
 
@@ -151,7 +152,7 @@ final class ParcoursColisTest extends WebTestCase
     public function testRecuPdf(): void
     {
         $colis = $this->creerColis();
-        $this->client->request('GET', '/colis/'.$colis->getId().'/recu.pdf');
+        $this->client->request('GET', '/colis/'.static::getContainer()->get(IdChiffreur::class)->encode($colis->getId()).'/recu.pdf');
         $this->assertResponseIsSuccessful();
         $this->assertResponseHeaderSame('Content-Type', 'application/pdf');
         $this->assertStringStartsWith('%PDF', (string) $this->client->getResponse()->getContent());

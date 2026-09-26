@@ -17,6 +17,9 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted(User::ROLE_ADMIN)]
 class TypeMarchandiseController extends AbstractController
 {
+    /** Identifiant chiffré (voir App\\Security\\IdChiffreur). */
+    private const ID = '[A-Za-z0-9_-]{22}';
+
     #[Route('', name: 'admin_type_index', methods: ['GET', 'POST'])]
     public function index(Request $request, TypeMarchandiseRepository $types, EntityManagerInterface $em): Response
     {
@@ -37,7 +40,7 @@ class TypeMarchandiseController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}', name: 'admin_type_edit', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
+    #[Route('/{id}', name: 'admin_type_edit', requirements: ['id' => self::ID], methods: ['GET', 'POST'])]
     public function edit(Request $request, TypeMarchandise $type, EntityManagerInterface $em): Response
     {
         $form = $this->createForm(TypeMarchandiseType::class, $type);

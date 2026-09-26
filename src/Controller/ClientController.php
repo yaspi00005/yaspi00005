@@ -21,6 +21,9 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted(User::ROLE_RAMASSAGE)]
 class ClientController extends AbstractController
 {
+    /** Identifiant chiffré (voir App\\Security\\IdChiffreur). */
+    private const ID = '[A-Za-z0-9_-]{22}';
+
     #[Route('', name: 'client_index', methods: ['GET'])]
     public function index(Request $request, ClientRepository $clients): Response
     {
@@ -66,7 +69,7 @@ class ClientController extends AbstractController
         return $this->render('client/form.html.twig', ['form' => $form, 'client' => $client]);
     }
 
-    #[Route('/{id}', name: 'client_show', requirements: ['id' => '\d+'], methods: ['GET'])]
+    #[Route('/{id}', name: 'client_show', requirements: ['id' => self::ID], methods: ['GET'])]
     public function show(Client $client): Response
     {
         $bonusForm = $this->isGranted(User::ROLE_ADMIN)
@@ -79,7 +82,7 @@ class ClientController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}/modifier', name: 'client_edit', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
+    #[Route('/{id}/modifier', name: 'client_edit', requirements: ['id' => self::ID], methods: ['GET', 'POST'])]
     public function edit(Request $request, Client $client, EntityManagerInterface $em): Response
     {
         $form = $this->createForm(ClientType::class, $client);
@@ -95,7 +98,7 @@ class ClientController extends AbstractController
         return $this->render('client/form.html.twig', ['form' => $form, 'client' => $client]);
     }
 
-    #[Route('/{id}/supprimer', name: 'client_delete', requirements: ['id' => '\d+'], methods: ['POST'])]
+    #[Route('/{id}/supprimer', name: 'client_delete', requirements: ['id' => self::ID], methods: ['POST'])]
     #[IsGranted(User::ROLE_ADMIN)]
     public function delete(Request $request, Client $client, EntityManagerInterface $em): Response
     {
@@ -114,7 +117,7 @@ class ClientController extends AbstractController
         return $this->redirectToRoute('client_index', [], Response::HTTP_SEE_OTHER);
     }
 
-    #[Route('/{id}/bonus', name: 'client_bonus', requirements: ['id' => '\d+'], methods: ['POST'])]
+    #[Route('/{id}/bonus', name: 'client_bonus', requirements: ['id' => self::ID], methods: ['POST'])]
     #[IsGranted(User::ROLE_ADMIN)]
     public function bonus(Request $request, Client $client, PaiementService $paiements): Response
     {

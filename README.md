@@ -31,6 +31,7 @@ Rôles : **Administrateur**, **Agent de ramassage** (France), **Représentant** 
 - Anti double-clic : un formulaire de colis ne peut créer qu'un seul colis.
 - Photos stockées hors du dossier public, visibles uniquement par les utilisateurs autorisés.
 - Lien de suivi non devinable ; le code de retrait n'apparaît jamais sur la page publique.
+- Identifiants chiffrés dans toutes les URL (`/colis/0ls5xdWLtBp8M2_-OYtNTA` au lieu de `/colis/35`) : AES + signature, clé dérivée d'`APP_SECRET` ; un lien modifié ou inventé donne une erreur 404.
 - SMS Orange avec vérification TLS active et jeton mis en cache ; chaque envoi est journalisé.
 - Connexion limitée à 5 essais / 15 min, comptes désactivables, protections CSRF partout.
 - Bugs de l'ancienne version corrigés (relations Doctrine cassées, recherche en erreur, route en double…).
@@ -61,7 +62,7 @@ Données de démonstration : `php bin/console doctrine:fixtures:load` (comptes `
 | Variable | Rôle |
 |---|---|
 | `DATABASE_URL` | connexion MySQL/MariaDB (indiquer `serverVersion`, ex. `8.0.32` ou `10.11.14-MariaDB`) |
-| `APP_SECRET` | clé secrète Symfony (chaîne aléatoire) |
+| `APP_SECRET` | clé secrète Symfony (chaîne aléatoire). Elle sert aussi à chiffrer les identifiants des URL : la changer rend invalides les liens et favoris déjà enregistrés. |
 | `MAILER_DSN` | serveur d'envoi d'e-mails, ex. `smtp://user:mdp@smtp.exemple.com:587` |
 | `APP_NOM`, `APP_DEVISE`, `APP_EMAIL_EXPEDITEUR`, `APP_TELEPHONE_AGENCE` | personnalisation |
 | `SMS_TRANSPORT` | `log` (n'envoie rien, écrit dans les logs) ou `orange` |

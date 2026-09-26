@@ -31,7 +31,7 @@
             <div class="col-md-2">
                 <select name="expedition" class="form-select form-control">
                     <option value="">Toutes expéditions</option>
-                    {% for e in expeditions %}<option value="{{ e.id }}" {{ filtres.expedition == e.id ? 'selected' }}>{{ e.numero }} · {{ e.destination.label }}</option>{% endfor %}
+                    {% for e in expeditions %}<option value="{{ hid(e.id) }}" {{ filtres.expedition == e.id ? 'selected' }}>{{ e.numero }} · {{ e.destination.label }}</option>{% endfor %}
                 </select>
             </div>
             <div class="col-6 col-md-1"><input type="date" name="du" value="{{ filtres.du }}" class="form-control" title="Reçu depuis le" aria-label="Reçu depuis le"></div>

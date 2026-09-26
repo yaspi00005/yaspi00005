@@ -8,6 +8,7 @@ use App\Enum\ModePaiement;
 use App\Repository\ExpeditionRepository;
 use App\Repository\PaiementRepository;
 use App\Repository\UserRepository;
+use App\Security\IdChiffreur;
 use App\Service\PaiementService;
 use App\Util\Csv;
 use App\Util\Pagination;
@@ -20,15 +21,18 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[Route('/paiements')]
 class PaiementController extends AbstractController
 {
+    /** Identifiant chiffré (voir App\\Security\\IdChiffreur). */
+    private const ID = '[A-Za-z0-9_-]{22}';
+
     #[Route('', name: 'paiement_index', methods: ['GET'])]
-    public function index(Request $request, PaiementRepository $paiements, UserRepository $users, ExpeditionRepository $expeditions): Response
+    public function index(Request $request, PaiementRepository $paiements, UserRepository $users, ExpeditionRepository $expeditions, IdChiffreur $chiffreur): Response
     {
         $filtres = [
             'du' => $request->query->getString('du', (new \DateTimeImmutable('first day of this month'))->format('Y-m-d')),
             'au' => $request->query->getString('au'),
             'mode' => $request->query->getString('mode'),
-            'caissier' => $request->query->getInt('caissier') ?: null,
-            'expedition' => $request->query->getInt('expedition') ?: null,
+            'caissier' => $chiffreur->decodeOptionnel($request->query->get('caissier')),
+            'expedition' => $chiffreur->decodeOptionnel($request->query->get('expedition')),
         ];
         $qb = $paiements->filtreQb($this->getUser(), $filtres);
 
@@ -62,7 +66,7 @@ class PaiementController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}/annuler', name: 'paiement_annuler', requirements: ['id' => '\d+'], methods: ['POST'])]
+    #[Route('/{id}/annuler', name: 'paiement_annuler', requirements: ['id' => self::ID], methods: ['POST'])]
     #[IsGranted(User::ROLE_ADMIN)]
     public function annuler(Request $request, Paiement $paiement, PaiementService $service): Response
     {

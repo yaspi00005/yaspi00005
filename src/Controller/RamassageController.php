@@ -8,6 +8,7 @@ use App\Enum\StatutRamassage;
 use App\Form\RamassageType;
 use App\Repository\ClientRepository;
 use App\Repository\RamassageRepository;
+use App\Security\IdChiffreur;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -21,6 +22,9 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted(User::ROLE_RAMASSAGE)]
 class RamassageController extends AbstractController
 {
+    /** Identifiant chiffré (voir App\\Security\\IdChiffreur). */
+    private const ID = '[A-Za-z0-9_-]{22}';
+
     #[Route('', name: 'ramassage_index', methods: ['GET'])]
     public function index(RamassageRepository $ramassages): Response
     {
@@ -41,18 +45,17 @@ class RamassageController extends AbstractController
         }
 
         return $this->json(array_map(fn (Ramassage $r) => [
-            'id' => $r->getId(),
             'title' => $r->getClient()->getNomComplet(),
             'start' => $r->getDatePrevue()->format(\DATE_ATOM),
             'end' => $r->getDatePrevue()->modify('+1 hour')->format(\DATE_ATOM),
             'url' => $this->generateUrl('ramassage_edit', ['id' => $r->getId()]),
             'className' => 'bg-'.$r->getStatut()->badge(),
-            'extendedProps' => ['statut' => $r->getStatut()->label(), 'telephone' => $r->getClient()->getTelephone()],
+            'extendedProps' => ['deplacer' => $this->generateUrl('ramassage_deplacer', ['id' => $r->getId()]), 'statut' => $r->getStatut()->label(), 'telephone' => $r->getClient()->getTelephone()],
         ], $ramassages->entre($debut, $fin)));
     }
 
     #[Route('/nouveau', name: 'ramassage_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $em, ClientRepository $clients): Response
+    public function new(Request $request, EntityManagerInterface $em, ClientRepository $clients, IdChiffreur $chiffreur): Response
     {
         $ramassage = (new Ramassage())->setAgent($this->getUser());
         if ($date = $request->query->getString('date')) {
@@ -61,20 +64,20 @@ class RamassageController extends AbstractController
             } catch (\Exception) {
             }
         }
-        if ($request->query->getInt('client')) {
-            $ramassage->setClient($clients->find($request->query->getInt('client')));
+        if ($clientId = $chiffreur->decodeOptionnel($request->query->get('client'))) {
+            $ramassage->setClient($clients->find($clientId));
         }
 
         return $this->formulaire($request, $ramassage, $em);
     }
 
-    #[Route('/{id}', name: 'ramassage_edit', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
+    #[Route('/{id}', name: 'ramassage_edit', requirements: ['id' => self::ID], methods: ['GET', 'POST'])]
     public function edit(Request $request, Ramassage $ramassage, EntityManagerInterface $em): Response
     {
         return $this->formulaire($request, $ramassage, $em);
     }
 
-    #[Route('/{id}/deplacer', name: 'ramassage_deplacer', requirements: ['id' => '\d+'], methods: ['POST'])]
+    #[Route('/{id}/deplacer', name: 'ramassage_deplacer', requirements: ['id' => self::ID], methods: ['POST'])]
     public function deplacer(Request $request, Ramassage $ramassage, EntityManagerInterface $em): JsonResponse
     {
         if (!$this->isCsrfTokenValid('ramassage', $request->headers->get('X-CSRF-Token'))) {
@@ -90,7 +93,7 @@ class RamassageController extends AbstractController
         return $this->json(['ok' => true]);
     }
 
-    #[Route('/{id}/supprimer', name: 'ramassage_delete', requirements: ['id' => '\d+'], methods: ['POST'])]
+    #[Route('/{id}/supprimer', name: 'ramassage_delete', requirements: ['id' => self::ID], methods: ['POST'])]
     public function delete(Request $request, Ramassage $ramassage, EntityManagerInterface $em): Response
     {
         if ($this->isCsrfTokenValid('delete-ramassage-'.$ramassage->getId(), $request->getPayload()->getString('_token'))) {

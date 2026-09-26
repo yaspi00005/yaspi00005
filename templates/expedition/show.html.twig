@@ -88,7 +88,7 @@
                             <tbody>
                             {% for c in colisSansExpedition %}
                                 <tr>
-                                    <td><input type="checkbox" name="colis[]" value="{{ c.id }}" class="form-check-input js-affecter" aria-label="Sélectionner {{ c.numeroSuivi }}"></td>
+                                    <td><input type="checkbox" name="colis[]" value="{{ hid(c.id) }}" class="form-check-input js-affecter" aria-label="Sélectionner {{ c.numeroSuivi }}"></td>
                                     <td>{{ c.numeroSuivi }}</td><td>{{ c.client.nomComplet }}</td><td>{{ c.dateReception|date('d/m/Y') }}</td><td class="num">{{ c.poidsTotal|poids }}</td>
                                 </tr>
                             {% endfor %}

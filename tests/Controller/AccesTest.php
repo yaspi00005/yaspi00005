@@ -4,6 +4,7 @@ namespace App\Tests\Controller;
 
 use App\Repository\ExpeditionRepository;
 use App\Repository\UserRepository;
+use App\Security\IdChiffreur;
 use App\Enum\Destination;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -73,13 +74,39 @@ final class AccesTest extends WebTestCase
         $client = $this->connecte('bamako');
         $expeditions = static::getContainer()->get(ExpeditionRepository::class);
 
-        $client->request('GET', '/expeditions/'.$expeditions->findOneBy(['destination' => Destination::Senegal])->getId());
+        $hid = static::getContainer()->get(IdChiffreur::class);
+        $client->request('GET', '/expeditions/'.$hid->encode($expeditions->findOneBy(['destination' => Destination::Senegal])->getId()));
         $this->assertResponseStatusCodeSame(403);
 
-        $client->request('GET', '/expeditions/'.$expeditions->findOneBy(['destination' => Destination::Mali])->getId());
+        $client->request('GET', '/expeditions/'.$hid->encode($expeditions->findOneBy(['destination' => Destination::Mali])->getId()));
         $this->assertResponseIsSuccessful();
 
         $client->request('GET', '/colis');
         $this->assertStringNotContainsString('Sénégal</small>', (string) $client->getResponse()->getContent());
+    }
+
+    public function testIdentifiantsChiffresDansLesUrl(): void
+    {
+        $client = $this->connecte('admin');
+        $expedition = static::getContainer()->get(ExpeditionRepository::class)->findOneBy([]);
+        $hid = static::getContainer()->get(IdChiffreur::class);
+
+        // Les liens générés ne contiennent plus l'identifiant en clair.
+        $crawler = $client->request('GET', '/expeditions');
+        $lien = $crawler->filter('a.card[href^="/expeditions/"]')->first()->attr('href');
+        $this->assertMatchesRegularExpression('#^/expeditions/[A-Za-z0-9_-]{22}$#', $lien);
+
+        // L'ancienne forme numérique n'existe plus.
+        $client->request('GET', '/expeditions/'.$expedition->getId());
+        $this->assertResponseStatusCodeSame(404);
+
+        // Un identifiant modifié d'un seul caractère est rejeté.
+        $code = $hid->encode($expedition->getId());
+        $falsifie = substr($code, 0, 5).('A' === $code[5] ? 'B' : 'A').substr($code, 6);
+        $client->request('GET', '/expeditions/'.$falsifie);
+        $this->assertResponseStatusCodeSame(404);
+
+        $client->request('GET', '/expeditions/'.$code);
+        $this->assertResponseIsSuccessful();
     }
 }

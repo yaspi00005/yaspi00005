@@ -2,14 +2,23 @@
 
 namespace App\Twig;
 
+use App\Security\IdChiffreur;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFilter;
+use Twig\TwigFunction;
 
 final class AppExtension extends AbstractExtension
 {
-    public function __construct(#[Autowire('%app.devise%')] private readonly string $devise)
+    public function __construct(
+        #[Autowire('%app.devise%')] private readonly string $devise,
+        private readonly IdChiffreur $chiffreur,
+    ) {
+    }
+
+    public function getFunctions(): array
     {
+        return [new TwigFunction('hid', fn (?int $id) => null === $id ? '' : $this->chiffreur->encode($id))];
     }
 
     public function getFilters(): array

@@ -11,7 +11,10 @@ use Symfony\Component\Routing\Attribute\Route;
 
 class PhotoController extends AbstractController
 {
-    #[Route('/articles/{id}/photo', name: 'article_photo', requirements: ['id' => '\d+'], methods: ['GET'])]
+    /** Identifiant chiffré (voir App\\Security\\IdChiffreur). */
+    private const ID = '[A-Za-z0-9_-]{22}';
+
+    #[Route('/articles/{id}/photo', name: 'article_photo', requirements: ['id' => self::ID], methods: ['GET'])]
     public function photo(Article $article, PhotoUploader $photos): BinaryFileResponse
     {
         $this->denyAccessUnlessGranted(ColisVoter::VOIR, $article->getColis());
