@@ -117,6 +117,33 @@ sur l'ordinateur ou le téléphone où il veut les recevoir ; *Mon profil* perme
 - L'extension PHP `gmp` est recommandée (calculs plus rapides), mais pas obligatoire.
 - Les envois (e-mail et navigateur) apparaissent dans *Administration → SMS & e-mails envoyés*.
 
+## Application Android
+
+L'application Android (dossier `android/`) est une *Trusted Web Activity* : elle ouvre le site SOTRAMA
+en plein écran avec le moteur de Chrome (notifications des rappels, caméra pour le scan des QR codes,
+photos des colis). Toute évolution du site est immédiatement disponible dans l'application.
+
+Elle est compilée et publiée par **GitHub Actions** (`.github/workflows/android.yml`) ; la page
+`/application` du site (menu « Application mobile », lien sur la page de connexion) propose le
+téléchargement de la dernière version et les étapes d'installation.
+
+Mise en place (une seule fois), dans GitHub → *Settings → Secrets and variables → Actions* :
+
+| Type | Nom | Valeur |
+|---|---|---|
+| Variable | `SOTRAMA_URL` | adresse HTTPS du site, ex. `https://app.sotrama.com` |
+| Secret | `ANDROID_KEYSTORE_BASE64` | contenu du fichier `sotrama.jks.base64.txt` (clé de signature) |
+| Secret | `ANDROID_KEYSTORE_PASSWORD` | mot de passe de la clé |
+
+Puis *Actions → Application Android → Run workflow* : `sotrama.apk` est publié dans les *Releases*,
+et le lien de téléchargement (`APP_APK_URL`) pointe toujours vers la dernière version.
+
+Sur le serveur, dans `.env.local` : `APP_ANDROID_SHA256=<empreinte SHA-256 de la clé>`. Le site publie
+alors `/.well-known/assetlinks.json`, ce qui permet à l'application de s'afficher sans barre d'adresse.
+
+**Conservez précieusement la clé de signature et son mot de passe** : sans elle, impossible de publier une
+mise à jour installable par-dessus l'application existante.
+
 ## Reprise des données de l'ancienne application
 
 Dans une base neuve (migrations exécutées, aucun client ni colis) :
