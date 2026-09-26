@@ -1,0 +1,59 @@
+plugins {
+    id 'com.android.application'
+}
+
+// Adresse du site SOTRAMA ouverte par l'application (variable SOTRAMA_URL, fournie par GitHub Actions).
+def siteUrl = (System.getenv('SOTRAMA_URL') ?: project.findProperty('sotramaUrl') ?: 'https://sotrama.example.com').replaceAll('/+$', '')
+def hote = new URI(siteUrl).host
+def signatureRelease = System.getenv('KEYSTORE_FILE') != null
+
+android {
+    namespace 'com.sotrama.app'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'com.sotrama.app'
+        minSdk 24
+        targetSdk 35
+        versionCode((System.getenv('VERSION_CODE') ?: '1') as int)
+        versionName System.getenv('VERSION_NAME') ?: '1.0'
+
+        resValue 'string', 'app_name', 'SOTRAMA'
+        manifestPlaceholders = [
+            hostName  : hote,
+            defaultUrl: siteUrl + '/?source=app',
+        ]
+        // Lien vérifié entre l'application et le site (Digital Asset Links).
+        resValue 'string', 'asset_statements',
+            '[{ \\"relation\\": [\\"delegate_permission/common.handle_all_urls\\"],' +
+            ' \\"target\\": {\\"namespace\\": \\"web\\", \\"site\\": \\"https://' + hote + '\\"}}]'
+    }
+
+    signingConfigs {
+        release {
+            if (signatureRelease) {
+                storeFile file(System.getenv('KEYSTORE_FILE'))
+                storePassword System.getenv('KEYSTORE_PASSWORD')
+                keyAlias System.getenv('KEY_ALIAS') ?: 'sotrama'
+                keyPassword System.getenv('KEY_PASSWORD') ?: System.getenv('KEYSTORE_PASSWORD')
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            // Sans clé fournie (test de compilation), on signe avec la clé de débogage.
+            signingConfig signatureRelease ? signingConfigs.release : signingConfigs.debug
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.6.2'
+}

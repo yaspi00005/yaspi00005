@@ -4,6 +4,9 @@ parameters:
     app.email_expediteur: '%env(APP_EMAIL_EXPEDITEUR)%'
     app.telephone_agence: '%env(APP_TELEPHONE_AGENCE)%'
     app.uploads_dir: '%kernel.project_dir%/var/uploads'
+    app.apk_url: '%env(APP_APK_URL)%'
+    app.android_package: '%env(APP_ANDROID_PACKAGE)%'
+    app.android_sha256: '%env(APP_ANDROID_SHA256)%'
 
 services:
     _defaults:

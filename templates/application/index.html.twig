@@ -1,0 +1,44 @@
+{% extends app.user ? 'base.html.twig' : 'base_simple.html.twig' %}
+
+{% block title %}Application Android{% endblock %}
+{% block colonne %}col-md-8 col-lg-6{% endblock %}
+
+{% block body %}
+<div class="{{ app.user ? 'row justify-content-center' }}">
+<div class="{{ app.user ? 'col-xl-8' }}">
+<div class="{{ app.user ? 'card' }}">
+<div class="{{ app.user ? 'card-body' }}">
+    <div class="text-center mb-4">
+        <img src="{{ asset('images/app/icone-192.png') }}" alt="" width="96" height="96" class="rounded-3 shadow-sm mb-3">
+        <h3 class="mb-1">SOTRAMA pour Android</h3>
+        <p class="text-muted mb-0">Toutes les fonctionnalités sur votre téléphone : colis, guichet et scan des QR codes, ramassages et rappels, paiements.</p>
+    </div>
+
+    <div class="row align-items-center g-4">
+        <div class="col-md-6 text-center">
+            <a href="{{ apk }}" class="btn btn-primary btn-lg w-100 mb-2" download><i class="fab fa-android me-2"></i>Télécharger l'application</a>
+            <div class="fs-12 text-muted">Fichier APK · Android 7 ou plus récent</div>
+        </div>
+        <div class="col-md-6 text-center d-none d-md-block">
+            <img src="{{ qr }}" alt="QR code vers cette page" width="170" height="170">
+            <div class="fs-12 text-muted">Depuis un ordinateur : scannez avec le téléphone</div>
+        </div>
+    </div>
+
+    <hr class="my-4">
+    <h5>Installation</h5>
+    <ol class="mb-3">
+        <li>Touchez <strong>« Télécharger l'application »</strong> sur le téléphone.</li>
+        <li>Ouvrez le fichier <strong>sotrama.apk</strong> téléchargé (notification ou dossier Téléchargements).</li>
+        <li>Si Android le demande, autorisez l'installation depuis cette source (<em>Paramètres → Installer des applications inconnues</em>), puis revenez et touchez <strong>Installer</strong>.</li>
+        <li>Ouvrez <strong>SOTRAMA</strong> et connectez-vous avec vos identifiants habituels.</li>
+    </ol>
+    <div class="alert alert-info mb-0">
+        <i class="fas fa-bell me-1"></i> Pour recevoir les rappels des ramassages sur le téléphone, ouvrez <strong>Mon profil</strong> dans l'application et touchez <strong>« Activer les notifications »</strong>.
+        Les mises à jour du site sont disponibles immédiatement dans l'application, sans la réinstaller.
+    </div>
+</div>
+</div>
+</div>
+</div>
+{% endblock %}

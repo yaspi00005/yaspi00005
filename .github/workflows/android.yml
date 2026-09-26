@@ -1,0 +1,83 @@
+# Compile l'application Android SOTRAMA (Trusted Web Activity) et publie sotrama.apk
+# dans les « Releases » du dépôt : le lien de téléchargement de l'application pointe vers la dernière.
+#
+# Réglages (Settings → Secrets and variables → Actions) :
+#   - variable  SOTRAMA_URL            adresse HTTPS du site, ex. https://app.sotrama.com
+#   - secret    ANDROID_KEYSTORE_BASE64   clé de signature (fichier .jks encodé en base64)
+#   - secret    ANDROID_KEYSTORE_PASSWORD mot de passe de la clé
+# Lancement : onglet Actions → « Application Android » → Run workflow.
+name: Application Android
+
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: "Adresse HTTPS du site (laisser vide pour utiliser la variable SOTRAMA_URL)"
+        required: false
+  push:
+    paths:
+      - 'android/**'
+      - '.github/workflows/android.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    env:
+      SOTRAMA_URL: ${{ inputs.url || vars.SOTRAMA_URL || 'https://sotrama.example.com' }}
+      VERSION_CODE: ${{ github.run_number }}
+      VERSION_NAME: 1.${{ github.run_number }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+
+      - name: Clé de signature
+        id: cle
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PWD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ] && [ -n "$KEYSTORE_PWD" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/sotrama.jks"
+            echo "KEYSTORE_FILE=$RUNNER_TEMP/sotrama.jks" >> "$GITHUB_ENV"
+            echo "KEYSTORE_PASSWORD=$KEYSTORE_PWD" >> "$GITHUB_ENV"
+            echo "signee=oui" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::Clé de signature absente : APK de test signé avec une clé de débogage, non publié."
+            echo "signee=non" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Compilation
+        working-directory: android
+        run: gradle assembleRelease --no-daemon --stacktrace
+
+      - name: Préparation de l'APK
+        run: |
+          cp android/app/build/outputs/apk/release/app-release.apk sotrama.apk
+          echo "Site : $SOTRAMA_URL — version $VERSION_NAME"
+          ls -la sotrama.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sotrama-apk
+          path: sotrama.apk
+
+      - name: Publication (lien de téléchargement)
+        if: steps.cle.outputs.signee == 'oui' && env.SOTRAMA_URL != 'https://sotrama.example.com'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: android-v${{ github.run_number }}
+          name: SOTRAMA Android 1.${{ github.run_number }}
+          body: "Application Android SOTRAMA pour ${{ env.SOTRAMA_URL }}. Téléchargez sotrama.apk ci-dessous."
+          files: sotrama.apk
+          make_latest: 'true'
