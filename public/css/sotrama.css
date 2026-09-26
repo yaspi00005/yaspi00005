@@ -51,5 +51,6 @@
 }
 
 /* Logo de l'entreprise (public/images/logo-sotrama.png) */
-.nav-header .logo-sotrama { object-fit: contain; background: transparent; }
-.auth-form .logo-sotrama { width: 72px; height: 72px; object-fit: contain; }
+.nav-header .brand-logo .logo-sotrama { width: auto !important; height: 70px !important; max-width: 60px; object-fit: contain; background: transparent; border-radius: 0; }
+.logo-connexion { height: 140px; width: auto; }
+@media (max-width: 575px) { .logo-connexion { height: 110px; } }

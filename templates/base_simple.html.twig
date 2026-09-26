@@ -16,6 +16,12 @@
                     <div class="authincation-content">
                         <div class="auth-form">
                             <div class="text-center mb-4">
+                                {% if logo_existe() %}
+                                <a href="{{ path('app_accueil') }}" class="d-inline-block text-decoration-none">
+                                    <img src="{{ asset('images/logo-sotrama.png') }}" alt="SOTRAMA" class="logo-connexion">
+                                    <span class="d-block fs-13 text-muted mt-2">Gestion des marchandises</span>
+                                </a>
+                                {% else %}
                                 <a href="{{ path('app_accueil') }}" class="d-inline-flex align-items-center gap-3 text-decoration-none">
                                     {% include 'partials/_logo.html.twig' %}
                                     <span class="text-start">
@@ -23,6 +29,7 @@
                                         <span class="d-block fs-13 text-muted">Gestion des marchandises</span>
                                     </span>
                                 </a>
+                                {% endif %}
                             </div>
                             {% block body %}{% endblock %}
                         </div>
