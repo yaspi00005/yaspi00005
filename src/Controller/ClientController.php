@@ -7,6 +7,7 @@ use App\Entity\User;
 use App\Form\BonusType;
 use App\Form\ClientType;
 use App\Repository\ClientRepository;
+use App\Service\CodePostal;
 use App\Service\PaiementService;
 use App\Util\Pagination;
 use Doctrine\ORM\EntityManagerInterface;
@@ -42,6 +43,12 @@ class ClientController extends AbstractController
             'id' => $c->getId(),
             'text' => $c->getNomComplet().' — '.$c->getTelephone(),
         ], $clients->autocomplete($request->query->getString('q')))]);
+    }
+
+    #[Route('/villes.json', name: 'client_villes', methods: ['GET'])]
+    public function villes(Request $request, CodePostal $codePostal): JsonResponse
+    {
+        return $this->json(['villes' => $codePostal->villes($request->query->getString('pays'), $request->query->getString('cp'))]);
     }
 
     #[Route('/nouveau', name: 'client_new', methods: ['GET', 'POST'])]

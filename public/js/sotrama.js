@@ -187,3 +187,65 @@
         envoyer(corps.pushTest).then(r => toastr.success(r.envoyees + ' notification(s) envoyée(s).')).catch(e => toastr.error(e.message));
     }));
 })();
+
+/* ---------- Fiche client : ville déduite du code postal ---------- */
+(function () {
+    'use strict';
+    const cp = document.querySelector('.js-cp-code');
+    const ville = document.querySelector('.js-cp-ville');
+    const pays = document.querySelector('.js-cp-pays');
+    const liste = document.getElementById('villes-cp');
+    const form = cp ? cp.closest('form') : null;
+    if (!cp || !ville || !pays || !liste || !form || !form.dataset.villesUrl) {
+        return;
+    }
+    const aide = ville.parentElement.querySelector('.form-text');
+    const aideInitiale = aide ? aide.textContent : '';
+    let dernier = '', minuterie = null, requete = 0;
+
+    const indiquer = function (texte, classe) {
+        if (!aide) { return; }
+        aide.textContent = texte || aideInitiale;
+        aide.classList.remove('text-success', 'text-warning');
+        if (classe) { aide.classList.add(classe); }
+    };
+
+    const chercher = function () {
+        const code = cp.value.trim();
+        const cle = pays.value + '|' + code;
+        if (code.length < 4 || cle === dernier) { return; }
+        dernier = cle;
+        const numero = ++requete;
+        fetch(form.dataset.villesUrl + '?' + new URLSearchParams({ pays: pays.value, cp: code }))
+            .then(r => r.ok ? r.json() : { villes: [] })
+            .then(function (donnees) {
+                if (numero !== requete) { return; } // réponse d'une saisie précédente
+                const villes = donnees.villes || [];
+                liste.innerHTML = '';
+                villes.forEach(v => { const o = document.createElement('option'); o.value = v; liste.appendChild(o); });
+                const saisieManuelle = ville.value && !ville.dataset.auto && !villes.includes(ville.value);
+                if (villes.length === 1) {
+                    if (saisieManuelle) {
+                        indiquer('Ce code postal correspond à « ' + villes[0] + ' » : vérifiez la ville.', 'text-warning');
+                    } else {
+                        ville.value = villes[0]; ville.dataset.auto = '1';
+                        indiquer('Ville trouvée pour ce code postal.', 'text-success');
+                    }
+                } else if (villes.length > 1) {
+                    if (!saisieManuelle && !villes.includes(ville.value)) { ville.value = ''; delete ville.dataset.auto; }
+                    indiquer(villes.length + ' communes pour ce code postal : choisissez dans la liste.', 'text-warning');
+                    ville.focus();
+                    if (typeof ville.showPicker === 'function') { try { ville.showPicker(); } catch (e) { /* non pris en charge */ } }
+                } else {
+                    indiquer('Aucune ville trouvée : saisissez-la manuellement.', 'text-warning');
+                }
+            })
+            .catch(() => indiquer('Recherche indisponible : saisissez la ville manuellement.', 'text-warning'));
+    };
+
+    const programmer = function () { clearTimeout(minuterie); minuterie = setTimeout(chercher, 350); };
+    cp.addEventListener('input', programmer);
+    cp.addEventListener('change', chercher);
+    pays.addEventListener('change', function () { dernier = ''; chercher(); });
+    ville.addEventListener('input', function () { delete ville.dataset.auto; });
+})();

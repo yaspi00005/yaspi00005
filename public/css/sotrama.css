@@ -54,3 +54,7 @@
 .nav-header .brand-logo .logo-sotrama { width: auto !important; height: 70px !important; max-width: 60px; object-fit: contain; background: transparent; border-radius: 0; }
 .logo-connexion { height: 140px; width: auto; }
 @media (max-width: 575px) { .logo-connexion { height: 110px; } }
+
+/* Messages d’aide colorés lisibles (contraste) */
+.form-text.text-warning { color: #9a6700 !important; }
+.form-text.text-success { color: #0a7a35 !important; }
