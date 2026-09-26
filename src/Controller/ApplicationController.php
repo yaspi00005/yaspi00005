@@ -46,8 +46,13 @@ class ApplicationController extends AbstractController
         ]] : [];
 
         $reponse = new JsonResponse($contenu);
-        $reponse->setPublic();
-        $reponse->setMaxAge(3600);
+        if ($contenu) {
+            $reponse->setPublic();
+            $reponse->setMaxAge(3600);
+        } else {
+            // Pas encore configuré : ne pas laisser un « [] » en cache.
+            $reponse->headers->set('Cache-Control', 'no-store');
+        }
 
         return $reponse;
     }
