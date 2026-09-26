@@ -7,11 +7,8 @@
         <div class="col-6 col-md-2">{{ form_row(f.poidsVolume) }}</div>
         <div class="col-6 col-md-2">{{ form_row(f.prix) }}</div>
         <div class="col-md-4">{{ form_row(f.observations) }}</div>
-        <div class="col-md-6">
-            {{ form_row(f.photoFile) }}
-            {% if f.vars.data and f.vars.data.photo and f.vars.data.id %}
-                <img src="{{ path('article_photo', {id: f.vars.data.id}) }}" class="photo-apercu mt-2" alt="Photo actuelle">
-            {% endif %}
+        <div class="col-md-8">
+            {% include 'partials/_photo.html.twig' with {field: f.photoFile, actuelle: f.vars.data and f.vars.data.photo and f.vars.data.id ? path('article_photo', {id: f.vars.data.id}) : null} %}
         </div>
     </div>
 </div>

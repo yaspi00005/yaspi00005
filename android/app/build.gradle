@@ -56,4 +56,6 @@ android {
 
 dependencies {
     implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.6.2'
+    // Position GPS pour le site (localisation des clients).
+    implementation 'com.google.androidbrowserhelper:locationdelegation:1.1.1'
 }

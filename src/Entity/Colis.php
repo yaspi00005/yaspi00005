@@ -95,6 +95,10 @@ class Colis
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $observations = null;
 
+    /** Photo du colis emballé (nom de fichier dans var/uploads/photos). */
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $photo = null;
+
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $updatedAt;
 
@@ -363,6 +367,18 @@ class Colis
     public function setRecupererPar(?string $recupererPar): static
     {
         $this->recupererPar = $recupererPar;
+
+        return $this;
+    }
+
+    public function getPhoto(): ?string
+    {
+        return $this->photo;
+    }
+
+    public function setPhoto(?string $photo): static
+    {
+        $this->photo = $photo;
 
         return $this;
     }

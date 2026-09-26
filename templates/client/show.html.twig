@@ -30,6 +30,30 @@
             </div>
         </div>
 
+        {% set nav = itineraire(client) %}
+        <div class="card js-geo-fiche" data-url="{{ path('client_position', {id: client.id}) }}" data-token="{{ csrf_token('position-client') }}">
+            <div class="card-header">
+                <h4 class="card-title"><i class="fas fa-map-marked-alt text-primary me-2"></i>Localisation</h4>
+                {% if client.hasPosition %}<span class="badge badge-{{ client.positionSource == 'gps' ? 'success' : 'info' }} light">{{ client.positionSource == 'gps' ? 'GPS' : 'Adresse' }}</span>{% endif %}
+            </div>
+            <div class="card-body pt-0">
+                {% if client.hasPosition %}
+                    <iframe class="geo-carte" title="Carte : domicile de {{ client.nomComplet }}" data-src="{{ carte_osm(client.latitude, client.longitude) }}" src="about:blank"></iframe>
+                    <p class="fs-12 text-muted mt-1 mb-2">{{ client.latitude|number_format(5, '.') }}, {{ client.longitude|number_format(5, '.') }}{% if client.positionMajLe %} · relevée le {{ client.positionMajLe|date('d/m/Y') }}{% endif %}</p>
+                {% else %}
+                    <p class="text-muted fs-13">Position GPS non enregistrée{{ nav ? ' : l\'itinéraire utilise l\'adresse' }}.</p>
+                {% endif %}
+                <div class="d-flex flex-wrap gap-2">
+                    {% if nav %}
+                        <a href="{{ nav }}" target="_blank" rel="noopener" class="btn btn-primary btn-sm"><i class="fas fa-route me-1"></i> Itinéraire</a>
+                        <a href="{{ itineraire(client, null, 'waze') }}" target="_blank" rel="noopener" class="btn btn-outline-primary btn-sm"><i class="fab fa-waze me-1"></i> Waze</a>
+                    {% endif %}
+                    <button type="button" class="btn btn-light btn-sm js-geo-ici"><i class="fas fa-crosshairs me-1"></i> Je suis chez le client</button>
+                </div>
+                <p class="fs-12 text-muted mt-2 mb-0">« Je suis chez le client » enregistre la position GPS de votre téléphone comme domicile du client.</p>
+            </div>
+        </div>
+
         <div class="card">
             <div class="card-header">
                 <h4 class="card-title"><i class="fas fa-gift text-primary me-2"></i>Bonus fidélité</h4>

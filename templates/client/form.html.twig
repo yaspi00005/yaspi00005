@@ -8,7 +8,7 @@
         <div class="card">
             <div class="card-header"><h4 class="card-title">{{ block('title') }}</h4></div>
             <div class="card-body">
-                {{ form_start(form, {attr: {'data-villes-url': path('client_villes')}}) }}
+                {{ form_start(form, {attr: {'data-villes-url': path('client_villes'), 'data-geocoder-url': path('client_geocoder')}}) }}
                 <div class="row">
                     <div class="col-md-6">{{ form_row(form.prenom) }}</div>
                     <div class="col-md-6">{{ form_row(form.nom) }}</div>
@@ -20,6 +20,26 @@
                     <div class="col-md-5">
                         {{ form_row(form.ville) }}
                         <datalist id="villes-cp"></datalist>
+                    </div>
+                    <div class="col-12">
+                        <div class="geo-bloc mb-3 js-geo">
+                            <label class="form-label d-block"><i class="fas fa-location-arrow text-primary me-1"></i> Position GPS du domicile</label>
+                            <p class="fs-13 mb-2 js-geo-etat">
+                                {% if client.hasPosition %}
+                                    Position enregistrée {{ client.positionSource == 'gps' ? 'sur place (GPS)' : 'à partir de l\'adresse' }}.
+                                {% else %}
+                                    Aucune position : utilisez le GPS du téléphone chez le client, ou localisez l'adresse.
+                                {% endif %}
+                            </p>
+                            <div class="d-flex flex-wrap gap-2">
+                                <button type="button" class="btn btn-primary btn-sm js-geo-gps"><i class="fas fa-crosshairs me-1"></i> Ma position actuelle</button>
+                                <button type="button" class="btn btn-outline-primary btn-sm js-geo-adresse"><i class="fas fa-search-location me-1"></i> Localiser l'adresse</button>
+                                <button type="button" class="btn btn-light btn-sm js-geo-effacer {{ client.hasPosition ? '' : 'd-none' }}"><i class="fas fa-times me-1"></i> Effacer</button>
+                            </div>
+                            <iframe class="geo-carte mt-2 {{ client.hasPosition ? '' : 'd-none' }}" title="Carte" data-src="{{ carte_osm(client.latitude, client.longitude) }}" src="about:blank"></iframe>
+                            {{ form_widget(form.latitude) }}{{ form_widget(form.longitude) }}{{ form_widget(form.positionSource) }}
+                            {{ form_errors(form.latitude) }}{{ form_errors(form.longitude) }}{{ form_errors(form.positionSource) }}
+                        </div>
                     </div>
                     <div class="col-12">{{ form_row(form.notes) }}</div>
                 </div>

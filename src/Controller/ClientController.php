@@ -8,6 +8,7 @@ use App\Form\BonusType;
 use App\Form\ClientType;
 use App\Repository\ClientRepository;
 use App\Service\CodePostal;
+use App\Service\Geocodage;
 use App\Service\PaiementService;
 use App\Util\Pagination;
 use Doctrine\ORM\EntityManagerInterface;
@@ -49,6 +50,15 @@ class ClientController extends AbstractController
     public function villes(Request $request, CodePostal $codePostal): JsonResponse
     {
         return $this->json(['villes' => $codePostal->villes($request->query->getString('pays'), $request->query->getString('cp'))]);
+    }
+
+    /** Position GPS d'une adresse (bouton « Localiser l'adresse » de la fiche client). */
+    #[Route('/geocoder.json', name: 'client_geocoder', methods: ['GET'])]
+    public function geocoder(Request $request, Geocodage $geocodage): JsonResponse
+    {
+        $q = $request->query;
+
+        return $this->json(['position' => $geocodage->localiser($q->getString('adresse'), $q->getString('cp'), $q->getString('ville'), $q->getString('pays'))]);
     }
 
     #[Route('/nouveau', name: 'client_new', methods: ['GET', 'POST'])]
@@ -103,6 +113,31 @@ class ClientController extends AbstractController
         }
 
         return $this->render('client/form.html.twig', ['form' => $form, 'client' => $client]);
+    }
+
+    /** Enregistre la position GPS relevée sur place par le téléphone de l'agent (fiche client). */
+    #[Route('/{id}/position', name: 'client_position', requirements: ['id' => self::ID], methods: ['POST'])]
+    public function position(Request $request, Client $client, EntityManagerInterface $em): JsonResponse
+    {
+        if (!$this->isCsrfTokenValid('position-client', $request->headers->get('X-CSRF-Token'))) {
+            return $this->json(['error' => 'Jeton de sécurité invalide, rechargez la page.'], Response::HTTP_FORBIDDEN);
+        }
+        $donnees = json_decode($request->getContent(), true) ?: [];
+        if (!empty($donnees['effacer'])) {
+            $client->positionner(null, null, null);
+            $em->flush();
+
+            return $this->json(['ok' => true]);
+        }
+        $lat = $donnees['lat'] ?? null;
+        $lng = $donnees['lng'] ?? null;
+        if (!is_numeric($lat) || !is_numeric($lng) || abs((float) $lat) > 90 || abs((float) $lng) > 180) {
+            return $this->json(['error' => 'Position invalide.'], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+        $client->positionner((float) $lat, (float) $lng, Client::POSITION_GPS);
+        $em->flush();
+
+        return $this->json(['ok' => true, 'lat' => $client->getLatitude(), 'lng' => $client->getLongitude()]);
     }
 
     #[Route('/{id}/supprimer', name: 'client_delete', requirements: ['id' => self::ID], methods: ['POST'])]

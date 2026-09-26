@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Article;
+use App\Entity\Colis;
 use App\Security\ColisVoter;
 use App\Service\PhotoUploader;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -21,6 +22,23 @@ class PhotoController extends AbstractController
         if (!$article->getPhoto() || !is_file($chemin = $photos->chemin($article->getPhoto()))) {
             throw $this->createNotFoundException();
         }
+
+        return $this->servir($chemin);
+    }
+
+    #[Route('/colis/{id}/photo', name: 'colis_photo', requirements: ['id' => self::ID], methods: ['GET'])]
+    public function photoColis(Colis $colis, PhotoUploader $photos): BinaryFileResponse
+    {
+        $this->denyAccessUnlessGranted(ColisVoter::VOIR, $colis);
+        if (!$colis->getPhoto() || !is_file($chemin = $photos->chemin($colis->getPhoto()))) {
+            throw $this->createNotFoundException();
+        }
+
+        return $this->servir($chemin);
+    }
+
+    private function servir(string $chemin): BinaryFileResponse
+    {
         $response = new BinaryFileResponse($chemin);
         $response->setPrivate();
         $response->setMaxAge(86400);

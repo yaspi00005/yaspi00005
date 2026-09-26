@@ -56,6 +56,23 @@ class Client
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $notes = null;
 
+    /** Position GPS du domicile (degrés décimaux, WGS84). */
+    #[ORM\Column(nullable: true)]
+    #[Assert\Range(notInRangeMessage: 'Latitude invalide.', min: -90, max: 90)]
+    private ?float $latitude = null;
+
+    #[ORM\Column(nullable: true)]
+    #[Assert\Range(notInRangeMessage: 'Longitude invalide.', min: -180, max: 180)]
+    private ?float $longitude = null;
+
+    /** Origine de la position : « gps » (relevée sur place) ou « adresse » (déduite de l'adresse). */
+    #[ORM\Column(length: 10, nullable: true)]
+    #[Assert\Choice(choices: [self::POSITION_GPS, self::POSITION_ADRESSE], message: 'Origine de la position invalide.')]
+    private ?string $positionSource = null;
+
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $positionMajLe = null;
+
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
 
@@ -79,6 +96,9 @@ class Client
         $this->colis = new ArrayCollection();
         $this->mouvementsBonus = new ArrayCollection();
     }
+
+    public const POSITION_GPS = 'gps';
+    public const POSITION_ADRESSE = 'adresse';
 
     #[ORM\PreUpdate]
     public function touch(): void
@@ -256,5 +276,72 @@ class Client
     public function __toString(): string
     {
         return $this->getNomComplet().' ('.$this->telephone.')';
+    }
+
+    public function getLatitude(): ?float
+    {
+        return $this->latitude;
+    }
+
+    public function setLatitude(?float $latitude): static
+    {
+        if ($latitude !== $this->latitude) {
+            $this->latitude = null === $latitude ? null : round($latitude, 7);
+            $this->positionMajLe = null === $latitude ? null : new \DateTimeImmutable();
+        }
+
+        return $this;
+    }
+
+    public function getLongitude(): ?float
+    {
+        return $this->longitude;
+    }
+
+    public function setLongitude(?float $longitude): static
+    {
+        if ($longitude !== $this->longitude) {
+            $this->longitude = null === $longitude ? null : round($longitude, 7);
+            $this->positionMajLe = null === $longitude ? null : new \DateTimeImmutable();
+        }
+
+        return $this;
+    }
+
+    public function getPositionSource(): ?string
+    {
+        return $this->positionSource;
+    }
+
+    public function setPositionSource(?string $positionSource): static
+    {
+        $this->positionSource = $positionSource ?: null;
+
+        return $this;
+    }
+
+    public function getPositionMajLe(): ?\DateTimeImmutable
+    {
+        return $this->positionMajLe;
+    }
+
+    public function hasPosition(): bool
+    {
+        return null !== $this->latitude && null !== $this->longitude;
+    }
+
+    /** Enregistre une position (null, null pour l'effacer). */
+    public function positionner(?float $latitude, ?float $longitude, ?string $source): static
+    {
+        $this->setLatitude($latitude)->setLongitude($longitude);
+        $this->positionSource = null === $latitude || null === $longitude ? null : $source;
+
+        return $this;
+    }
+
+    /** Adresse postale sur une ligne (pour la navigation quand il n'y a pas de position). */
+    public function getAdresseComplete(): string
+    {
+        return trim(preg_replace('/\s+/', ' ', implode(', ', array_filter([$this->adresse, trim($this->codePostal.' '.$this->ville), $this->pays]))));
     }
 }

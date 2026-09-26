@@ -45,10 +45,10 @@ class ArticleType extends AbstractType
             ])
             ->add('observations', TextType::class, ['label' => 'Observations', 'required' => false])
             ->add('photoFile', FileType::class, [
-                'label' => 'Photo',
+                'label' => 'Photo de l\'article',
                 'mapped' => false,
                 'required' => false,
-                'attr' => ['accept' => 'image/*', 'capture' => 'environment'],
+                'attr' => ['accept' => 'image/*'],
                 'constraints' => [new Image(maxSize: '8M', mimeTypesMessage: 'Envoyez une image (JPEG, PNG, WebP).')],
             ]);
 

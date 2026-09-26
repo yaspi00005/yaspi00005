@@ -71,6 +71,15 @@
             </div>
         </div>
 
+        {% if colis.photo %}
+        <div class="card">
+            <div class="card-header"><h4 class="card-title"><i class="fas fa-camera text-primary me-2"></i>Photo du colis</h4></div>
+            <div class="card-body pt-0">
+                <a href="{{ path('colis_photo', {id: colis.id}) }}" target="_blank"><img src="{{ path('colis_photo', {id: colis.id}) }}" alt="Photo du colis {{ colis.numeroSuivi }}" class="photo-colis"></a>
+            </div>
+        </div>
+        {% endif %}
+
         <div class="card">
             <div class="card-header">
                 <h4 class="card-title">Articles ({{ colis.nombreArticles }})</h4>

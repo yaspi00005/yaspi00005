@@ -87,21 +87,214 @@
         });
         $liste.on('keydown', '.js-prix', function () { $(this).data('manuel', true); });
 
-        // Aperçu des photos.
-        $liste.on('change', 'input[type=file]', function () {
-            const $ligne = $(this).closest('.article-ligne');
-            $ligne.find('.photo-apercu').remove();
-            if (this.files && this.files[0]) {
-                $('<img class="photo-apercu mt-2" alt="">').attr('src', URL.createObjectURL(this.files[0])).insertAfter(this);
-            }
-        });
-
         if (!$liste.children('.article-ligne').length) {
             ajouter();
         }
         recalculer();
     }
 })(jQuery);
+
+/* ---------- Photos : appareil photo du téléphone, compression avant l'envoi ---------- */
+(function () {
+    'use strict';
+    const COTE_MAX = 1600;      // pixels (largeur ou hauteur)
+    const QUALITE = 0.82;       // JPEG
+    const bloc = el => el.closest('.js-photo');
+    const taille = o => o < 1048576 ? Math.round(o / 1024) + ' Ko' : (o / 1048576).toFixed(1).replace('.', ',') + ' Mo';
+
+    // Réduit les photos du téléphone (souvent 4 à 10 Mo) : envoi rapide en 4G et sous la limite du serveur.
+    const compresser = file => new Promise(function (resolve) {
+        if (!/^image\/(jpeg|png|webp)$/.test(file.type)) { resolve(file); return; }
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = function () {
+            URL.revokeObjectURL(url);
+            const echelle = Math.min(1, COTE_MAX / Math.max(img.naturalWidth, img.naturalHeight));
+            if (echelle === 1 && file.size < 1.5 * 1048576) { resolve(file); return; }
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.round(img.naturalWidth * echelle);
+            canvas.height = Math.round(img.naturalHeight * echelle);
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.width, canvas.height); // fond blanc (PNG transparent)
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            canvas.toBlob(function (blob) {
+                if (!blob || blob.size >= file.size) { resolve(file); return; }
+                resolve(new File([blob], (file.name || 'photo').replace(/\.\w+$/, '') + '.jpg', { type: 'image/jpeg', lastModified: Date.now() }));
+            }, 'image/jpeg', QUALITE);
+        };
+        img.onerror = function () { URL.revokeObjectURL(url); resolve(file); };
+        img.src = url;
+    });
+
+    const afficher = function (zone, file) {
+        zone.querySelectorAll('.js-photo-nouvelle').forEach(el => el.remove());
+        const actuelle = zone.querySelector('.js-photo-actuelle');
+        const info = zone.querySelector('.js-photo-info');
+        zone.querySelector('.js-photo-retirer').classList.toggle('d-none', !file);
+        if (actuelle) { actuelle.classList.toggle('d-none', !!file); }
+        if (!file) { info.textContent = ''; return; }
+        const img = document.createElement('img');
+        img.className = 'photo-apercu mt-2 js-photo-nouvelle';
+        img.alt = 'Nouvelle photo';
+        img.src = URL.createObjectURL(file);
+        zone.querySelector('.js-photo-input').insertAdjacentElement('afterend', img);
+        info.textContent = 'Photo prête (' + taille(file.size) + ')';
+    };
+
+    document.addEventListener('click', function (e) {
+        const bouton = e.target.closest('.js-photo-camera, .js-photo-galerie, .js-photo-retirer');
+        if (!bouton) { return; }
+        const zone = bloc(bouton);
+        const input = zone.querySelector('.js-photo-input');
+        if (bouton.classList.contains('js-photo-retirer')) {
+            input.value = '';
+            afficher(zone, null);
+            return;
+        }
+        // « capture » ouvre directement l'appareil photo (arrière) sur mobile ; sans, la galerie.
+        if (bouton.classList.contains('js-photo-camera')) { input.setAttribute('capture', 'environment'); } else { input.removeAttribute('capture'); }
+        input.click();
+    });
+
+    document.addEventListener('change', function (e) {
+        const input = e.target;
+        if (!input.matches || !input.matches('.js-photo-input')) { return; }
+        const zone = bloc(input);
+        const file = input.files && input.files[0];
+        if (!file) { afficher(zone, null); return; }
+        zone.querySelector('.js-photo-info').textContent = 'Préparation de la photo…';
+        compresser(file).then(function (resultat) {
+            if (resultat !== file && typeof DataTransfer !== 'undefined') {
+                try { const dt = new DataTransfer(); dt.items.add(resultat); input.files = dt.files; } catch (x) { resultat = file; }
+            }
+            afficher(zone, resultat);
+        });
+    });
+})();
+
+/* ---------- Localisation des clients (GPS du téléphone ou adresse) ---------- */
+(function () {
+    'use strict';
+    const carteUrl = function (lat, lng) {
+        const d = 0.004;
+        return 'https://www.openstreetmap.org/export/embed.html?bbox=' + [lng - d, lat - d / 2, lng + d, lat + d / 2].join(',') + '&layer=mapnik&marker=' + lat + ',' + lng;
+    };
+    const erreurGps = function (err) {
+        if (!window.isSecureContext) { return 'La localisation nécessite une connexion sécurisée (https).'; }
+        switch (err && err.code) {
+            case 1: return 'Localisation refusée : autorisez l\'accès à la position pour SOTRAMA dans les réglages du téléphone.';
+            case 2: return 'Position introuvable : activez le GPS (localisation) du téléphone.';
+            case 3: return 'Le GPS met trop de temps à répondre : réessayez, de préférence à l\'extérieur.';
+            default: return 'Localisation impossible sur cet appareil.';
+        }
+    };
+    // Cartes chargées après la page : l'écran de chargement du thème n'attend pas OpenStreetMap.
+    const chargerCartes = () => document.querySelectorAll('iframe.geo-carte[data-src]').forEach(f => { if (f.dataset.src) { f.src = f.dataset.src; } });
+    if (document.readyState === 'complete') { chargerCartes(); } else { window.addEventListener('load', chargerCartes, { once: true }); }
+
+    window.sotramaPosition = function () {
+        return new Promise(function (resolve, reject) {
+            if (!navigator.geolocation) { reject({ code: 0 }); return; }
+            navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 });
+        });
+    };
+
+    // Formulaire client
+    const zone = document.querySelector('.js-geo');
+    if (zone) {
+        const form = zone.closest('form');
+        const lat = zone.querySelector('.js-geo-lat');
+        const lng = zone.querySelector('.js-geo-lng');
+        const source = zone.querySelector('.js-geo-source');
+        const etat = zone.querySelector('.js-geo-etat');
+        const carte = zone.querySelector('.geo-carte');
+        const effacer = zone.querySelector('.js-geo-effacer');
+        const champ = sel => form.querySelector(sel);
+        const indiquer = (texte, classe) => { etat.textContent = texte; etat.className = 'fs-13 mb-2 js-geo-etat ' + (classe || ''); };
+
+        const placer = function (la, ln, origine, texte, classe) {
+            lat.value = la.toFixed(7); lng.value = ln.toFixed(7); source.value = origine;
+            carte.src = carteUrl(la, ln); carte.classList.remove('d-none');
+            effacer.classList.remove('d-none');
+            indiquer(texte, classe || 'text-success');
+        };
+
+        zone.querySelector('.js-geo-gps').addEventListener('click', function () {
+            indiquer('Recherche de la position GPS…');
+            window.sotramaPosition().then(function (p) {
+                const precision = Math.round(p.coords.accuracy);
+                placer(p.coords.latitude, p.coords.longitude, 'gps',
+                    'Position GPS relevée (précision ± ' + precision + ' m).' + (precision > 150 ? ' Précision faible : réessayez à l\'extérieur.' : ''),
+                    precision > 150 ? 'text-warning' : 'text-success');
+            }).catch(e => indiquer(erreurGps(e), 'text-danger'));
+        });
+
+        let requete = 0;
+        const localiserAdresse = function (manuel) {
+            const params = {
+                adresse: (champ('[name$="[adresse]"]') || {}).value || '',
+                cp: (champ('.js-cp-code') || {}).value || '',
+                ville: (champ('.js-cp-ville') || {}).value || '',
+                pays: (champ('.js-cp-pays') || {}).value || ''
+            };
+            if (!params.cp.trim() && !params.ville.trim()) {
+                if (manuel) { indiquer('Renseignez au moins le code postal ou la ville.', 'text-warning'); }
+                return;
+            }
+            const numero = ++requete;
+            if (manuel) { indiquer('Recherche de l\'adresse…'); }
+            fetch(form.dataset.geocoderUrl + '?' + new URLSearchParams(params))
+                .then(r => r.ok ? r.json() : { position: null })
+                .then(function (d) {
+                    if (numero !== requete) { return; }
+                    const p = d.position;
+                    if (!p) {
+                        if (manuel) { indiquer('Adresse introuvable : vérifiez-la ou utilisez « Ma position actuelle » chez le client.', 'text-warning'); }
+                        return;
+                    }
+                    placer(p.lat, p.lng, 'adresse', 'Position trouvée : ' + p.libelle + (p.precision === 'approximative' ? ' (approximative).' : '.'),
+                        p.precision === 'approximative' ? 'text-warning' : 'text-success');
+                })
+                .catch(() => manuel && indiquer('Recherche indisponible pour le moment.', 'text-warning'));
+        };
+        zone.querySelector('.js-geo-adresse').addEventListener('click', () => localiserAdresse(true));
+
+        // Position déduite automatiquement de l'adresse, sauf si elle a été relevée au GPS.
+        let minuterie = null;
+        const auto = function () {
+            if (source.value === 'gps') { return; }
+            clearTimeout(minuterie);
+            minuterie = setTimeout(() => localiserAdresse(false), 900);
+        };
+        ['[name$="[adresse]"]', '.js-cp-code', '.js-cp-ville'].forEach(sel => { const el = champ(sel); if (el) { el.addEventListener('change', auto); } });
+
+        effacer.addEventListener('click', function () {
+            lat.value = ''; lng.value = ''; source.value = '';
+            carte.classList.add('d-none'); carte.src = 'about:blank';
+            effacer.classList.add('d-none');
+            indiquer('Position effacée.', 'text-muted');
+        });
+    }
+
+    // Fiche client : « Je suis chez le client »
+    const fiche = document.querySelector('.js-geo-fiche');
+    if (fiche) {
+        const bouton = fiche.querySelector('.js-geo-ici');
+        bouton.addEventListener('click', function () {
+            bouton.disabled = true;
+            window.sotramaPosition().then(function (p) {
+                const precision = Math.round(p.coords.accuracy);
+                if (!window.confirm('Enregistrer votre position actuelle (précision ± ' + precision + ' m) comme domicile du client ?')) { return null; }
+                return fetch(fiche.dataset.url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': fiche.dataset.token },
+                    body: JSON.stringify({ lat: p.coords.latitude, lng: p.coords.longitude, precision: precision })
+                }).then(r => r.json().then(j => { if (!r.ok) { throw new Error(j.error || 'Erreur'); } toastr.success('Position du client enregistrée.'); setTimeout(() => window.location.reload(), 700); }));
+            }).catch(e => toastr.error(e && e.message && !('code' in e) ? e.message : erreurGps(e)))
+              .finally(() => { bouton.disabled = false; });
+        });
+    }
+})();
 
 /* ---------- Notifications du navigateur (rappels des ramassages) ---------- */
 (function () {

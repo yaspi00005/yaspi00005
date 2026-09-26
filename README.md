@@ -12,9 +12,9 @@ avec l'interface du thème **Workload** (ThemeForest).
 | Module | Pour qui | Ce qu'on y fait |
 |---|---|---|
 | Tableau de bord | tous | chiffres clés, graphiques (colis par mois, encaissements, statuts), derniers colis |
-| Colis | tous (filtré par pays pour les représentants) | recherche et filtres, saisie multi-articles avec photos et prix suggéré, reçu PDF avec QR code, export Excel |
-| Clients | ramassage, admin | fiche client, historique des colis, compte bonus fidélité |
-| Ramassages | ramassage, admin | calendrier (glisser-déposer), rendez-vous à venir |
+| Colis | tous (filtré par pays pour les représentants) | recherche et filtres, saisie multi-articles avec photos prises à l'appareil photo du téléphone (colis et articles, compressées avant l'envoi) et prix suggéré, reçu PDF avec QR code, export Excel |
+| Clients | ramassage, admin | fiche client, historique des colis, compte bonus fidélité, position GPS (téléphone ou adresse), carte et itinéraire Google Maps / Waze |
+| Ramassages | ramassage, admin | calendrier (glisser-déposer), rendez-vous à venir avec itinéraire vers le client |
 | Expéditions | tous (admin pour modifier) | création, affectation des colis, changement de statut répercuté sur tous les colis + SMS, manifeste Excel |
 | Guichet agence | représentants, admin | recherche par code de retrait / n° de suivi / scan QR (caméra ou douchette), encaissement, remise au destinataire |
 | Paiements | tous (filtré par pays) | journal filtrable, totaux par caissier et par mode, export Excel, annulation (admin) |

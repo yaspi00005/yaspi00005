@@ -30,6 +30,7 @@
                 {{ form_row(form.expedition) }}
                 {{ form_row(form.typeExpedition) }}
                 {{ form_row(form.observations) }}
+                {% include 'partials/_photo.html.twig' with {field: form.photoFile, actuelle: colis.id and colis.photo ? path('colis_photo', {id: colis.id}) : null} %}
             </div>
         </div>
     </div>

@@ -13,11 +13,13 @@ use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CollectionType;
 use Symfony\Component\Form\Extension\Core\Type\EnumType;
+use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\TelType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints\Image;
 
 class ColisType extends AbstractType
 {
@@ -62,6 +64,13 @@ class ColisType extends AbstractType
                 'expanded' => true,
             ])
             ->add('observations', TextareaType::class, ['label' => 'Observations', 'required' => false, 'attr' => ['rows' => 2]])
+            ->add('photoFile', FileType::class, [
+                'label' => 'Photo du colis',
+                'mapped' => false,
+                'required' => false,
+                'attr' => ['accept' => 'image/*'],
+                'constraints' => [new Image(maxSize: '8M', mimeTypesMessage: 'Envoyez une image (JPEG, PNG, WebP).')],
+            ])
             ->add('articles', CollectionType::class, [
                 'label' => false,
                 'entry_type' => ArticleType::class,

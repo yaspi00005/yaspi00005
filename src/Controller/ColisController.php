@@ -186,7 +186,7 @@ class ColisController extends AbstractController
         $this->denyAccessUnlessGranted(ColisVoter::MODIFIER, $colis);
         $this->verifierCsrf($request, 'delete-colis-'.$colis->getId());
 
-        $photos = array_filter($colis->getArticles()->map(fn ($a) => $a->getPhoto())->toArray());
+        $photos = array_filter([$colis->getPhoto(), ...$colis->getArticles()->map(fn ($a) => $a->getPhoto())->toArray()]);
         try {
             $this->colisService->supprimer($colis);
             array_walk($photos, fn ($p) => $this->photos->supprimer($p));
@@ -321,6 +321,12 @@ class ColisController extends AbstractController
 
     private function enregistrerPhotos(FormInterface $form): void
     {
+        if ($fichier = $form->get('photoFile')->getData()) {
+            $colis = $form->getData();
+            $ancienne = $colis->getPhoto();
+            $colis->setPhoto($this->photos->upload($fichier));
+            $this->photos->supprimer($ancienne);
+        }
         foreach ($form->get('articles') as $articleForm) {
             $fichier = $articleForm->get('photoFile')->getData();
             if ($fichier) {

@@ -24,10 +24,14 @@
             <div class="card-header"><h4 class="card-title">À venir</h4></div>
             <div class="card-body">
                 {% for r in aVenir %}
-                    <a href="{{ path('ramassage_edit', {id: r.id}) }}" class="d-block border-bottom py-2 text-decoration-none">
-                        <span class="d-flex justify-content-between"><strong class="text-black">{{ r.client.nomComplet }}{% if r.statut.value == 'confirme' %} <i class="fas fa-check-circle text-info" title="Confirmé par le client"></i>{% endif %}</strong><span class="text-primary">{{ r.datePrevue|date('d/m H:i') }}</span></span>
-                        <small class="text-muted">{{ r.adresse ?: r.client.adresse }} {{ r.client.ville }}</small>
-                    </a>
+                    <div class="d-flex align-items-center gap-2 border-bottom py-2">
+                        <a href="{{ path('ramassage_edit', {id: r.id}) }}" class="flex-grow-1 text-decoration-none">
+                            <span class="d-flex justify-content-between"><strong class="text-black">{{ r.client.nomComplet }}{% if r.statut.value == 'confirme' %} <i class="fas fa-check-circle text-info" title="Confirmé par le client"></i>{% endif %}</strong><span class="text-primary">{{ r.datePrevue|date('d/m H:i') }}</span></span>
+                            <small class="text-muted">{{ r.adresse ?: r.client.adresse }} {{ r.client.ville }}</small>
+                        </a>
+                        {% set nav = itineraire(r.client, r.adresse) %}
+                        {% if nav %}<a href="{{ nav }}" target="_blank" rel="noopener" class="btn btn-primary light btn-xs sharp" title="Itinéraire vers le client" aria-label="Itinéraire vers {{ r.client.nomComplet }}"><i class="fas fa-route"></i></a>{% endif %}
+                    </div>
                 {% else %}
                     <p class="text-muted mb-0">Aucun ramassage prévu.</p>
                 {% endfor %}
