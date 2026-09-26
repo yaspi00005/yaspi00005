@@ -35,14 +35,14 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\String\Slugger\AsciiSlugger;
 
 /**
- * Reprend les données de l'ancienne application GESCO (base MySQL) dans la nouvelle.
+ * Reprend les données de l'ancienne application SOTRAMA (base MySQL) dans la nouvelle.
  *
  *   php bin/console app:import-ancienne-base "mysql://user:mdp@127.0.0.1:3306/ancienne_base" --photos=/chemin/ancien/public/uploads
  *
  * La base cible doit être vide (migrations exécutées, aucun client ni colis).
  * Aucun SMS ni e-mail n'est envoyé pendant l'import.
  */
-#[AsCommand(name: 'app:import-ancienne-base', description: "Importe les données de l'ancienne application GESCO")]
+#[AsCommand(name: 'app:import-ancienne-base', description: "Importe les données de l'ancienne application SOTRAMA")]
 final class ImportAncienneBaseCommand extends Command
 {
     private SymfonyStyle $io;
@@ -63,7 +63,7 @@ final class ImportAncienneBaseCommand extends Command
     protected function configure(): void
     {
         $this
-            ->addArgument('dsn', InputArgument::REQUIRED, "Connexion à l'ancienne base, ex. mysql://user:mdp@127.0.0.1:3306/gesco")
+            ->addArgument('dsn', InputArgument::REQUIRED, "Connexion à l'ancienne base, ex. mysql://user:mdp@127.0.0.1:3306/ancienne_base")
             ->addOption('photos', null, InputOption::VALUE_REQUIRED, "Dossier des anciennes photos (ancien public/uploads) à copier")
             ->addOption('dry-run', null, InputOption::VALUE_NONE, "Simule l'import sans rien enregistrer");
     }

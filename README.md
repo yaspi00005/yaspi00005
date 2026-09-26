@@ -1,4 +1,4 @@
-# GESCO Marchandises — v2
+# SOTRAMA — v2
 
 Application de gestion d'envoi de colis France → Mali / Sénégal : ramassage chez le client,
 expéditions aériennes et maritimes, encaissements, bonus fidélité, guichet de retrait en agence

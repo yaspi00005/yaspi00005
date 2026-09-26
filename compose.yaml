@@ -3,8 +3,8 @@ services:
   database:
     image: mysql:8.0
     environment:
-      MYSQL_DATABASE: gesco_v2
-      MYSQL_USER: gesco
+      MYSQL_DATABASE: sotrama
+      MYSQL_USER: sotrama
       MYSQL_PASSWORD: changer_moi
       MYSQL_ROOT_PASSWORD: changer_moi_root
     ports:

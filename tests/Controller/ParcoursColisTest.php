@@ -60,7 +60,7 @@ final class ParcoursColisTest extends WebTestCase
     {
         $colis = $this->creerColis();
 
-        $this->assertMatchesRegularExpression('/^GS\d{4}-\d{4}$/', $colis->getNumeroSuivi());
+        $this->assertMatchesRegularExpression('/^ST\d{4}-\d{4}$/', $colis->getNumeroSuivi());
         $this->assertMatchesRegularExpression('/^[A-Z2-9]{6}$/', $colis->getCodeRetrait());
         $this->assertSame(2, $colis->getNombreArticles());
         $this->assertSame(10250, $colis->getFrais(), 'Frais = somme des prix des articles (80 + 22,50).');

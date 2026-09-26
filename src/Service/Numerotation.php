@@ -17,10 +17,10 @@ final class Numerotation
     ) {
     }
 
-    /** Ex. : GS2609-0042 (année 26, mois 09, 42e colis du mois). */
+    /** Ex. : ST2609-0042 (année 26, mois 09, 42e colis du mois). */
     public function numeroSuivi(\DateTimeInterface $date): string
     {
-        $prefixe = 'GS'.$date->format('ym').'-';
+        $prefixe = 'ST'.$date->format('ym').'-';
         $n = $this->colisRepository->compterPourPrefixe($prefixe) + 1;
         do {
             $numero = $prefixe.str_pad((string) $n, 4, '0', STR_PAD_LEFT);

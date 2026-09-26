@@ -37,7 +37,7 @@ final class CreerAdminCommand extends Command
             $user = (new User())
                 ->setUsername($identifiant)
                 ->setPrenom($io->ask('Prénom', 'Admin'))
-                ->setNom($io->ask('Nom', 'GESCO'));
+                ->setNom($io->ask('Nom', 'SOTRAMA'));
         }
         $password = $io->askHidden('Mot de passe (8 caractères min.)', function (?string $v) {
             if (mb_strlen((string) $v) < 8) {

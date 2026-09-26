@@ -3,24 +3,31 @@
 namespace App\Form;
 
 use App\Entity\Article;
+use App\Repository\TypeMarchandiseRepository;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\MoneyType;
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\Form\FormEvent;
+use Symfony\Component\Form\FormEvents;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\Image;
 
 class ArticleType extends AbstractType
 {
+    public function __construct(private readonly TypeMarchandiseRepository $types)
+    {
+    }
+
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
+        $noms = array_map(fn ($t) => $t->getNom(), $this->types->findActifs());
+
         $builder
-            ->add('typeMarchandise', TextType::class, [
-                'label' => 'Marchandise',
-                'attr' => ['list' => 'types-marchandises', 'class' => 'js-type-marchandise', 'placeholder' => 'Ex. : Vêtements'],
-            ])
+            ->add('typeMarchandise', ChoiceType::class, $this->optionsType($noms))
             ->add('poidsVolume', NumberType::class, [
                 'label' => 'Poids (kg)',
                 'scale' => 2,
@@ -42,6 +49,25 @@ class ArticleType extends AbstractType
                 'attr' => ['accept' => 'image/*', 'capture' => 'environment'],
                 'constraints' => [new Image(maxSize: '8M', mimeTypesMessage: 'Envoyez une image (JPEG, PNG, WebP).')],
             ]);
+
+        // En modification, un article peut porter un type retiré de la liste depuis : on le garde sélectionnable.
+        $builder->addEventListener(FormEvents::PRE_SET_DATA, function (FormEvent $event) use ($noms) {
+            $actuel = $event->getData()?->getTypeMarchandise();
+            if ($actuel && !\in_array($actuel, $noms, true)) {
+                $event->getForm()->add('typeMarchandise', ChoiceType::class, $this->optionsType([...$noms, $actuel]));
+            }
+        });
+    }
+
+    /** @param list<string> $noms */
+    private function optionsType(array $noms): array
+    {
+        return [
+            'label' => 'Marchandise',
+            'choices' => array_combine($noms, $noms),
+            'placeholder' => 'Choisir',
+            'attr' => ['class' => 'js-type-marchandise'],
+        ];
     }
 
     public function configureOptions(OptionsResolver $resolver): void

@@ -1,4 +1,4 @@
-/* Comportements communs GESCO (jQuery fourni par le thème). */
+/* Comportements communs SOTRAMA (jQuery fourni par le thème). */
 (function ($) {
     'use strict';
 
@@ -26,7 +26,7 @@
     });
 
     // Formats d'affichage.
-    window.gescoMontant = function (v) {
+    window.formatMontant = function (v) {
         return (Math.round(v * 100) / 100).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     };
 
@@ -45,15 +45,21 @@
                 $(this).find('.numero-article').text(n);
             });
             $('#total-articles').text(n);
-            $('#total-poids').text(gescoMontant(poids));
-            $('#total-prix').text(gescoMontant(total));
+            $('#total-poids').text(formatMontant(poids));
+            $('#total-prix').text(formatMontant(total));
         };
+
+        // Liste des marchandises avec recherche (select2).
+        const initialiserTypes = function ($zone) {
+            $zone.find('select.js-type-marchandise').select2({ width: '100%', language: { noResults: () => 'Aucun résultat' } });
+        };
+        initialiserTypes($liste);
 
         const ajouter = function () {
             const html = $liste.data('prototype').replace(/__name__/g, index++);
             const $ligne = $(html);
             $liste.append($ligne);
-            $ligne.find('input').first().trigger('focus');
+            initialiserTypes($ligne);
             recalculer();
         };
 

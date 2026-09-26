@@ -5,9 +5,6 @@
 {% block body %}
 {{ form_start(form, {attr: {novalidate: 'novalidate'}}) }}
 {% if nonce %}<input type="hidden" name="_nonce" value="{{ nonce }}">{% endif %}
-<datalist id="types-marchandises">
-    {% for t in types %}<option value="{{ t.nom }}"></option>{% endfor %}
-</datalist>
 
 {{ form_errors(form) }}
 

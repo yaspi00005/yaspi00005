@@ -1,4 +1,4 @@
-/* Compléments GESCO au thème Workload. */
+/* Compléments SOTRAMA au thème Workload. */
 /* Le thème donne aux cartes toute la hauteur de la colonne : on la retire quand plusieurs cartes sont empilées. */
 .card:not(:only-child) { height: auto; }
 .avatar-initiales {

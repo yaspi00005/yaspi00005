@@ -19,8 +19,8 @@
 /assets/vendor/
 ###< symfony/asset-mapper ###
 
-###> gesco ###
+###> sotrama ###
 # Thème Workload sous licence ThemeForest : installé via « php bin/console app:installer-theme <chemin/xhtml> »
 /public/theme/
 /var/uploads/
-###< gesco ###
+###< sotrama ###
