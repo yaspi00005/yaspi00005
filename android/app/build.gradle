@@ -9,12 +9,12 @@ def signatureRelease = System.getenv('KEYSTORE_FILE') != null
 
 android {
     namespace 'com.sotrama.app'
-    compileSdk 35
+    compileSdk 36
 
     defaultConfig {
         applicationId 'com.sotrama.app'
         minSdk 24
-        targetSdk 35
+        targetSdk 36
         versionCode((System.getenv('VERSION_CODE') ?: '1') as int)
         versionName System.getenv('VERSION_NAME') ?: '1.0'
 

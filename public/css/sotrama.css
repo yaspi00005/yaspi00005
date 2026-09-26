@@ -66,3 +66,7 @@
 #modal-erreurs .erreur-message { color: #b3261e; font-weight: 600; }
 .champ-signale { animation: champ-signale 1.6s ease-out 1; }
 @keyframes champ-signale { 0% { box-shadow: 0 0 0 .35rem rgba(220, 53, 69, .45); } 100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); } }
+
+/* Étapes numérotées (le thème retire les puces des listes) */
+ol.etapes { list-style: decimal; padding-left: 1.4rem; }
+ol.etapes li { margin-bottom: .35rem; }
