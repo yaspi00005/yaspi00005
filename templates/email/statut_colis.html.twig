@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="fr">
+<body style="margin:0;background:#f4f5f7;font-family:Arial,sans-serif;color:#222">
+<table width="100%" cellpadding="0" cellspacing="0" style="padding:24px 0"><tr><td align="center">
+<table width="560" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:12px;overflow:hidden">
+    <tr><td style="background:#00A15D;color:#fff;padding:20px 28px;font-size:20px;font-weight:bold">{{ app_nom }}</td></tr>
+    <tr><td style="padding:28px">
+        <p>Bonjour {{ colis.client.prenom }},</p>
+        <p>Votre colis <strong>{{ colis.numeroSuivi }}</strong> pour <strong>{{ colis.destinataireNom }}</strong> est maintenant :</p>
+        <p style="font-size:22px;color:#00A15D;font-weight:bold;margin:18px 0">{{ colis.statut.label }}</p>
+        {% if colis.montantRestant > 0 %}<p>Reste à payer : <strong>{{ colis.montantRestant|money }}</strong></p>{% endif %}
+        <p style="margin:26px 0"><a href="{{ lien }}" style="background:#00A15D;color:#fff;text-decoration:none;padding:12px 22px;border-radius:24px">Suivre mon colis</a></p>
+        <p style="color:#777;font-size:12px">Merci pour votre confiance.</p>
+    </td></tr>
+</table>
+</td></tr></table>
+</body>
+</html>

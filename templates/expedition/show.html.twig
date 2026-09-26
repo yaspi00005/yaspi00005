@@ -1,0 +1,145 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Expédition {{ expedition.numero }}{% endblock %}
+
+{% block body %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+    <div class="d-flex align-items-center gap-3">
+        <span class="stat-icon bgl-primary text-primary"><i class="fas {{ expedition.modeTransport.icone }}"></i></span>
+        <div>
+            <h3 class="mb-0">{{ expedition.modeTransport.label }} → {{ expedition.destination.label }}</h3>
+            <span class="text-muted">{{ expedition.numero }} · départ {{ expedition.dateDepart|date('d/m/Y') }}{% if expedition.reference %} · réf. {{ expedition.reference }}{% endif %}</span>
+        </div>
+        {% include 'partials/_badge.html.twig' with {statut: expedition.statut} %}
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a href="?export=csv" class="btn btn-outline-primary btn-rounded btn-sm"><i class="fas fa-file-excel me-1"></i> Manifeste</a>
+        {% if is_granted('ROLE_ADMIN') %}
+            <a href="{{ path('expedition_edit', {id: expedition.id}) }}" class="btn btn-primary btn-rounded btn-sm"><i class="fas fa-pen me-1"></i> Modifier</a>
+            {% if expedition.colis is empty %}
+            <form method="post" action="{{ path('expedition_delete', {id: expedition.id}) }}" data-confirm="Supprimer cette expédition ?">
+                <input type="hidden" name="_token" value="{{ csrf_token('delete-expedition-' ~ expedition.id) }}">
+                <button class="btn btn-danger light btn-rounded btn-sm"><i class="fas fa-trash"></i></button>
+            </form>
+            {% endif %}
+        {% endif %}
+    </div>
+</div>
+
+<div class="row">
+    {% for s in [
+        {v: expedition.colis|length, l: 'Colis', i: 'fa-box', c: 'primary'},
+        {v: clients, l: 'Clients', i: 'fa-users', c: 'info'},
+        {v: expedition.poidsTotal|poids, l: 'Poids total', i: 'fa-weight-hanging', c: 'warning'},
+        {v: expedition.montantEncaisse|money, l: 'Encaissé sur ' ~ expedition.montantTotal|money, i: 'fa-euro-sign', c: 'success'},
+    ] %}
+    <div class="col-xl-3 col-sm-6">
+        <div class="card stat-card"><div class="card-body d-flex align-items-center gap-3">
+            <span class="stat-icon bgl-{{ s.c }} text-{{ s.c }}"><i class="fas {{ s.i }}"></i></span>
+            <div><div class="stat-value">{{ s.v }}</div><span class="text-muted fs-14">{{ s.l }}</span></div>
+        </div></div>
+    </div>
+    {% endfor %}
+
+    <div class="col-xl-9">
+        <div class="card">
+            <div class="card-header"><h4 class="card-title">Colis de l'expédition</h4></div>
+            <div class="card-body pt-0">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead><tr><th>N° suivi</th><th>Client</th><th>Destinataire</th><th class="num">Poids</th><th class="num">Montant</th><th class="num">Reste</th><th>Statut</th><th></th></tr></thead>
+                        <tbody>
+                        {% for c in expedition.colis %}
+                            <tr>
+                                <td><a href="{{ path('colis_show', {id: c.id}) }}" class="text-primary font-w600">{{ c.numeroSuivi }}</a></td>
+                                <td>{{ c.client.nomComplet }}</td>
+                                <td>{{ c.destinataireNom }}<br><small class="text-muted">{{ c.destinataireTelephone|tel }}</small></td>
+                                <td class="num">{{ c.poidsTotal|poids }}</td>
+                                <td class="num">{{ c.montantNet|money }}</td>
+                                <td class="num {{ c.montantRestant ? 'text-danger font-w600' }}">{{ c.montantRestant|money }}</td>
+                                <td>{% include 'partials/_badge.html.twig' with {statut: c.statut} %}</td>
+                                <td class="text-end">
+                                    {% if is_granted('ROLE_ADMIN') and expedition.statut.accepteNouveauxColis %}
+                                    <form method="post" action="{{ path('expedition_retirer', {id: expedition.id, colis: c.id}) }}" data-confirm="Retirer ce colis de l'expédition ?">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('retirer-colis-' ~ c.id) }}">
+                                        <button class="btn btn-danger light btn-xs sharp" title="Retirer de l'expédition" aria-label="Retirer de l'expédition"><i class="fas fa-times"></i></button>
+                                    </form>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr><td colspan="8"><div class="empty-state"><i class="fas fa-box-open"></i>Aucun colis dans cette expédition.</div></td></tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        {% if colisSansExpedition %}
+        <div class="card">
+            <div class="card-header"><h4 class="card-title">Colis en attente d'affectation ({{ colisSansExpedition|length }})</h4></div>
+            <div class="card-body pt-0">
+                <form method="post" action="{{ path('expedition_affecter', {id: expedition.id}) }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('affecter-expedition-' ~ expedition.id) }}">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead><tr><th><input type="checkbox" class="form-check-input" onclick="document.querySelectorAll('.js-affecter').forEach(c => c.checked = this.checked)" aria-label="Tout sélectionner"></th><th>N° suivi</th><th>Client</th><th>Reçu le</th><th class="num">Poids</th></tr></thead>
+                            <tbody>
+                            {% for c in colisSansExpedition %}
+                                <tr>
+                                    <td><input type="checkbox" name="colis[]" value="{{ c.id }}" class="form-check-input js-affecter" aria-label="Sélectionner {{ c.numeroSuivi }}"></td>
+                                    <td>{{ c.numeroSuivi }}</td><td>{{ c.client.nomComplet }}</td><td>{{ c.dateReception|date('d/m/Y') }}</td><td class="num">{{ c.poidsTotal|poids }}</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <button class="btn btn-primary btn-sm"><i class="fas fa-plus me-1"></i> Ajouter à l'expédition</button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="col-xl-3">
+        {% if is_granted('ROLE_ADMIN') %}
+        <div class="card">
+            <div class="card-header"><h4 class="card-title">Statut</h4></div>
+            <div class="card-body">
+                <form method="post" action="{{ path('expedition_statut', {id: expedition.id}) }}" data-confirm="Changer le statut de l'expédition et de tous ses colis ?">
+                    <input type="hidden" name="_token" value="{{ csrf_token('statut-expedition-' ~ expedition.id) }}">
+                    <select name="statut" class="form-select form-control mb-2" aria-label="Nouveau statut">
+                        {% for s in statuts %}<option value="{{ s.value }}" {{ s == expedition.statut ? 'selected' }}>{{ s.label }}</option>{% endfor %}
+                    </select>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" name="notifier" value="1" id="notifier" checked>
+                        <label class="form-check-label" for="notifier">Prévenir les destinataires (SMS / e-mail)</label>
+                    </div>
+                    <button class="btn btn-primary w-100">Mettre à jour</button>
+                </form>
+                <p class="fs-12 text-muted mt-2 mb-0">Le statut est appliqué à tous les colis de l'expédition (sauf ceux déjà remis).</p>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="card">
+            <div class="card-header"><h4 class="card-title">Colis par statut</h4></div>
+            <div class="card-body">
+                {% for statut, n in parStatut %}
+                    <div class="d-flex justify-content-between py-1"><span>{{ enum('App\\Enum\\StatutColis').from(statut).label }}</span><strong>{{ n }}</strong></div>
+                {% else %}<span class="text-muted">—</span>{% endfor %}
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><h4 class="card-title">Encaissements par caissier</h4></div>
+            <div class="card-body">
+                {% for c in parCaissier %}
+                    <div class="d-flex justify-content-between py-1"><span>{{ c.caissier }}</span><strong>{{ c.total|money }}</strong></div>
+                {% else %}<span class="text-muted">Aucun encaissement.</span>{% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

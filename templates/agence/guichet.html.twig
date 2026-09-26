@@ -1,0 +1,68 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Guichet agence{% endblock %}
+
+{% block body %}
+<div class="row">
+    <div class="col-xl-5">
+        <div class="card">
+            <div class="card-header"><h4 class="card-title"><i class="fas fa-qrcode text-primary me-2"></i>Retrouver un colis</h4></div>
+            <div class="card-body">
+                <form method="get" id="form-code">
+                    <label class="form-label" for="code">Code de retrait, n° de suivi ou scan du QR code</label>
+                    <div class="input-group mb-3">
+                        <input type="text" name="code" id="code" value="{{ code }}" class="form-control code-retrait fs-20" autocomplete="off" autofocus placeholder="Ex. : K7XQ3M">
+                        <button class="btn btn-primary" type="submit">Chercher</button>
+                    </div>
+                </form>
+                <button type="button" class="btn btn-outline-primary w-100" id="btn-scanner"><i class="fas fa-camera me-1"></i> Scanner avec la caméra</button>
+                <div id="lecteur-qr" class="mt-3" style="display:none"></div>
+                <p class="fs-12 text-muted mt-3 mb-0">Un lecteur de code-barres USB fonctionne aussi : cliquez dans le champ puis scannez le QR du reçu.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-7">
+        <div class="card">
+            <div class="card-header"><h4 class="card-title">Colis arrivés à remettre ({{ aRetirer|length }})</h4></div>
+            <div class="card-body pt-0">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead><tr><th>N° suivi</th><th>Destinataire</th><th class="num">Reste</th><th>Arrivé</th></tr></thead>
+                        <tbody>
+                        {% for c in aRetirer %}
+                            <tr>
+                                <td><a href="{{ path('colis_show', {id: c.id}) }}" class="text-primary font-w600">{{ c.numeroSuivi }}</a></td>
+                                <td>{{ c.destinataireNom }}<br><small class="text-muted"><a href="tel:{{ c.destinataireTelephone }}">{{ c.destinataireTelephone|tel }}</a></small></td>
+                                <td class="num {{ c.montantRestant ? 'text-danger font-w600' : 'text-success' }}">{{ c.montantRestant ? c.montantRestant|money : 'Soldé' }}</td>
+                                <td>{{ c.updatedAt|date('d/m/Y') }}</td>
+                            </tr>
+                        {% else %}
+                            <tr><td colspan="4"><div class="empty-state"><i class="fas fa-check-circle"></i>Aucun colis en attente de retrait.</div></td></tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+document.getElementById('btn-scanner').addEventListener('click', function () {
+    const zone = document.getElementById('lecteur-qr');
+    zone.style.display = 'block';
+    this.disabled = true;
+    const lecteur = new Html5Qrcode('lecteur-qr');
+    lecteur.start({ facingMode: 'environment' }, { fps: 10, qrbox: 230 }, function (texte) {
+        lecteur.stop();
+        document.getElementById('code').value = texte;
+        document.getElementById('form-code').submit();
+    }).catch(function () {
+        zone.innerHTML = '<div class="alert alert-warning">Caméra indisponible. Saisissez le code manuellement.</div>';
+    });
+});
+</script>
+{% endblock %}

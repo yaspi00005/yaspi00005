@@ -1,0 +1,68 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Expéditions{% endblock %}
+
+{% block body %}
+<div class="card">
+    <div class="card-header flex-wrap gap-2">
+        <h4 class="card-title">{{ expeditions.total }} expéditions</h4>
+        {% if is_granted('ROLE_ADMIN') %}
+            <a href="{{ path('expedition_new') }}" class="btn btn-primary btn-rounded btn-sm"><i class="fas fa-plus me-1"></i> Nouvelle expédition</a>
+        {% endif %}
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-2 filtres mb-3">
+            <div class="col-md-3"><input type="search" name="q" value="{{ filtres.q }}" class="form-control" placeholder="N° ou référence" aria-label="Numéro ou référence"></div>
+            <div class="col-6 col-md-2">
+                <select name="statut" class="form-select form-control" aria-label="Statut">
+                    <option value="">Tous statuts</option>
+                    {% for s in statuts %}<option value="{{ s.value }}" {{ filtres.statut == s.value ? 'selected' }}>{{ s.label }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="col-6 col-md-2">
+                <select name="destination" class="form-select form-control" aria-label="Destination">
+                    <option value="">Toutes destinations</option>
+                    {% for d in destinations %}<option value="{{ d.value }}" {{ filtres.destination == d.value ? 'selected' }}>{{ d.label }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="col-6 col-md-2"><input type="date" name="du" value="{{ filtres.du }}" class="form-control" aria-label="Départ depuis le"></div>
+            <div class="col-6 col-md-2"><input type="date" name="au" value="{{ filtres.au }}" class="form-control" aria-label="Départ jusqu'au"></div>
+            <div class="col-md-1"><button class="btn btn-primary w-100" aria-label="Filtrer"><i class="fas fa-filter"></i></button></div>
+        </form>
+
+        <div class="row">
+        {% for e in expeditions %}
+            <div class="col-xl-4 col-md-6">
+                <a href="{{ path('expedition_show', {id: e.id}) }}" class="card border text-decoration-none shadow-none">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <span class="d-flex align-items-center gap-3">
+                                <span class="stat-icon bgl-primary text-primary"><i class="fas {{ e.modeTransport.icone }}"></i></span>
+                                <span>
+                                    <span class="d-block fs-18 font-w600 text-black">{{ e.destination.label }}</span>
+                                    <small class="text-muted">{{ e.numero }}</small>
+                                </span>
+                            </span>
+                            {% include 'partials/_badge.html.twig' with {statut: e.statut} %}
+                        </div>
+                        <div class="d-flex justify-content-between text-muted fs-14">
+                            <span><i class="far fa-calendar me-1"></i>Départ {{ e.dateDepart|date('d/m/Y') }}</span>
+                            <span>{{ e.dateArrivee ? 'Arrivée ' ~ e.dateArrivee|date('d/m/Y') : (e.dateArriveePrevue ? 'Prévue ' ~ e.dateArriveePrevue|date('d/m/Y') : '') }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mt-3">
+                            <span><strong class="text-black">{{ e.colis|length }}</strong> colis · {{ e.poidsTotal|poids }}</span>
+                            <span class="text-success font-w600">{{ e.montantEncaisse|money }} <small class="text-muted">/ {{ e.montantTotal|money }}</small></span>
+                        </div>
+                        {% set pct = e.montantTotal ? (e.montantEncaisse * 100 / e.montantTotal)|round : 0 %}
+                        <div class="progress mt-2" style="height:6px"><div class="progress-bar bg-primary" style="width: {{ pct }}%" role="progressbar" aria-valuenow="{{ pct }}" aria-valuemin="0" aria-valuemax="100" aria-label="Part encaissée"></div></div>
+                    </div>
+                </a>
+            </div>
+        {% else %}
+            <div class="col-12"><div class="empty-state"><i class="fas fa-shipping-fast"></i>Aucune expédition.</div></div>
+        {% endfor %}
+        </div>
+        {% include 'partials/_pagination.html.twig' with {pagination: expeditions} %}
+    </div>
+</div>
+{% endblock %}

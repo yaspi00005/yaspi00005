@@ -1,0 +1,37 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}SMS et e-mails envoyés{% endblock %}
+
+{% block body %}
+<div class="card">
+    <div class="card-header">
+        <h4 class="card-title">{{ notifications.total }} envois</h4>
+        <div class="btn-group">
+            <a href="{{ path('admin_notification_index') }}" class="btn btn-sm {{ filtre != 'echecs' ? 'btn-primary' : 'btn-outline-primary' }}">Tous</a>
+            <a href="{{ path('admin_notification_index', {filtre: 'echecs'}) }}" class="btn btn-sm {{ filtre == 'echecs' ? 'btn-primary' : 'btn-outline-primary' }}">Échecs</a>
+        </div>
+    </div>
+    <div class="card-body pt-0">
+        <div class="table-responsive">
+            <table class="table">
+                <thead><tr><th>Date</th><th>Canal</th><th>Destinataire</th><th>Colis</th><th>Message</th><th>Résultat</th></tr></thead>
+                <tbody>
+                {% for n in notifications %}
+                    <tr>
+                        <td class="text-nowrap">{{ n.createdAt|date('d/m/Y H:i') }}</td>
+                        <td>{{ n.canal|upper }}</td>
+                        <td>{{ n.destinataire }}</td>
+                        <td>{% if n.colis %}<a href="{{ path('colis_show', {id: n.colis.id}) }}">{{ n.colis.numeroSuivi }}</a>{% endif %}</td>
+                        <td class="fs-13">{{ n.message|u.truncate(120, '…') }}</td>
+                        <td>{% if n.succes %}<span class="badge light badge-success">Envoyé</span>{% else %}<span class="badge light badge-danger" title="{{ n.erreur }}">Échec</span><br><small class="text-muted">{{ n.erreur|u.truncate(60, '…') }}</small>{% endif %}</td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="6"><div class="empty-state"><i class="fas fa-sms"></i>Aucun envoi.</div></td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% include 'partials/_pagination.html.twig' with {pagination: notifications} %}
+    </div>
+</div>
+{% endblock %}

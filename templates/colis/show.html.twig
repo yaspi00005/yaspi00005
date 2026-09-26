@@ -1,0 +1,244 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Colis {{ colis.numeroSuivi }}{% endblock %}
+
+{% block body %}
+{% set peutEncaisser = is_granted('COLIS_ENCAISSER', colis) %}
+{% set peutLivrer = is_granted('COLIS_LIVRER', colis) %}
+
+{% if app.request.query.get('nouveau') %}
+<div class="alert alert-success solid-alert d-flex flex-wrap align-items-center justify-content-between gap-2">
+    <span><i class="fas fa-check-circle me-2"></i>Colis enregistré. Remettez le reçu au client : il contient le code de retrait <strong class="code-retrait">{{ colis.codeRetrait }}</strong>.</span>
+    <a href="{{ path('colis_recu', {id: colis.id}) }}" target="_blank" class="btn btn-light btn-sm"><i class="fas fa-print me-1"></i> Imprimer le reçu</a>
+</div>
+{% endif %}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+    <div>
+        <h3 class="mb-1">{{ colis.numeroSuivi }}</h3>
+        {% include 'partials/_badge.html.twig' with {statut: colis.statut} %}
+        {% include 'partials/_badge.html.twig' with {statut: colis.statutPaiement} %}
+        <span class="badge light badge-dark">{{ colis.typeExpedition.label }}</span>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        <a href="{{ path('colis_recu', {id: colis.id}) }}" target="_blank" class="btn btn-outline-primary btn-rounded btn-sm"><i class="fas fa-file-pdf me-1"></i> Reçu PDF</a>
+        {% if is_granted('COLIS_MODIFIER', colis) %}
+            <a href="{{ path('colis_edit', {id: colis.id}) }}" class="btn btn-primary btn-rounded btn-sm"><i class="fas fa-pen me-1"></i> Modifier</a>
+            {% if colis.supprimable %}
+            <form method="post" action="{{ path('colis_delete', {id: colis.id}) }}" data-confirm="Supprimer définitivement ce colis ?">
+                <input type="hidden" name="_token" value="{{ csrf_token('delete-colis-' ~ colis.id) }}">
+                <button class="btn btn-danger light btn-rounded btn-sm"><i class="fas fa-trash me-1"></i> Supprimer</button>
+            </form>
+            {% endif %}
+        {% endif %}
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-xl-8">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header"><h4 class="card-title">Expéditeur</h4></div>
+                    <div class="card-body">
+                        <div class="d-flex align-items-center gap-3">
+                            <span class="avatar-initiales">{{ colis.client.initiales }}</span>
+                            <div>
+                                {% if is_granted('ROLE_RAMASSAGE') %}
+                                    <a href="{{ path('client_show', {id: colis.client.id}) }}" class="fs-18 font-w600 text-black">{{ colis.client.nomComplet }}</a>
+                                {% else %}
+                                    <span class="fs-18 font-w600 text-black">{{ colis.client.nomComplet }}</span>
+                                {% endif %}
+                                <div class="text-muted"><i class="fas fa-phone-alt me-1"></i> <a href="tel:{{ colis.client.telephone }}">{{ colis.client.telephone|tel }}</a></div>
+                                {% if colis.client.ville %}<div class="text-muted"><i class="fas fa-map-pin me-1"></i> {{ colis.client.ville }}, {{ colis.client.pays }}</div>{% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header"><h4 class="card-title">Destinataire</h4></div>
+                    <div class="card-body">
+                        <div class="fs-18 font-w600 text-black">{{ colis.destinataireNom }}</div>
+                        <div class="text-muted"><i class="fas fa-phone-alt me-1"></i> <a href="tel:{{ colis.destinataireTelephone }}">{{ colis.destinataireTelephone|tel }}</a></div>
+                        <div class="text-muted mt-1"><i class="fas fa-key me-1"></i> Code de retrait : <span class="code-retrait text-black">{{ colis.codeRetrait }}</span></div>
+                        {% if colis.dateRecuperation %}
+                            <div class="text-success mt-1"><i class="fas fa-check me-1"></i> Remis le {{ colis.dateRecuperation|date('d/m/Y H:i') }} à {{ colis.recupererPar }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h4 class="card-title">Articles ({{ colis.nombreArticles }})</h4>
+                <span class="text-muted">{{ colis.poidsTotal|poids }}</span>
+            </div>
+            <div class="card-body pt-0">
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead><tr><th>Photo</th><th>Marchandise</th><th>Observations</th><th class="num">Poids</th><th class="num">Prix</th></tr></thead>
+                        <tbody>
+                        {% for a in colis.articles %}
+                            <tr>
+                                <td>{% if a.photo %}<a href="{{ path('article_photo', {id: a.id}) }}" target="_blank"><img src="{{ path('article_photo', {id: a.id}) }}" alt="Photo de l'article" class="rounded" style="width:56px;height:56px;object-fit:cover"></a>{% else %}<span class="text-muted">—</span>{% endif %}</td>
+                                <td class="font-w600">{{ a.typeMarchandise }}</td>
+                                <td class="text-muted">{{ a.observations }}</td>
+                                <td class="num">{{ a.poidsVolume|poids }}</td>
+                                <td class="num">{{ a.prix|money }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% if colis.observations %}<p class="mt-3 mb-0"><strong>Observations :</strong> {{ colis.observations }}</p>{% endif %}
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><h4 class="card-title">Paiements</h4></div>
+            <div class="card-body pt-0">
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead><tr><th>Date</th><th>Mode</th><th class="num">Montant</th><th class="num">Remise</th><th>Caissier</th><th></th></tr></thead>
+                        <tbody>
+                        {% for p in colis.paiements %}
+                            <tr>
+                                <td>{{ p.date|date('d/m/Y H:i') }}</td>
+                                <td>{{ p.mode.label }}{% if p.reference %}<br><small class="text-muted">{{ p.reference }}</small>{% endif %}</td>
+                                <td class="num">{{ p.montant|money }}</td>
+                                <td class="num">{{ p.remise ? p.remise|money : '—' }}</td>
+                                <td>{{ p.caissier ? p.caissier.nomComplet : '—' }}</td>
+                                <td class="text-end">
+                                    {% if is_granted('ROLE_ADMIN') %}
+                                    <form method="post" action="{{ path('paiement_annuler', {id: p.id}) }}" data-confirm="Annuler ce paiement ?">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('annuler-paiement-' ~ p.id) }}">
+                                        <button class="btn btn-danger light btn-xs sharp" title="Annuler ce paiement" aria-label="Annuler ce paiement"><i class="fas fa-undo"></i></button>
+                                    </form>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr><td colspan="6" class="text-muted text-center py-4">Aucun paiement enregistré.</td></tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-4">
+        <div class="card">
+            <div class="card-header"><h4 class="card-title">Montants</h4></div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2"><span>Tarif</span><strong>{{ colis.frais|money }}</strong></div>
+                <div class="d-flex justify-content-between mb-2"><span>Remises</span><strong>− {{ colis.remise|money }}</strong></div>
+                <div class="d-flex justify-content-between mb-2"><span>Déjà payé</span><strong class="text-success">{{ colis.montantPaye|money }}</strong></div>
+                <hr>
+                <div class="d-flex justify-content-between align-items-center"><span class="fs-18">Reste à payer</span><strong class="fs-24 {{ colis.montantRestant ? 'text-danger' : 'text-success' }}">{{ colis.montantRestant|money }}</strong></div>
+                {% if colis.client.soldeBonus > 0 %}
+                    <div class="alert alert-info mt-3 mb-0 py-2">Bonus fidélité disponible : <strong>{{ colis.client.soldeBonus|money }}</strong></div>
+                {% endif %}
+
+                {% if is_granted('ROLE_ADMIN') %}
+                <details class="mt-3">
+                    <summary class="text-primary">Corriger le tarif</summary>
+                    <form method="post" action="{{ path('colis_tarif', {id: colis.id}) }}" class="d-flex gap-2 mt-2">
+                        <input type="hidden" name="_token" value="{{ csrf_token('tarif-colis-' ~ colis.id) }}">
+                        <input type="number" step="0.01" min="0" name="frais" class="form-control" value="{{ (colis.frais / 100)|number_format(2, '.', '') }}" aria-label="Nouveau tarif">
+                        <button class="btn btn-primary">OK</button>
+                    </form>
+                </details>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if encaissement %}
+        <div class="card border-primary">
+            <div class="card-header"><h4 class="card-title"><i class="fas fa-cash-register text-primary me-2"></i>Encaisser</h4></div>
+            <div class="card-body">
+                {{ form_start(encaissement) }}
+                    <div class="row g-2">
+                        <div class="col-7">{{ form_row(encaissement.montant) }}</div>
+                        <div class="col-5">{{ form_row(encaissement.remise) }}</div>
+                    </div>
+                    {{ form_row(encaissement.mode) }}
+                    {{ form_row(encaissement.reference) }}
+                    {{ form_row(encaissement.commentaire) }}
+                    <button class="btn btn-primary w-100"><i class="fas fa-check me-1"></i> Enregistrer le paiement</button>
+                {{ form_end(encaissement) }}
+                {% if colis.client.soldeBonus > 0 %}
+                <form method="post" action="{{ path('colis_bonus', {id: colis.id}) }}" class="mt-2" data-confirm="Utiliser le bonus fidélité du client sur ce colis ?">
+                    <input type="hidden" name="_token" value="{{ csrf_token('bonus-colis-' ~ colis.id) }}">
+                    <button class="btn btn-outline-info w-100"><i class="fas fa-gift me-1"></i> Utiliser le bonus ({{ min(colis.client.soldeBonus, colis.montantRestant)|money }})</button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if peutLivrer and colis.statut.value != 'recupere' %}
+        <div class="card">
+            <div class="card-header"><h4 class="card-title"><i class="fas fa-hand-holding text-primary me-2"></i>Agence</h4></div>
+            <div class="card-body">
+                {% if colis.statut.value == 'arrive' %}
+                    <form method="post" action="{{ path('colis_remettre', {id: colis.id}) }}" data-confirm="Confirmer la remise du colis ?">
+                        <input type="hidden" name="_token" value="{{ csrf_token('remettre-colis-' ~ colis.id) }}">
+                        <label class="form-label" for="recuperePar">Remis à</label>
+                        <input type="text" id="recuperePar" name="recuperePar" class="form-control mb-2" value="{{ colis.destinataireNom }}">
+                        {% if not colis.solde %}
+                            <div class="alert alert-warning py-2">Le colis n'est pas soldé : encaissez le reste avant la remise.</div>
+                            {% if is_granted('ROLE_ADMIN') %}
+                                <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="forcer" value="1" id="forcer"><label class="form-check-label" for="forcer">Remettre quand même (admin)</label></div>
+                            {% endif %}
+                        {% endif %}
+                        <button class="btn btn-success w-100" {{ not colis.solde and not is_granted('ROLE_ADMIN') ? 'disabled' }}><i class="fas fa-check-double me-1"></i> Remettre au destinataire</button>
+                    </form>
+                    <hr>
+                {% endif %}
+                <form method="post" action="{{ path('colis_statut', {id: colis.id}) }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('statut-colis-' ~ colis.id) }}">
+                    <label class="form-label" for="statut">Changer le statut</label>
+                    <div class="d-flex gap-2">
+                        <select name="statut" id="statut" class="form-select form-control">
+                            {% for s in statuts %}<option value="{{ s.value }}" {{ s == colis.statut ? 'selected' }}>{{ s.label }}</option>{% endfor %}
+                        </select>
+                        <button class="btn btn-primary">OK</button>
+                    </div>
+                    <input type="text" name="commentaire" class="form-control mt-2" placeholder="Commentaire (facultatif)" aria-label="Commentaire">
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="card">
+            <div class="card-header"><h4 class="card-title">Suivi</h4></div>
+            <div class="card-body">
+                {% if colis.expedition %}
+                    <p class="mb-3"><i class="fas {{ colis.expedition.modeTransport.icone }} text-primary me-1"></i>
+                        <a href="{{ path('expedition_show', {id: colis.expedition.id}) }}">{{ colis.expedition.numero }}</a>
+                        · {{ colis.expedition.destination.label }} · départ {{ colis.expedition.dateDepart|date('d/m/Y') }}</p>
+                {% else %}
+                    <p class="text-warning"><i class="fas fa-exclamation-triangle me-1"></i> Pas encore affecté à une expédition.</p>
+                {% endif %}
+                <ul class="timeline-statut">
+                    {% for h in colis.historique|reverse %}
+                        <li><span class="point"></span>
+                            <strong>{{ h.statut.label }}</strong> <small class="text-muted">· {{ h.date|date('d/m/Y H:i') }}</small>
+                            {% if h.commentaire or h.auteur %}<div class="text-muted fs-13">{{ h.commentaire }}{% if h.auteur %} — {{ h.auteur.nomComplet }}{% endif %}</div>{% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+                <div class="qr-colis text-center mt-3">
+                    <img src="{{ qr }}" alt="QR code de suivi du colis">
+                    <div class="fs-12 text-muted">Lien de suivi public du destinataire</div>
+                </div>
+                <p class="fs-12 text-muted mt-3 mb-0">Enregistré par {{ colis.agent ? colis.agent.nomComplet : '—' }} le {{ colis.dateReception|date('d/m/Y à H:i') }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Utilisateurs{% endblock %}
+
+{% block body %}
+<div class="card">
+    <div class="card-header">
+        <h4 class="card-title">{{ users|length }} utilisateurs</h4>
+        <a href="{{ path('admin_user_new') }}" class="btn btn-primary btn-rounded btn-sm"><i class="fas fa-user-plus me-1"></i> Nouvel utilisateur</a>
+    </div>
+    <div class="card-body pt-0">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead><tr><th>Nom</th><th>Identifiant</th><th>Rôle</th><th>Pays</th><th>Dernière connexion</th><th>État</th><th></th></tr></thead>
+                <tbody>
+                {% for u in users %}
+                    <tr class="{{ not u.actif ? 'opacity-50' }}">
+                        <td class="d-flex align-items-center gap-2"><span class="avatar-initiales avatar-sm">{{ u.initiales }}</span> {{ u.nomComplet }}</td>
+                        <td>{{ u.username }}</td>
+                        <td>{{ u.roleLabel }}</td>
+                        <td>{{ u.pays ? u.pays.label : '—' }}</td>
+                        <td>{{ u.derniereConnexion ? u.derniereConnexion|date('d/m/Y H:i') : 'Jamais' }}</td>
+                        <td><span class="badge light badge-{{ u.actif ? 'success' : 'danger' }}">{{ u.actif ? 'Actif' : 'Désactivé' }}</span></td>
+                        <td class="text-end"><a href="{{ path('admin_user_edit', {id: u.id}) }}" class="btn btn-primary shadow btn-xs sharp" title="Modifier" aria-label="Modifier"><i class="fas fa-pencil-alt"></i></a></td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

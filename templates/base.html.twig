@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+    <title>{% block title %}Tableau de bord{% endblock %} · {{ app_nom }}</title>
+    <link rel="shortcut icon" type="image/png" href="{{ asset('theme/images/favicon.png') }}">
+    <link href="{{ asset('theme/vendor/jquery-nice-select/css/nice-select.css') }}" rel="stylesheet">
+    <link href="{{ asset('theme/vendor/select2/css/select2.min.css') }}" rel="stylesheet">
+    <link href="{{ asset('theme/vendor/toastr/css/toastr.min.css') }}" rel="stylesheet">
+    {% block stylesheets %}{% endblock %}
+    <link href="{{ asset('theme/css/style.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/gesco.css') }}" rel="stylesheet">
+</head>
+<body>
+    <div id="preloader">
+        <div class="lds-ripple"><div></div><div></div></div>
+    </div>
+
+    <div id="main-wrapper">
+        {# ---------- En-tête de la barre latérale ---------- #}
+        <div class="nav-header">
+            <a href="{{ path('app_accueil') }}" class="brand-logo">
+                {% include 'partials/_logo.html.twig' %}
+                <div class="brand-title">
+                    <h2>GESCO</h2>
+                    <span class="brand-sub-title">Gestion des marchandises</span>
+                </div>
+            </a>
+            <div class="nav-control">
+                <div class="hamburger">
+                    <span class="line"></span><span class="line"></span><span class="line"></span>
+                </div>
+            </div>
+        </div>
+
+        {# ---------- En-tête ---------- #}
+        <div class="header border-bottom">
+            <div class="header-content">
+                <nav class="navbar navbar-expand">
+                    <div class="collapse navbar-collapse justify-content-between">
+                        <div class="header-left">
+                            <div class="dashboard_bar">{% block page_title %}{{ block('title') }}{% endblock %}</div>
+                        </div>
+                        <ul class="navbar-nav header-right">
+                            <li class="nav-item d-flex align-items-center">
+                                <form class="input-group search-area" action="{{ path('colis_index') }}" method="get" role="search">
+                                    <input type="search" name="q" class="form-control" placeholder="N° de suivi, client, téléphone…" value="{{ app.request.query.get('q') }}" aria-label="Rechercher un colis">
+                                    <span class="input-group-text"><button type="submit" class="btn p-0 border-0 bg-transparent" aria-label="Rechercher"><i class="flaticon-381-search-2"></i></button></span>
+                                </form>
+                            </li>
+                            {% if is_granted('ROLE_RAMASSAGE') %}
+                            <li class="nav-item d-none d-md-flex align-items-center">
+                                <a href="{{ path('colis_new') }}" class="btn btn-primary btn-rounded btn-sm"><i class="fas fa-plus me-1"></i> Nouveau colis</a>
+                            </li>
+                            {% endif %}
+                            <li class="nav-item dropdown header-profile">
+                                <a class="nav-link" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <span class="avatar-initiales">{{ app.user.initiales }}</span>
+                                    <div class="header-info ms-3">
+                                        <span class="fs-18 font-w500 mb-2">{{ app.user.nomComplet }}</span>
+                                        <small class="fs-12 font-w400">{{ app.user.roleLabel }}{% if app.user.pays %} · {{ app.user.pays.label }}{% endif %}</small>
+                                    </div>
+                                </a>
+                                <div class="dropdown-menu dropdown-menu-end">
+                                    <a href="{{ path('app_profil') }}" class="dropdown-item ai-icon"><i class="fas fa-user-circle text-primary"></i><span class="ms-2">Mon profil</span></a>
+                                    <a href="{{ path('app_logout') }}" class="dropdown-item ai-icon"><i class="fas fa-sign-out-alt text-danger"></i><span class="ms-2">Déconnexion</span></a>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+            </div>
+        </div>
+
+        {# ---------- Menu ---------- #}
+        {% include 'partials/_menu.html.twig' %}
+
+        {# ---------- Contenu ---------- #}
+        <div class="content-body">
+            <div class="container-fluid">
+                {% block breadcrumb %}{% endblock %}
+                {% include 'partials/_flash.html.twig' %}
+                {% block body %}{% endblock %}
+            </div>
+        </div>
+
+        <div class="footer">
+            <div class="copyright">
+                <p>{{ app_nom }} © {{ 'now'|date('Y') }}</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ asset('theme/vendor/global/global.min.js') }}"></script>
+    <script src="{{ asset('theme/vendor/jquery-nice-select/js/jquery.nice-select.min.js') }}"></script>
+    <script src="{{ asset('theme/vendor/select2/js/select2.full.min.js') }}"></script>
+    <script src="{{ asset('theme/vendor/toastr/js/toastr.min.js') }}"></script>
+    {% block vendor_javascripts %}{% endblock %}
+    <script src="{{ asset('theme/js/custom.min.js') }}"></script>
+    <script src="{{ asset('theme/js/dlabnav-init.js') }}"></script>
+    <script src="{{ asset('js/gesco.js') }}"></script>
+    {% block javascripts %}{% endblock %}
+</body>
+</html>

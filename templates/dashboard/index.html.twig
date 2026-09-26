@@ -1,0 +1,185 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Tableau de bord{% endblock %}
+
+{% macro stat(icone, couleur, valeur, libelle, url) %}
+    <div class="col-xl-3 col-6">
+        <a href="{{ url }}" class="card stat-card text-decoration-none">
+            <div class="card-body d-flex flex-column flex-sm-row align-items-sm-center gap-2 gap-sm-3">
+                <span class="stat-icon bgl-{{ couleur }} text-{{ couleur }}"><i class="{{ icone }}"></i></span>
+                <div>
+                    <div class="stat-value">{{ valeur }}</div>
+                    <span class="text-muted fs-14">{{ libelle }}</span>
+                </div>
+            </div>
+        </a>
+    </div>
+{% endmacro %}
+{% import _self as m %}
+
+{% block body %}
+<div class="row">
+    <div class="col-12">
+        <div class="card bg-primary text-white overflow-hidden">
+            <div class="card-body d-flex flex-wrap align-items-center justify-content-between gap-3">
+                <div>
+                    <h3 class="text-white mb-1">Bonjour {{ app.user.prenom }} 👋</h3>
+                    <p class="mb-0 opacity-75">
+                        {{ totalColis }} colis suivis{% if app.user.pays and not is_granted('ROLE_ADMIN') %} vers le {{ app.user.pays.label }}{% endif %}
+                        · {{ enAttenteRetrait }} arrivés depuis plus de 7 jours sans être retirés.
+                    </p>
+                </div>
+                <div class="d-flex gap-2 flex-wrap">
+                    {% if is_granted('ROLE_REPRESENTANT') %}
+                        <a href="{{ path('agence_guichet') }}" class="btn bg-white btn-rounded text-primary font-w600"><i class="fas fa-qrcode me-1"></i> Guichet</a>
+                    {% endif %}
+                    {% if is_granted('ROLE_RAMASSAGE') %}
+                        <a href="{{ path('colis_new') }}" class="btn bg-white btn-rounded text-primary font-w600"><i class="fas fa-plus me-1"></i> Nouveau colis</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{ m.stat('fas fa-box-open', 'primary', totalColis, 'Colis au total', path('colis_index')) }}
+    {{ m.stat('fas fa-truck-loading', 'warning', parStatut['en_preparation']|default(0), 'En préparation', path('colis_index', {statut: 'en_preparation'})) }}
+    {{ m.stat('fas fa-plane', 'info', (parStatut['expedie']|default(0)) + (parStatut['en_transit']|default(0)) + (parStatut['retenu_douane']|default(0)), 'En route', path('expedition_index')) }}
+    {{ m.stat('fas fa-map-marker-alt', 'secondary', parStatut['arrive']|default(0), 'À retirer en agence', path('colis_index', {statut: 'arrive'})) }}
+
+    {{ m.stat('fas fa-euro-sign', 'success', totaux.paye|money, 'Encaissé (total)', path('paiement_index')) }}
+    {{ m.stat('fas fa-hourglass-half', 'danger', resteAEncaisser|money, 'Reste à encaisser', path('colis_index', {paiement: 'non_paye'})) }}
+    {{ m.stat('fas fa-calendar-check', 'primary', totauxMois.paye|money, 'Encaissé ce mois-ci', path('paiement_index')) }}
+    {{ m.stat('fas fa-users', 'info', totalClients, 'Clients', is_granted('ROLE_RAMASSAGE') ? path('client_index') : '#') }}
+
+    <div class="col-xl-8">
+        <div class="card">
+            <div class="card-header border-0 pb-0">
+                <h4 class="card-title">Colis reçus par mois</h4>
+            </div>
+            <div class="card-body">
+                <canvas id="chart-mois" height="110" aria-label="Colis reçus par mois" role="img"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4">
+        <div class="card">
+            <div class="card-header border-0 pb-0">
+                <h4 class="card-title">Répartition par statut</h4>
+            </div>
+            <div class="card-body">
+                <canvas id="chart-statuts" height="220" aria-label="Répartition des colis par statut" role="img"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-8">
+        <div class="card">
+            <div class="card-header border-0">
+                <h4 class="card-title">Derniers colis</h4>
+                <a href="{{ path('colis_index') }}" class="btn btn-primary light btn-sm btn-rounded">Tout voir</a>
+            </div>
+            <div class="card-body pt-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead><tr><th>N° suivi</th><th>Client</th><th>Destinataire</th><th class="num">Reste</th><th>Statut</th></tr></thead>
+                        <tbody>
+                        {% for c in derniersColis %}
+                            <tr>
+                                <td><a href="{{ path('colis_show', {id: c.id}) }}" class="text-primary font-w600">{{ c.numeroSuivi }}</a><br><small class="text-muted">{{ c.dateReception|date('d/m/Y') }}</small></td>
+                                <td>{{ c.client.nomComplet }}</td>
+                                <td>{{ c.destinataireNom }}</td>
+                                <td class="num">{{ c.montantRestant|money }}</td>
+                                <td>{% include 'partials/_badge.html.twig' with {statut: c.statut} %}</td>
+                            </tr>
+                        {% else %}
+                            <tr><td colspan="5"><div class="empty-state"><i class="fas fa-box-open"></i>Aucun colis pour le moment.</div></td></tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4">
+        <div class="card">
+            <div class="card-header border-0">
+                <h4 class="card-title">Expéditions récentes</h4>
+                <a href="{{ path('expedition_index') }}" class="btn btn-primary light btn-sm btn-rounded">Tout voir</a>
+            </div>
+            <div class="card-body pt-0">
+                {% for e in expeditions %}
+                    <a href="{{ path('expedition_show', {id: e.id}) }}" class="d-flex align-items-center justify-content-between py-2 border-bottom text-decoration-none">
+                        <span class="d-flex align-items-center gap-3">
+                            <span class="stat-icon bgl-primary text-primary" style="width:2.6rem;height:2.6rem;font-size:1rem"><i class="fas {{ e.modeTransport.icone }}"></i></span>
+                            <span>
+                                <span class="d-block text-black font-w600">{{ e.destination.label }} · {{ e.dateDepart|date('d/m/Y') }}</span>
+                                <small class="text-muted">{{ e.numero }} · {{ e.colis|length }} colis</small>
+                            </span>
+                        </span>
+                        {% include 'partials/_badge.html.twig' with {statut: e.statut} %}
+                    </a>
+                {% else %}
+                    <div class="empty-state"><i class="fas fa-shipping-fast"></i>Aucune expédition.</div>
+                {% endfor %}
+            </div>
+        </div>
+        {% if ramassages %}
+        <div class="card">
+            <div class="card-header border-0">
+                <h4 class="card-title">Prochains ramassages</h4>
+                <a href="{{ path('ramassage_index') }}" class="btn btn-primary light btn-sm btn-rounded">Planning</a>
+            </div>
+            <div class="card-body pt-0">
+                {% for r in ramassages %}
+                    <a href="{{ path('ramassage_edit', {id: r.id}) }}" class="d-flex justify-content-between py-2 border-bottom text-decoration-none">
+                        <span class="text-black">{{ r.client.nomComplet }}<br><small class="text-muted">{{ r.client.ville }}</small></span>
+                        <span class="text-end text-primary font-w600">{{ r.datePrevue|date('d/m') }}<br><small class="text-muted">{{ r.datePrevue|date('H:i') }}</small></span>
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header border-0 pb-0">
+                <h4 class="card-title">Encaissements des 30 derniers jours ({{ app_devise }})</h4>
+            </div>
+            <div class="card-body">
+                <canvas id="chart-encaissements" height="80" aria-label="Encaissements des 30 derniers jours" role="img"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block vendor_javascripts %}
+    <script src="{{ asset('theme/vendor/chart.js/Chart.bundle.min.js') }}"></script>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+(function () {
+    const vert = '#00A15D', options = { legend: { display: false }, maintainAspectRatio: true, scales: { yAxes: [{ ticks: { beginAtZero: true, precision: 0 } }], xAxes: [{ gridLines: { display: false } }] } };
+    new Chart(document.getElementById('chart-mois'), {
+        type: 'bar',
+        data: { labels: {{ chartMois.labels|json_encode|raw }}, datasets: [{ label: 'Colis', data: {{ chartMois.data|json_encode|raw }}, backgroundColor: vert, borderRadius: 6, barPercentage: .55 }] },
+        options: options
+    });
+    new Chart(document.getElementById('chart-encaissements'), {
+        type: 'line',
+        data: { labels: {{ chartEncaissements.labels|json_encode|raw }}, datasets: [{ label: 'Encaissé', data: {{ chartEncaissements.data|json_encode|raw }}, borderColor: vert, backgroundColor: 'rgba(0,161,93,.12)', pointRadius: 2, lineTension: .35, fill: true }] },
+        options: options
+    });
+    new Chart(document.getElementById('chart-statuts'), {
+        type: 'doughnut',
+        data: {
+            labels: {{ statuts|map(s => s.label)|json_encode|raw }},
+            datasets: [{ data: {{ statuts|map(s => parStatut[s.value]|default(0))|json_encode|raw }}, backgroundColor: ['#FFAB2D', '#3e4954', '#58bad7', '#FF5E4B', '#00A15D', '#09BD3C'], borderWidth: 0 }]
+        },
+        options: { cutoutPercentage: 68, legend: { position: 'bottom', labels: { boxWidth: 12 } } }
+    });
+})();
+</script>
+{% endblock %}

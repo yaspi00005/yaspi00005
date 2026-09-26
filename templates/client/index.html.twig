@@ -1,0 +1,47 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Clients{% endblock %}
+
+{% block body %}
+<div class="card">
+    <div class="card-header flex-wrap gap-2">
+        <h4 class="card-title">{{ clients.total }} clients</h4>
+        <div class="d-flex gap-2 flex-wrap">
+            <form method="get" class="d-flex gap-2">
+                <input type="search" name="q" value="{{ q }}" class="form-control" placeholder="Nom, téléphone, ville…" aria-label="Rechercher un client">
+                <button class="btn btn-primary" aria-label="Rechercher"><i class="fas fa-search"></i></button>
+            </form>
+            <a href="{{ path('client_new') }}" class="btn btn-primary btn-rounded"><i class="fas fa-user-plus me-1"></i> Nouveau client</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead><tr><th>Client</th><th>Téléphone</th><th>Ville</th><th class="num">Colis</th><th class="num">Bonus</th><th></th></tr></thead>
+                <tbody>
+                {% for c in clients %}
+                    <tr>
+                        <td>
+                            <a href="{{ path('client_show', {id: c.id}) }}" class="d-flex align-items-center gap-2 text-black font-w600">
+                                <span class="avatar-initiales avatar-sm">{{ c.initiales }}</span> {{ c.nomComplet }}
+                            </a>
+                        </td>
+                        <td><a href="tel:{{ c.telephone }}">{{ c.telephone|tel }}</a>{% if c.email %}<br><small class="text-muted">{{ c.email }}</small>{% endif %}</td>
+                        <td>{{ c.ville }}{% if c.pays != 'France' %} <small class="text-muted">({{ c.pays }})</small>{% endif %}</td>
+                        <td class="num">{{ c.colis|length }}</td>
+                        <td class="num">{{ c.soldeBonus ? c.soldeBonus|money : '—' }}</td>
+                        <td class="text-end">
+                            <a href="{{ path('colis_new', {client: c.id}) }}" class="btn btn-primary light btn-xs" title="Nouveau colis pour ce client"><i class="fas fa-box"></i> Colis</a>
+                            <a href="{{ path('client_edit', {id: c.id}) }}" class="btn btn-primary shadow btn-xs sharp" title="Modifier" aria-label="Modifier"><i class="fas fa-pencil-alt"></i></a>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="6"><div class="empty-state"><i class="fas fa-users"></i>Aucun client trouvé.</div></td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% include 'partials/_pagination.html.twig' with {pagination: clients} %}
+    </div>
+</div>
+{% endblock %}

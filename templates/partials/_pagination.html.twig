@@ -1,0 +1,20 @@
+{# Paramètres : pagination (App\Util\Pagination) #}
+{% if pagination.pages > 1 %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-3">
+    <small class="text-muted">{{ pagination.premier }}–{{ pagination.dernier }} sur {{ pagination.total }}</small>
+    <nav aria-label="Pagination">
+        <ul class="pagination pagination-sm pagination-circle mb-0">
+            {% set params = app.request.query.all %}
+            <li class="page-item page-indicator {{ not pagination.aPrecedente ? 'disabled' }}">
+                <a class="page-link" href="?{{ params|merge({page: pagination.page - 1})|url_encode }}" aria-label="Précédent"><i class="la la-angle-left"></i></a>
+            </li>
+            {% for p in max(1, pagination.page - 2)..min(pagination.pages, pagination.page + 2) %}
+                <li class="page-item {{ p == pagination.page ? 'active' }}"><a class="page-link" href="?{{ params|merge({page: p})|url_encode }}">{{ p }}</a></li>
+            {% endfor %}
+            <li class="page-item page-indicator {{ not pagination.aSuivante ? 'disabled' }}">
+                <a class="page-link" href="?{{ params|merge({page: pagination.page + 1})|url_encode }}" aria-label="Suivant"><i class="la la-angle-right"></i></a>
+            </li>
+        </ul>
+    </nav>
+</div>
+{% endif %}

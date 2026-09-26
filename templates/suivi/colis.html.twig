@@ -1,0 +1,63 @@
+{% extends 'base_simple.html.twig' %}
+
+{% block title %}Colis {{ colis.numeroSuivi }} · {{ app_nom }}{% endblock %}
+{% block colonne %}col-md-8 col-lg-7{% endblock %}
+
+{% block body %}
+    <div class="text-center mb-4">
+        <div class="text-muted">Colis</div>
+        <h3 class="mb-1">{{ colis.numeroSuivi }}</h3>
+        {% include 'partials/_badge.html.twig' with {statut: colis.statut} %}
+    </div>
+
+    {% set etapes = [
+        {s: 'en_preparation', l: 'Reçu', i: 'fa-box'},
+        {s: 'expedie', l: 'Expédié', i: 'fa-plane-departure'},
+        {s: 'en_transit', l: 'En transit', i: 'fa-route'},
+        {s: 'arrive', l: 'Arrivé', i: 'fa-map-marker-alt'},
+        {s: 'recupere', l: 'Remis', i: 'fa-check'},
+    ] %}
+    {% set rangActuel = colis.statut.rang %}
+    <div class="suivi-etapes mb-4">
+        {% for e in etapes %}
+            {% set rang = enum('App\\Enum\\StatutColis').from(e.s).rang %}
+            <div class="etape {{ rang <= rangActuel ? 'faite' }}"><div class="rond"><i class="fas {{ e.i }}"></i></div>{{ e.l }}</div>
+        {% endfor %}
+    </div>
+    {% if colis.statut.value == 'retenu_douane' %}
+        <div class="alert alert-warning">Votre colis est actuellement retenu en douane. Nous vous tiendrons informé.</div>
+    {% endif %}
+
+    <div class="row g-3">
+        <div class="col-sm-6">
+            <div class="border rounded-3 p-3 h-100">
+                <div class="text-muted fs-13">Destinataire</div>
+                <div class="font-w600 text-black">{{ colis.destinataireNom }}</div>
+                {% if colis.expedition %}
+                    <div class="text-muted fs-13 mt-2">Destination</div>
+                    <div class="text-black">{{ colis.expedition.destination.label }} ({{ colis.expedition.destination.ville }})</div>
+                    <div class="text-muted fs-13 mt-2">{{ colis.expedition.modeTransport.label }} · départ {{ colis.expedition.dateDepart|date('d/m/Y') }}{% if colis.expedition.dateArriveePrevue %}, arrivée prévue {{ colis.expedition.dateArriveePrevue|date('d/m/Y') }}{% endif %}</div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-sm-6">
+            <div class="border rounded-3 p-3 h-100">
+                <div class="text-muted fs-13">Contenu</div>
+                <div class="text-black">{{ colis.nombreArticles }} article(s) · {{ colis.poidsTotal|poids }}</div>
+                <div class="text-muted fs-13 mt-2">Reste à payer</div>
+                <div class="fs-20 font-w700 {{ colis.montantRestant ? 'text-danger' : 'text-success' }}">{{ colis.montantRestant ? colis.montantRestant|money : 'Soldé ✔' }}</div>
+            </div>
+        </div>
+    </div>
+
+    <h5 class="mt-4">Historique</h5>
+    <ul class="timeline-statut">
+        {% for h in colis.historique|reverse %}
+            <li><span class="point"></span><strong>{{ h.statut.label }}</strong> <small class="text-muted">· {{ h.date|date('d/m/Y H:i') }}</small></li>
+        {% endfor %}
+    </ul>
+    {% if colis.statut.value == 'arrive' %}
+        <div class="alert alert-success mb-0">Votre colis vous attend à l'agence. Présentez-vous avec le <strong>code de retrait</strong> reçu par SMS et une pièce d'identité.</div>
+    {% endif %}
+    {% if app_telephone_agence %}<p class="text-center text-muted mt-3 mb-0">Une question ? {{ app_telephone_agence }}</p>{% endif %}
+{% endblock %}

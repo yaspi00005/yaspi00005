@@ -1,0 +1,74 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Planning des ramassages{% endblock %}
+
+{% block stylesheets %}
+    <link href="{{ asset('theme/vendor/fullcalendar/css/main.min.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block body %}
+<div class="row">
+    <div class="col-xl-9">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="card-title">Calendrier</h4>
+                <a href="{{ path('ramassage_new') }}" class="btn btn-primary btn-rounded btn-sm"><i class="fas fa-plus me-1"></i> Planifier un ramassage</a>
+            </div>
+            <div class="card-body">
+                <div id="calendrier" data-events="{{ path('ramassage_events') }}" data-token="{{ csrf_token('ramassage') }}" data-nouveau="{{ path('ramassage_new') }}"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3">
+        <div class="card">
+            <div class="card-header"><h4 class="card-title">À venir</h4></div>
+            <div class="card-body">
+                {% for r in aVenir %}
+                    <a href="{{ path('ramassage_edit', {id: r.id}) }}" class="d-block border-bottom py-2 text-decoration-none">
+                        <span class="d-flex justify-content-between"><strong class="text-black">{{ r.client.nomComplet }}</strong><span class="text-primary">{{ r.datePrevue|date('d/m H:i') }}</span></span>
+                        <small class="text-muted">{{ r.adresse ?: r.client.adresse }} {{ r.client.ville }}</small>
+                    </a>
+                {% else %}
+                    <p class="text-muted mb-0">Aucun ramassage prévu.</p>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-body">
+                {% for s in statuts %}<span class="badge badge-{{ s.badge }} me-1 mb-1">{{ s.label }}</span>{% endfor %}
+                <p class="fs-12 text-muted mt-2 mb-0">Cliquez sur un jour pour planifier, glissez un rendez-vous pour le déplacer.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block vendor_javascripts %}
+    <script src="{{ asset('theme/vendor/fullcalendar/js/main.min.js') }}"></script>
+    <script src="{{ asset('theme/vendor/fullcalendar/lib/fr.js') }}"></script>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const el = document.getElementById('calendrier');
+    const calendrier = new FullCalendar.Calendar(el, {
+        locale: 'fr',
+        initialView: window.innerWidth < 768 ? 'listWeek' : 'dayGridMonth',
+        headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,listWeek' },
+        events: el.dataset.events,
+        editable: true,
+        eventDurationEditable: false,
+        dateClick: info => { window.location = el.dataset.nouveau + '?date=' + encodeURIComponent(info.dateStr); },
+        eventDrop: function (info) {
+            fetch('{{ path('ramassage_index') }}/' + info.event.id + '/deplacer', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': el.dataset.token },
+                body: JSON.stringify({ start: info.event.start.toISOString() })
+            }).then(r => { if (!r.ok) { info.revert(); toastr.error('Déplacement impossible'); } else { toastr.success('Ramassage déplacé'); } });
+        }
+    });
+    calendrier.render();
+});
+</script>
+{% endblock %}

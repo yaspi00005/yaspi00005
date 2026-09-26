@@ -1,0 +1,27 @@
+parameters:
+    app.nom: '%env(APP_NOM)%'
+    app.devise: '%env(APP_DEVISE)%'
+    app.email_expediteur: '%env(APP_EMAIL_EXPEDITEUR)%'
+    app.telephone_agence: '%env(APP_TELEPHONE_AGENCE)%'
+    app.uploads_dir: '%kernel.project_dir%/var/uploads'
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        bind:
+            string $uploadsDir: '%app.uploads_dir%'
+            string $appNom: '%app.nom%'
+            string $emailExpediteur: '%app.email_expediteur%'
+
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Entity/'
+            - '../src/Enum/'
+            - '../src/Kernel.php'
+
+    App\Service\Sms\SmsSenderInterface:
+        factory: ['@App\Service\Sms\SmsSenderFactory', 'create']
+        arguments: ['%env(SMS_TRANSPORT)%']

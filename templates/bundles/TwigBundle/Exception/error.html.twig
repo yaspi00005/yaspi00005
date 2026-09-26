@@ -1,0 +1,20 @@
+{% extends 'base_simple.html.twig' %}
+
+{% block title %}Erreur {{ status_code }}{% endblock %}
+
+{% block body %}
+    <div class="text-center">
+        <h1 class="display-3 font-w700 text-primary">{{ status_code }}</h1>
+        {% if status_code == 404 %}
+            <h4 class="mb-3">Page introuvable</h4>
+            <p class="text-muted">La page ou l'élément demandé n'existe pas (ou plus).</p>
+        {% elseif status_code == 403 %}
+            <h4 class="mb-3">Accès refusé</h4>
+            <p class="text-muted">Vous n'avez pas les droits pour accéder à cette page.</p>
+        {% else %}
+            <h4 class="mb-3">Une erreur est survenue</h4>
+            <p class="text-muted">L'équipe technique a été prévenue. Réessayez dans un instant.</p>
+        {% endif %}
+        <a href="{{ path('app_accueil') }}" class="btn btn-primary">Retour à l'accueil</a>
+    </div>
+{% endblock %}

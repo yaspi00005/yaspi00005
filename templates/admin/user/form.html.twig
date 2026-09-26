@@ -1,0 +1,33 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ user.id ? 'Modifier ' ~ user.nomComplet : 'Nouvel utilisateur' }}{% endblock %}
+
+{% block body %}
+<div class="row justify-content-center">
+    <div class="col-xl-8">
+        <div class="card">
+            <div class="card-header"><h4 class="card-title">{{ block('title') }}</h4></div>
+            <div class="card-body">
+                {{ form_start(form) }}
+                <div class="row">
+                    <div class="col-md-6">{{ form_row(form.prenom) }}</div>
+                    <div class="col-md-6">{{ form_row(form.nom) }}</div>
+                    <div class="col-md-6">{{ form_row(form.username) }}</div>
+                    <div class="col-md-6">{{ form_row(form.email) }}</div>
+                    <div class="col-md-6">{{ form_row(form.telephone) }}</div>
+                    <div class="col-md-6">{{ form_row(form.pays) }}</div>
+                    <div class="col-12">{{ form_row(form.rolePrincipal) }}</div>
+                    <div class="col-md-6">{{ form_row(form.plainPassword.first) }}</div>
+                    <div class="col-md-6">{{ form_row(form.plainPassword.second) }}</div>
+                    <div class="col-12">{{ form_row(form.actif) }}</div>
+                </div>
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{{ path('admin_user_index') }}" class="btn btn-light">Annuler</a>
+                    <button class="btn btn-primary"><i class="fas fa-check me-1"></i> Enregistrer</button>
+                </div>
+                {{ form_end(form) }}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

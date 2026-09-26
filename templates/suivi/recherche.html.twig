@@ -1,0 +1,21 @@
+{% extends 'base_simple.html.twig' %}
+
+{% block title %}Suivre mon colis · {{ app_nom }}{% endblock %}
+
+{% block body %}
+    <h4 class="text-center mb-2">Suivre mon colis</h4>
+    <p class="text-center text-muted mb-4">Saisissez le numéro de suivi indiqué sur le reçu et votre numéro de téléphone.</p>
+    {% if erreur %}<div class="alert alert-danger">{{ erreur }}</div>{% endif %}
+    <form method="post">
+        <input type="hidden" name="_token" value="{{ csrf_token('suivi') }}">
+        <div class="mb-3">
+            <label class="form-label" for="numero"><strong>Numéro de suivi</strong></label>
+            <input type="text" id="numero" name="numero" value="{{ numero }}" class="form-control" placeholder="GS2609-0001" required>
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="telephone"><strong>Téléphone (expéditeur ou destinataire)</strong></label>
+            <input type="tel" id="telephone" name="telephone" class="form-control" required>
+        </div>
+        <button class="btn btn-primary w-100">Voir mon colis</button>
+    </form>
+{% endblock %}

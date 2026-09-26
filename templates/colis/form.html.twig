@@ -1,0 +1,74 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ colis.id ? 'Modifier le colis ' ~ colis.numeroSuivi : 'Nouveau colis' }}{% endblock %}
+
+{% block body %}
+{{ form_start(form, {attr: {novalidate: 'novalidate'}}) }}
+{% if nonce %}<input type="hidden" name="_nonce" value="{{ nonce }}">{% endif %}
+<datalist id="types-marchandises">
+    {% for t in types %}<option value="{{ t.nom }}"></option>{% endfor %}
+</datalist>
+
+{{ form_errors(form) }}
+
+<div class="row">
+    <div class="col-xl-5">
+        <div class="card">
+            <div class="card-header"><h4 class="card-title"><i class="fas fa-user text-primary me-2"></i>Expéditeur</h4></div>
+            <div class="card-body">
+                {{ form_row(form.client) }}
+                <a href="{{ path('client_new', {retour: 'colis'}) }}" class="btn btn-link px-0 btn-sm"><i class="fas fa-user-plus me-1"></i> Nouveau client</a>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header"><h4 class="card-title"><i class="fas fa-map-marker-alt text-primary me-2"></i>Destinataire</h4></div>
+            <div class="card-body">
+                {{ form_row(form.destinataireNom) }}
+                {{ form_row(form.destinataireTelephone) }}
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header"><h4 class="card-title"><i class="fas fa-shipping-fast text-primary me-2"></i>Envoi</h4></div>
+            <div class="card-body">
+                {{ form_row(form.expedition) }}
+                {{ form_row(form.typeExpedition) }}
+                {{ form_row(form.observations) }}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-7">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="card-title"><i class="fas fa-boxes text-primary me-2"></i>Articles</h4>
+                <button type="button" id="ajouter-article" class="btn btn-primary btn-sm btn-rounded"><i class="fas fa-plus me-1"></i> Ajouter un article</button>
+            </div>
+            <div class="card-body">
+                {{ form_errors(form.articles) }}
+                <div id="articles-liste"
+                     data-prototype="{{ include('colis/_article.html.twig', {f: form.articles.vars.prototype})|e('html_attr') }}"
+                     data-tarifs="{{ types|filter(t => t.prixUnitaire)|reduce((acc, t) => acc|merge({(t.nom|lower): t.prixUnitaire}), {})|json_encode }}">
+                    {% for f in form.articles %}
+                        {% include 'colis/_article.html.twig' with {f: f} %}
+                    {% endfor %}
+                </div>
+                {% do form.articles.setRendered() %}
+            </div>
+            <div class="card-footer total-colis bg-white">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                    <div class="d-flex gap-4">
+                        <div><small class="text-muted d-block">Articles</small><strong id="total-articles">0</strong></div>
+                        <div><small class="text-muted d-block">Poids total</small><strong><span id="total-poids">0,00</span> kg</strong></div>
+                        <div><small class="text-muted d-block">Montant</small><strong class="text-primary fs-20"><span id="total-prix">0,00</span> {{ app_devise }}</strong></div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="{{ colis.id ? path('colis_show', {id: colis.id}) : path('colis_index') }}" class="btn btn-light">Annuler</a>
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-check me-1"></i> {{ colis.id ? 'Enregistrer' : 'Enregistrer le colis' }}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{ form_end(form) }}
+{% endblock %}

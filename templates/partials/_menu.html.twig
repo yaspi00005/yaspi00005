@@ -1,0 +1,53 @@
+{% set route = app.request.attributes.get('_route') %}
+{% macro item(route_active, prefixes, url, icone, texte) %}
+    {% set actif = false %}
+    {% for p in prefixes %}{% if route_active starts with p %}{% set actif = true %}{% endif %}{% endfor %}
+    <li class="{{ actif ? 'mm-active' }}">
+        <a href="{{ url }}" class="{{ actif ? 'mm-active' }}" aria-expanded="false">
+            <i class="{{ icone }}"></i>
+            <span class="nav-text">{{ texte }}</span>
+        </a>
+    </li>
+{% endmacro %}
+{% import _self as m %}
+<div class="dlabnav">
+    <div class="dlabnav-scroll">
+        <ul class="metismenu" id="menu">
+            {{ m.item(route, ['app_accueil'], path('app_accueil'), 'fas fa-home', 'Tableau de bord') }}
+            {% if is_granted('ROLE_REPRESENTANT') %}
+                {{ m.item(route, ['agence_'], path('agence_guichet'), 'fas fa-qrcode', 'Guichet agence') }}
+            {% endif %}
+            {{ m.item(route, ['colis_'], path('colis_index'), 'fas fa-box-open', 'Colis') }}
+            {{ m.item(route, ['expedition_'], path('expedition_index'), 'fas fa-shipping-fast', 'Expéditions') }}
+            {% if is_granted('ROLE_RAMASSAGE') %}
+                {{ m.item(route, ['client_'], path('client_index'), 'fas fa-users', 'Clients') }}
+                {{ m.item(route, ['ramassage_'], path('ramassage_index'), 'fas fa-calendar-alt', 'Ramassages') }}
+            {% endif %}
+            {{ m.item(route, ['paiement_'], path('paiement_index'), 'fas fa-wallet', 'Paiements') }}
+            {% if is_granted('ROLE_ADMIN') %}
+                <li class="{{ route starts with 'admin_' ? 'mm-active' }}">
+                    <a class="has-arrow" href="javascript:void(0)" aria-expanded="{{ route starts with 'admin_' ? 'true' : 'false' }}">
+                        <i class="fas fa-cog"></i>
+                        <span class="nav-text">Administration</span>
+                    </a>
+                    <ul aria-expanded="false">
+                        <li><a href="{{ path('admin_user_index') }}" class="{{ route starts with 'admin_user' ? 'mm-active' }}">Utilisateurs</a></li>
+                        <li><a href="{{ path('admin_type_index') }}" class="{{ route starts with 'admin_type' ? 'mm-active' }}">Types de marchandises</a></li>
+                        <li><a href="{{ path('admin_notification_index') }}" class="{{ route starts with 'admin_notification' ? 'mm-active' }}">SMS &amp; e-mails envoyés</a></li>
+                    </ul>
+                </li>
+            {% endif %}
+        </ul>
+        {% if is_granted('ROLE_RAMASSAGE') %}
+        <div class="plus-box">
+            <div class="text-center">
+                <h4 class="fs-18 font-w600 mb-4">Un client vous confie un colis ?</h4>
+                <a href="{{ path('colis_new') }}" class="btn btn-primary btn-rounded">Enregistrer <i class="fas fa-caret-right"></i></a>
+            </div>
+        </div>
+        {% endif %}
+        <div class="copyright">
+            <p><strong>{{ app_nom }}</strong></p>
+        </div>
+    </div>
+</div>

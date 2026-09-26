@@ -1,0 +1,17 @@
+{# Paramètre : f (formulaire ArticleType) #}
+<div class="article-ligne">
+    <button type="button" class="btn btn-danger light btn-xs sharp btn-retirer" title="Retirer cet article" aria-label="Retirer cet article"><i class="fas fa-trash"></i></button>
+    <div class="fs-13 text-muted mb-2">Article n° <span class="numero-article"></span></div>
+    <div class="row g-2">
+        <div class="col-md-4">{{ form_row(f.typeMarchandise) }}</div>
+        <div class="col-6 col-md-2">{{ form_row(f.poidsVolume) }}</div>
+        <div class="col-6 col-md-2">{{ form_row(f.prix) }}</div>
+        <div class="col-md-4">{{ form_row(f.observations) }}</div>
+        <div class="col-md-6">
+            {{ form_row(f.photoFile) }}
+            {% if f.vars.data and f.vars.data.photo and f.vars.data.id %}
+                <img src="{{ path('article_photo', {id: f.vars.data.id}) }}" class="photo-apercu mt-2" alt="Photo actuelle">
+            {% endif %}
+        </div>
+    </div>
+</div>

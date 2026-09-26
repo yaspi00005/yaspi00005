@@ -1,0 +1,16 @@
+# Base MySQL pour le développement local : « docker compose up -d »
+services:
+  database:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: gesco_v2
+      MYSQL_USER: gesco
+      MYSQL_PASSWORD: changer_moi
+      MYSQL_ROOT_PASSWORD: changer_moi_root
+    ports:
+      - "3306:3306"
+    volumes:
+      - database_data:/var/lib/mysql
+
+volumes:
+  database_data:

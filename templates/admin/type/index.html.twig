@@ -1,0 +1,42 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Types de marchandises{% endblock %}
+
+{% block body %}
+<div class="row">
+    <div class="col-xl-8">
+        <div class="card">
+            <div class="card-header"><h4 class="card-title">{{ types|length }} types</h4></div>
+            <div class="card-body pt-0">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead><tr><th>Nom</th><th class="num">Tarif / kg</th><th>Saisie</th><th></th></tr></thead>
+                        <tbody>
+                        {% for t in types %}
+                            <tr>
+                                <td class="font-w600">{{ t.nom }}</td>
+                                <td class="num">{{ t.prixUnitaire is not null ? t.prixUnitaire|money : '—' }}</td>
+                                <td><span class="badge light badge-{{ t.actif ? 'success' : 'dark' }}">{{ t.actif ? 'Proposé' : 'Masqué' }}</span></td>
+                                <td class="text-end"><a href="{{ path('admin_type_edit', {id: t.id}) }}" class="btn btn-primary shadow btn-xs sharp" title="Modifier" aria-label="Modifier"><i class="fas fa-pencil-alt"></i></a></td>
+                            </tr>
+                        {% else %}
+                            <tr><td colspan="4"><div class="empty-state"><i class="fas fa-tags"></i>Aucun type défini.</div></td></tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4">
+        <div class="card">
+            <div class="card-header"><h4 class="card-title">Ajouter un type</h4></div>
+            <div class="card-body">
+                {{ form_start(form) }}{{ form_rest(form) }}
+                <button class="btn btn-primary w-100">Ajouter</button>
+                {{ form_end(form) }}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

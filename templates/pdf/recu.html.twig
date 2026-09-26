@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<style>
+    @page { margin: 28px 32px; }
+    body { font-family: 'DejaVu Sans', sans-serif; font-size: 11px; color: #222; }
+    .vert { color: #00A15D; }
+    h1 { font-size: 20px; margin: 0; }
+    table { width: 100%; border-collapse: collapse; }
+    .entete td { vertical-align: top; }
+    .bloc { border: 1px solid #ddd; border-radius: 6px; padding: 8px 10px; }
+    .titre { font-size: 9px; text-transform: uppercase; color: #777; letter-spacing: .5px; margin-bottom: 3px; }
+    .articles th { background: #00A15D; color: #fff; padding: 6px; text-align: left; font-size: 10px; }
+    .articles td { border-bottom: 1px solid #eee; padding: 6px; }
+    .num { text-align: right; white-space: nowrap; }
+    .totaux td { padding: 4px 6px; }
+    .code { font-size: 22px; font-weight: bold; letter-spacing: 4px; }
+    .photos img { width: 120px; height: 120px; object-fit: cover; border-radius: 4px; }
+    .petit { font-size: 9px; color: #777; }
+</style>
+</head>
+<body>
+<table class="entete">
+    <tr>
+        <td>
+            <h1 class="vert">{{ app_nom }}</h1>
+            <div class="petit">Reçu de dépôt de colis{% if app_telephone_agence %} · {{ app_telephone_agence }}{% endif %}</div>
+        </td>
+        <td style="text-align:right">
+            <div class="titre">N° de suivi</div>
+            <div style="font-size:18px;font-weight:bold">{{ colis.numeroSuivi }}</div>
+            <div class="petit">Déposé le {{ colis.dateReception|date('d/m/Y à H:i') }}</div>
+        </td>
+    </tr>
+</table>
+<br>
+<table>
+    <tr>
+        <td style="width:37%;padding-right:8px;vertical-align:top">
+            <div class="bloc">
+                <div class="titre">Expéditeur</div>
+                <strong>{{ colis.client.nomComplet }}</strong><br>
+                {{ colis.client.telephone }}<br>
+                {{ colis.client.adresse }} {{ colis.client.codePostal }} {{ colis.client.ville }}
+            </div>
+        </td>
+        <td style="width:37%;padding-right:8px;vertical-align:top">
+            <div class="bloc">
+                <div class="titre">Destinataire</div>
+                <strong>{{ colis.destinataireNom }}</strong><br>
+                {{ colis.destinataireTelephone }}<br>
+                {% if colis.expedition %}{{ colis.expedition.destination.label }} — {{ colis.expedition.modeTransport.label }}, départ {{ colis.expedition.dateDepart|date('d/m/Y') }}{% endif %}
+            </div>
+        </td>
+        <td style="width:26%;text-align:center;vertical-align:top">
+            <img src="{{ qr }}" style="width:110px;height:110px" alt="QR">
+            <div class="petit">Scannez pour suivre le colis</div>
+        </td>
+    </tr>
+</table>
+<br>
+<table class="articles">
+    <thead><tr><th>#</th><th>Marchandise</th><th>Observations</th><th class="num">Poids</th><th class="num">Prix</th></tr></thead>
+    <tbody>
+    {% for a in colis.articles %}
+        <tr><td>{{ loop.index }}</td><td>{{ a.typeMarchandise }}</td><td>{{ a.observations }}</td><td class="num">{{ a.poidsVolume|poids }}</td><td class="num">{{ a.prix|money }}</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+<br>
+<table>
+    <tr>
+        <td style="width:55%;vertical-align:top">
+            <div class="bloc" style="text-align:center">
+                <div class="titre">Code de retrait à présenter à l'agence</div>
+                <div class="code vert">{{ colis.codeRetrait }}</div>
+                <div class="petit">Ne communiquez ce code qu'au destinataire du colis.</div>
+            </div>
+            <p class="petit">Suivi en ligne : {{ lien }}</p>
+        </td>
+        <td style="width:45%;vertical-align:top;padding-left:10px">
+            <table class="totaux">
+                <tr><td>Poids total</td><td class="num">{{ colis.poidsTotal|poids }}</td></tr>
+                <tr><td>Tarif</td><td class="num">{{ colis.frais|money }}</td></tr>
+                {% if colis.remise %}<tr><td>Remises</td><td class="num">− {{ colis.remise|money }}</td></tr>{% endif %}
+                <tr><td>Déjà payé</td><td class="num">{{ colis.montantPaye|money }}</td></tr>
+                <tr><td style="font-size:14px"><strong>Reste à payer</strong></td><td class="num" style="font-size:14px"><strong>{{ colis.montantRestant|money }}</strong></td></tr>
+            </table>
+        </td>
+    </tr>
+</table>
+{% if photos %}
+<br>
+<div class="titre">Photos des articles</div>
+<table class="photos"><tr>
+    {% for p in photos|slice(0, 4) %}
+        <td style="width:25%;text-align:center;vertical-align:top"><img src="{{ p.uri }}" alt=""><div class="petit">{{ p.legende }}</div></td>
+    {% endfor %}
+</tr></table>
+{% endif %}
+<br>
+<table><tr>
+    <td class="petit" style="width:50%">Signature de l'agent : {{ colis.agent ? colis.agent.nomComplet }}<br><br>______________________</td>
+    <td class="petit" style="width:50%;text-align:right">Signature du client<br><br>______________________</td>
+</tr></table>
+</body>
+</html>

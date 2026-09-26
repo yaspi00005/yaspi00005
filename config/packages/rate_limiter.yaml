@@ -1,0 +1,6 @@
+framework:
+    rate_limiter:
+        suivi:
+            policy: sliding_window
+            limit: 20
+            interval: '10 minutes'
