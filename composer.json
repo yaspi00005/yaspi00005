@@ -7,11 +7,11 @@
         "php": ">=8.2",
         "ext-ctype": "*",
         "ext-iconv": "*",
-        "doctrine/doctrine-bundle": "^3.3",
-        "doctrine/doctrine-migrations-bundle": "^4.0",
+        "doctrine/doctrine-bundle": "^2.13 || ^3.0",
+        "doctrine/doctrine-migrations-bundle": "^3.4 || ^4.0",
         "doctrine/orm": "^3.7",
         "dompdf/dompdf": "^3.1",
-        "endroid/qr-code": "^6.1",
+        "endroid/qr-code": "^6.0",
         "minishlink/web-push": "^11.0",
         "nyholm/psr7": "^1.8",
         "symfony/asset": "7.4.*",
@@ -24,7 +24,7 @@
         "symfony/http-client": "7.4.*",
         "symfony/intl": "7.4.*",
         "symfony/mailer": "7.4.*",
-        "symfony/monolog-bundle": "^4.1",
+        "symfony/monolog-bundle": "^3.10 || ^4.0",
         "symfony/notifier": "7.4.*",
         "symfony/rate-limiter": "7.4.*",
         "symfony/runtime": "7.4.*",
@@ -40,8 +40,8 @@
         "twig/string-extra": "^3.24"
     },
     "require-dev": {
-        "doctrine/doctrine-fixtures-bundle": "^4.3",
-        "phpunit/phpunit": "^13.3",
+        "doctrine/doctrine-fixtures-bundle": "^4.0",
+        "phpunit/phpunit": "^11.5",
         "symfony/browser-kit": "7.4.*",
         "symfony/css-selector": "7.4.*",
         "symfony/debug-bundle": "7.4.*",
@@ -54,8 +54,11 @@
             "symfony/flex": true,
             "symfony/runtime": true
         },
-        "bump-after-update": true,
-        "sort-packages": true
+        "bump-after-update": false,
+        "sort-packages": true,
+        "platform": {
+            "php": "8.2.28"
+        }
     },
     "autoload": {
         "psr-4": {

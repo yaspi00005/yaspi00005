@@ -1,0 +1,11 @@
+# Hébergement mutualisé : si le domaine pointe sur le dossier du projet (et non sur public/),
+# toutes les requêtes sont envoyées vers public/. Le code, .env, var/… restent inaccessibles.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^$ public/ [L]
+    RewriteRule (.*) public/$1 [L]
+</IfModule>
+
+<IfModule !mod_rewrite.c>
+    Require all denied
+</IfModule>
