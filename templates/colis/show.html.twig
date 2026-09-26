@@ -139,8 +139,11 @@
                 <div class="d-flex justify-content-between mb-2"><span>Déjà payé</span><strong class="text-success">{{ colis.montantPaye|money }}</strong></div>
                 <hr>
                 <div class="d-flex justify-content-between align-items-center"><span class="fs-18">Reste à payer</span><strong class="fs-24 {{ colis.montantRestant ? 'text-danger' : 'text-success' }}">{{ colis.montantRestant|money }}</strong></div>
-                {% if colis.client.soldeBonus > 0 %}
-                    <div class="alert alert-info mt-3 mb-0 py-2">Bonus fidélité disponible : <strong>{{ colis.client.soldeBonus|money }}</strong></div>
+                {% if bonusGagne > 0 %}
+                    <div class="alert alert-success mt-3 mb-0 py-2"><i class="fas fa-gift me-1"></i> Ce colis rapporte <strong>{{ bonusGagne|money }}</strong> de bonus fidélité au client.</div>
+                {% endif %}
+                {% if bonusDisponible > 0 %}
+                    <div class="alert alert-info mt-2 mb-0 py-2">Bonus utilisable sur ce colis : <strong>{{ bonusDisponible|money }}</strong></div>
                 {% endif %}
 
                 {% if is_granted('ROLE_ADMIN') %}
@@ -170,10 +173,10 @@
                     {{ form_row(encaissement.commentaire) }}
                     <button class="btn btn-primary w-100"><i class="fas fa-check me-1"></i> Enregistrer le paiement</button>
                 {{ form_end(encaissement) }}
-                {% if colis.client.soldeBonus > 0 %}
+                {% if bonusDisponible > 0 %}
                 <form method="post" action="{{ path('colis_bonus', {id: colis.id}) }}" class="mt-2" data-confirm="Utiliser le bonus fidélité du client sur ce colis ?">
                     <input type="hidden" name="_token" value="{{ csrf_token('bonus-colis-' ~ colis.id) }}">
-                    <button class="btn btn-outline-info w-100"><i class="fas fa-gift me-1"></i> Utiliser le bonus ({{ min(colis.client.soldeBonus, colis.montantRestant)|money }})</button>
+                    <button class="btn btn-outline-info w-100"><i class="fas fa-gift me-1"></i> Utiliser le bonus ({{ bonusDisponible|money }})</button>
                 </form>
                 {% endif %}
             </div>

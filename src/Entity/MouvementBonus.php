@@ -28,6 +28,10 @@ class MouvementBonus
     #[ORM\Column(length: 255)]
     private string $libelle = '';
 
+    /** Bonus gagné grâce à un colis (barème fidélité), recalculé si le colis change. */
+    #[ORM\Column(options: ['default' => false])]
+    private bool $gainColis = false;
+
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(onDelete: 'SET NULL')]
     private ?Colis $colis = null;
@@ -86,6 +90,18 @@ class MouvementBonus
     public function setLibelle(string $libelle): static
     {
         $this->libelle = $libelle;
+
+        return $this;
+    }
+
+    public function isGainColis(): bool
+    {
+        return $this->gainColis;
+    }
+
+    public function setGainColis(bool $gainColis): static
+    {
+        $this->gainColis = $gainColis;
 
         return $this;
     }

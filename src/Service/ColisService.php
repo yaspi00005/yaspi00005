@@ -14,6 +14,7 @@ final class ColisService
         private readonly EntityManagerInterface $em,
         private readonly Numerotation $numerotation,
         private readonly NotificationService $notifications,
+        private readonly BonusFidelite $bonus,
     ) {
     }
 
@@ -30,6 +31,7 @@ final class ColisService
 
         $this->em->persist($colis);
         $this->em->flush();
+        $this->bonus->synchroniser($colis);
 
         $this->notifications->colisEnregistre($colis);
 
@@ -41,6 +43,16 @@ final class ColisService
     {
         $colis->setFrais($colis->getTotalArticles());
         $colis->rafraichirStatutPaiement();
+    }
+
+    /** À appeler après modification des articles d'un colis. */
+    public function apresModification(Colis $colis): void
+    {
+        if (0 === $colis->getMontantPaye() && 0 === $colis->getRemise()) {
+            $this->recalculerFrais($colis);
+        }
+        $this->em->flush();
+        $this->bonus->synchroniser($colis);
     }
 
     public function changerStatut(Colis $colis, StatutColis $statut, ?User $auteur, ?string $commentaire = null, bool $notifier = true): bool
@@ -93,6 +105,7 @@ final class ColisService
         if (!$colis->isSupprimable()) {
             throw new \DomainException('Seuls les colis en préparation sans paiement peuvent être supprimés.');
         }
+        $this->bonus->annulerGain($colis);
         $this->em->remove($colis);
         $this->em->flush();
     }

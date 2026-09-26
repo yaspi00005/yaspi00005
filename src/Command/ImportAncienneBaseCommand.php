@@ -92,6 +92,7 @@ final class ImportAncienneBaseCommand extends Command
             $this->importerColis($input->getOption('photos'));
             $this->importerPaiements();
             $this->finaliserColis();
+            $this->importerBonus();
             $this->importerRamassages();
             $this->em->flush();
 
@@ -303,6 +304,46 @@ final class ImportAncienneBaseCommand extends Command
                 $colis->setFrais($colis->getRemise() + $paye);
             }
             $colis->rafraichirStatutPaiement();
+        }
+    }
+
+    /**
+     * Les lignes de « bases_sahel » deviennent les bonus gagnés par colis. Le solde du client reste celui
+     * de l'ancienne application (clients.sahel) : l'écart éventuel est inscrit comme une ligne d'ajustement.
+     */
+    private function importerBonus(): void
+    {
+        $gains = [];
+        foreach ($this->ancienne->fetchAllAssociative('SELECT * FROM bases_sahel ORDER BY id') as $r) {
+            $colis = $this->map['colis'][(int) $r['colis_id']] ?? null;
+            $montant = max(0, (int) $r['sahel']) * 100;
+            if (!$colis || 0 === $montant) {
+                continue;
+            }
+            $client = $colis->getClient();
+            $mouvement = (new MouvementBonus())->setMontant($montant)->setGainColis(true)->setColis($colis)
+                ->setLibelle('Bonus fidélité — colis '.$colis->getNumeroSuivi())
+                ->setCreatedAt($this->date($r['date_operations']) ?? $colis->getDateReception());
+            $client->addMouvementBonus($mouvement);
+            $this->em->persist($mouvement);
+            $gains[spl_object_id($client)] = [$client, ($gains[spl_object_id($client)][1] ?? 0) + $montant];
+        }
+
+        foreach ($gains as [$client, $total]) {
+            // Le mouvement « Solde repris » créé avec le client est remplacé par l'ajustement.
+            foreach ($client->getMouvementsBonus() as $m) {
+                if (!$m->isGainColis() && str_starts_with($m->getLibelle(), 'Solde repris')) {
+                    $client->getMouvementsBonus()->removeElement($m);
+                    $this->em->remove($m);
+                }
+            }
+            $ecart = $client->getSoldeBonus() - $total;
+            if (0 !== $ecart) {
+                $ajustement = (new MouvementBonus())->setMontant($ecart)
+                    ->setLibelle($ecart < 0 ? "Bonus déjà utilisé (ancienne application)" : "Ajustement repris de l'ancienne application");
+                $client->addMouvementBonus($ajustement);
+                $this->em->persist($ajustement);
+            }
         }
     }
 

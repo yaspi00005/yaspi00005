@@ -14,7 +14,7 @@ final class Version20260926172722 extends AbstractMigration
 {
     public function getDescription(): string
     {
-        return '';
+        return 'Schéma initial SOTRAMA v2';
     }
 
     public function up(Schema $schema): void

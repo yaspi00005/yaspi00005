@@ -16,6 +16,7 @@ final class DocumentService
         private readonly Environment $twig,
         private readonly NotificationService $notifications,
         private readonly PhotoUploader $photos,
+        private readonly BonusFidelite $bonus,
     ) {
     }
 
@@ -43,6 +44,7 @@ final class DocumentService
             'qr' => $this->qrCodeColis($colis),
             'photos' => $photos,
             'lien' => $this->notifications->lienSuivi($colis),
+            'bonusGagne' => $this->bonus->gainDuColis($colis)?->getMontant() ?? 0,
         ]);
 
         $options = new Options();

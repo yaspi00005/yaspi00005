@@ -16,8 +16,10 @@ use Doctrine\ORM\EntityManagerInterface;
  */
 final class PaiementService
 {
-    public function __construct(private readonly EntityManagerInterface $em)
-    {
+    public function __construct(
+        private readonly EntityManagerInterface $em,
+        private readonly BonusFidelite $bonus,
+    ) {
     }
 
     public function encaisser(
@@ -74,7 +76,7 @@ final class PaiementService
     public function appliquerBonus(Colis $colis, ?User $caissier): int
     {
         $client = $colis->getClient();
-        $montant = min($client->getSoldeBonus(), $colis->getMontantRestant());
+        $montant = min($this->bonus->disponiblePour($colis), $colis->getMontantRestant());
         if ($montant <= 0) {
             throw new \DomainException('Aucun bonus applicable sur ce colis.');
         }

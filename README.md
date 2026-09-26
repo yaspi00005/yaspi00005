@@ -23,6 +23,24 @@ avec l'interface du thème **Workload** (ThemeForest).
 
 Rôles : **Administrateur**, **Agent de ramassage** (France), **Représentant** (agence, rattaché à un pays).
 
+### Bonus fidélité
+
+Chaque colis rapporte au client un bonus selon le total de ses articles (reprise du trigger
+`bases_sahel` de l'ancienne application, voir `src/Service/BonusFidelite.php`) :
+
+| Total des articles | Bonus | | Total des articles | Bonus |
+|---|---|---|---|---|
+| 200 – 299,99 € | 10 € | | 900 – 999,99 € | 70 € |
+| 300 – 399,99 € | 15 € | | 1 000 – 1 099,99 € | 80 € |
+| 400 – 499,99 € | 20 € | | 1 100 – 1 199,99 € | 90 € |
+| 500 – 599,99 € | 30 € | | 1 200 – 1 299,99 € | 100 € |
+| 600 – 699,99 € | 40 € | | 1 300 – 1 399,99 € | 110 € |
+| 700 – 799,99 € | 50 € | | 1 400 – 1 499,99 € | 120 € |
+| 800 – 899,99 € | 60 € | | 1 500 € et plus | 150 € |
+
+Le bonus est recalculé si les articles changent et retiré si le colis est supprimé. Il est utilisable
+sur les colis suivants (pas sur celui qui l'a rapporté) et figure sur le reçu.
+
 ### Améliorations par rapport à l'ancienne version
 
 - Montants stockés en centimes, calculs centralisés (`PaiementService`) : plus de sur-encaissement possible, remises et bonus cohérents, annulation d'un paiement qui restitue le bonus.

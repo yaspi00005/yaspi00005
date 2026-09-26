@@ -15,6 +15,7 @@ use App\Repository\ExpeditionRepository;
 use App\Repository\TypeMarchandiseRepository;
 use App\Security\ColisVoter;
 use App\Security\IdChiffreur;
+use App\Service\BonusFidelite;
 use App\Service\ColisService;
 use App\Service\DocumentService;
 use App\Service\PaiementService;
@@ -128,7 +129,7 @@ class ColisController extends AbstractController
     }
 
     #[Route('/{id}', name: 'colis_show', requirements: ['id' => self::ID], methods: ['GET'])]
-    public function show(Colis $colis, DocumentService $documents): Response
+    public function show(Colis $colis, DocumentService $documents, BonusFidelite $bonus): Response
     {
         $this->denyAccessUnlessGranted(ColisVoter::VOIR, $colis);
 
@@ -143,6 +144,8 @@ class ColisController extends AbstractController
             'colis' => $colis,
             'qr' => $documents->qrCodeColis($colis),
             'encaissement' => $encaissement,
+            'bonusDisponible' => min($bonus->disponiblePour($colis), $colis->getMontantRestant()),
+            'bonusGagne' => $bonus->gainDuColis($colis)?->getMontant() ?? 0,
             'statuts' => array_filter(StatutColis::cases(), fn (StatutColis $s) => StatutColis::Recupere !== $s),
         ]);
     }
@@ -164,10 +167,7 @@ class ColisController extends AbstractController
 
                 return $this->renderForm($form, $colis, $types, null);
             }
-            if (0 === $colis->getMontantPaye() && 0 === $colis->getRemise()) {
-                $this->colisService->recalculerFrais($colis);
-            }
-            $em->flush();
+            $this->colisService->apresModification($colis);
             $restantes = array_filter($colis->getArticles()->map(fn ($a) => $a->getPhoto())->toArray());
             foreach (array_diff($anciennesPhotos, $restantes) as $photo) {
                 $this->photos->supprimer($photo);

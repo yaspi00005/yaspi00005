@@ -78,6 +78,13 @@
                 <div class="petit">Ne communiquez ce code qu'au destinataire du colis.</div>
             </div>
             <p class="petit">Suivi en ligne : {{ lien }}</p>
+            {% if bonusGagne > 0 or colis.client.soldeBonus > 0 %}
+            <div class="bloc" style="margin-top:6px">
+                <div class="titre">Bonus fidélité</div>
+                {% if bonusGagne > 0 %}Ce colis vous rapporte <strong class="vert">{{ bonusGagne|money }}</strong>.<br>{% endif %}
+                Vous avez cumulé <strong>{{ colis.client.soldeBonus|money }}</strong> de bonus, déductibles de vos prochains envois.
+            </div>
+            {% endif %}
         </td>
         <td style="width:45%;vertical-align:top;padding-left:10px">
             <table class="totaux">
