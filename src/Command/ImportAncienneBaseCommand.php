@@ -148,7 +148,7 @@ final class ImportAncienneBaseCommand extends Command
             if (User::ROLE_REPRESENTANT === $role) {
                 $user->setPays(\in_array('ROLE_SENEGAL', $roles, true) ? Destination::Senegal : Destination::Mali);
             }
-            $this->em->persist($user);
+            $this->enregistrer($user);
             $this->map['user'][(int) $r['id']] = $user;
         }
         $this->em->flush();
@@ -158,8 +158,9 @@ final class ImportAncienneBaseCommand extends Command
     {
         $existants = array_map(fn (TypeMarchandise $t) => mb_strtolower($t->getNom()), $this->em->getRepository(TypeMarchandise::class)->findAll());
         foreach ($this->ancienne->fetchFirstColumn('SELECT DISTINCT TRIM(nom) FROM type_marchandises WHERE nom <> \'\'') as $nom) {
+            $nom = mb_substr($nom, 0, 100);
             if (!\in_array(mb_strtolower($nom), $existants, true)) {
-                $this->em->persist((new TypeMarchandise())->setNom($nom));
+                $this->enregistrer((new TypeMarchandise())->setNom($nom));
                 $existants[] = mb_strtolower($nom);
             }
         }
@@ -170,7 +171,8 @@ final class ImportAncienneBaseCommand extends Command
         foreach ($this->ancienne->fetchAllAssociative('SELECT * FROM clients ORDER BY id') as $r) {
             $client = (new Client())
                 ->setNom($r['nom'] ?: '—')->setPrenom($r['prenom'] ?: '—')
-                ->setTelephone($r['telephone'] ?: '—')
+                ->setTelephone($this->premierTelephone($r['telephone']) ?: '—')
+                ->setNotes($this->autresTelephones($r['telephone']))
                 ->setEmail($r['email'] ?: null)
                 ->setAdresse($r['adresse'] ?: null)->setVille($r['ville'] ?: null)->setCodePostal($r['code_postal'] ?: null)
                 ->setPays(trim((string) $r['pays']) ?: 'France');
@@ -180,9 +182,9 @@ final class ImportAncienneBaseCommand extends Command
                 $client->setSoldeBonus($solde);
                 $mouvement = (new MouvementBonus())->setMontant($solde)->setLibelle("Solde repris de l'ancienne application");
                 $client->addMouvementBonus($mouvement);
-                $this->em->persist($mouvement);
+                $this->enregistrer($mouvement);
             }
-            $this->em->persist($client);
+            $this->enregistrer($client);
             $this->map['client'][(int) $r['id']] = $client;
         }
         $this->em->flush();
@@ -201,7 +203,7 @@ final class ImportAncienneBaseCommand extends Command
                 ->setDateDepart($this->date($r['date_expeditions']) ?? new \DateTimeImmutable('2000-01-01'))
                 ->setDateArrivee($this->date($r['date_arrive']))
                 ->setStatut($this->statutExpedition($r['statut']));
-            $this->em->persist($expedition);
+            $this->enregistrer($expedition);
             $this->map['expedition'][(int) $r['id']] = $expedition;
         }
         $this->em->flush();
@@ -235,7 +237,8 @@ final class ImportAncienneBaseCommand extends Command
                 ->setToken($this->numerotation->token())
                 ->setClient($client)
                 ->setDestinataireNom(trim((string) $r['destinateurs_nom']) ?: '—')
-                ->setDestinataireTelephone(trim((string) $r['destinateurs_telephones']) ?: '—')
+                ->setDestinataireTelephone($this->premierTelephone($r['destinateurs_telephones']) ?: '—')
+                ->setObservations($this->autresTelephones($r['destinateurs_telephones']))
                 ->setExpedition($this->map['expedition'][(int) $r['expeditions_id']] ?? null)
                 ->setAgent($this->map['user'][(int) $r['expediteurs_id']] ?? null)
                 ->setTypeExpedition(str_contains($this->normaliser($r['type_expeditions']), 'express') ? TypeExpedition::Express : TypeExpedition::Standard)
@@ -258,7 +261,7 @@ final class ImportAncienneBaseCommand extends Command
             $colis->addHistorique((new HistoriqueStatut($colis->getStatut(), null, 'Repris de l\'ancienne application'))
                 ->setDate($this->date($r['date_update']) ?? $reception));
 
-            $this->em->persist($colis);
+            $this->enregistrer($colis);
             $this->map['colis'][(int) $r['id']] = $colis;
             if (0 === $i % 200) {
                 $this->em->flush();
@@ -283,7 +286,7 @@ final class ImportAncienneBaseCommand extends Command
                 ->setDate($this->date($r['date_paiements']) ?? $colis->getDateReception())
                 ->setCaissier($this->map['user'][(int) $r['caissier_id']] ?? null);
             $colis->getPaiements()->add($paiement);
-            $this->em->persist($paiement);
+            $this->enregistrer($paiement);
         }
     }
 
@@ -322,7 +325,7 @@ final class ImportAncienneBaseCommand extends Command
                 ->setLibelle('Bonus fidélité — colis '.$colis->getNumeroSuivi())
                 ->setCreatedAt($this->date($r['date_operations']) ?? $colis->getDateReception());
             $client->addMouvementBonus($mouvement);
-            $this->em->persist($mouvement);
+            $this->enregistrer($mouvement);
             $gains[spl_object_id($client)] = [$client, ($gains[spl_object_id($client)][1] ?? 0) + $montant];
         }
 
@@ -339,7 +342,7 @@ final class ImportAncienneBaseCommand extends Command
                 $ajustement = (new MouvementBonus())->setMontant($ecart)
                     ->setLibelle($ecart < 0 ? "Bonus déjà utilisé (ancienne application)" : "Ajustement repris de l'ancienne application");
                 $client->addMouvementBonus($ajustement);
-                $this->em->persist($ajustement);
+                $this->enregistrer($ajustement);
             }
         }
     }
@@ -352,7 +355,7 @@ final class ImportAncienneBaseCommand extends Command
                 continue;
             }
             $statut = $this->normaliser($r['statut']);
-            $this->em->persist((new Ramassage())
+            $this->enregistrer((new Ramassage())
                 ->setClient($client)
                 ->setDatePrevue($this->date($r['date_ramassages']))
                 ->setCommentaire($r['commentaires'] ?: null)
@@ -407,6 +410,56 @@ final class ImportAncienneBaseCommand extends Command
             str_contains($s, 'vir') => ModePaiement::Virement,
             default => ModePaiement::Especes,
         };
+    }
+
+    /** Premier numéro d'un champ qui en contient parfois plusieurs (« 76 11 22 33 / 66 44 55 77 »). */
+    private function premierTelephone(?string $valeur): string
+    {
+        $valeur = trim((string) $valeur);
+        if (mb_strlen($valeur) <= 30) {
+            return $valeur;
+        }
+
+        return trim(preg_split('#\s*(?:/|,|;|\||\bet\b|\bou\b)\s*#iu', $valeur)[0]);
+    }
+
+    /** Le champ complet, gardé en note quand il contenait plusieurs numéros. */
+    private function autresTelephones(?string $valeur): ?string
+    {
+        $valeur = trim((string) $valeur);
+
+        return mb_strlen($valeur) > 30 ? 'Téléphones (ancienne application) : '.$valeur : null;
+    }
+
+    /**
+     * Enregistre une entité en coupant les textes trop longs pour leur colonne (l'ancienne base
+     * acceptait 255 caractères ou plus là où la nouvelle en prévoit moins), avec un avertissement.
+     */
+    private function enregistrer(object $entite): void
+    {
+        $this->couperTextes($entite);
+        if ($entite instanceof Colis) {
+            array_map($this->couperTextes(...), [...$entite->getArticles()->toArray(), ...$entite->getHistorique()->toArray()]);
+        }
+        $this->em->persist($entite);
+    }
+
+    private function couperTextes(object $entite): void
+    {
+        $meta = $this->em->getClassMetadata($entite::class);
+        foreach ($meta->getFieldNames() as $champ) {
+            $mapping = $meta->getFieldMapping($champ);
+            $longueur = $mapping->length ?? null;
+            if ('string' !== $mapping->type || !$longueur || isset($mapping->enumType)) {
+                continue;
+            }
+            $valeur = $meta->getFieldValue($entite, $champ);
+            if (\is_string($valeur) && mb_strlen($valeur) > $longueur) {
+                $meta->setFieldValue($entite, $champ, rtrim(mb_substr($valeur, 0, $longueur)));
+                $nomCourt = (new \ReflectionClass($entite))->getShortName();
+                $this->avertissements[] = "$nomCourt, champ « $champ » trop long ($longueur caractères max) : « ".mb_substr($valeur, 0, 60).(mb_strlen($valeur) > 60 ? '…' : '').' » a été raccourci.';
+            }
+        }
     }
 
     /**
