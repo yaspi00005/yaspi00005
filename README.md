@@ -117,6 +117,23 @@ sur l'ordinateur ou le téléphone où il veut les recevoir ; *Mon profil* perme
 - L'extension PHP `gmp` est recommandée (calculs plus rapides), mais pas obligatoire.
 - Les envois (e-mail et navigateur) apparaissent dans *Administration → SMS & e-mails envoyés*.
 
+## Rapports d'activité (e-mail + PDF)
+
+Chaque nuit à minuit, `app:rapport-activite` envoie aux **administrateurs** (adresse renseignée dans
+*Administration → Utilisateurs*, et `RAPPORTS_EMAILS`) un e-mail récapitulatif avec le **détail en PDF** :
+colis enregistrés, colis remis, paiements reçus (par mode et par caissier), ramassages, changements de statut.
+
+- chaque jour : la veille ; le lundi : aussi la semaine écoulée ; le 1er : aussi le mois écoulé ;
+- **rien n'est envoyé** si la période n'a eu aucun mouvement ; un rapport n'est jamais envoyé deux fois.
+
+Tâche cron (cPanel → *Tâches cron*) :
+
+```
+0 0 * * * cd /home/<compte>/public_html/app-sotrama && php bin/console app:rapport-activite --env=prod >> var/log/rapports.log 2>&1
+```
+
+Essais : `--apercu` (chiffres sans envoi), `--type=mois --date=2026-09-01`, `--a=moi@exemple.com`, `--pdf=/tmp`.
+
 ## Application Android
 
 L'application Android (dossier `android/`) est une *Trusted Web Activity* : elle ouvre le site SOTRAMA

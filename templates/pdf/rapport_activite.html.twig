@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<style>
+    @page { margin: 26px 30px 40px; }
+    body { font-family: 'DejaVu Sans', sans-serif; font-size: 9.5px; color: #222; }
+    .vert { color: #00A15D; }
+    h1 { font-size: 18px; margin: 0; }
+    h2 { font-size: 12px; color: #00A15D; margin: 16px 0 6px; border-bottom: 2px solid #00A15D; padding-bottom: 3px; }
+    .petit { font-size: 8.5px; color: #777; }
+    table { width: 100%; border-collapse: collapse; }
+    .chiffres td { width: 25%; background: #f2f8f5; border: 3px solid #fff; padding: 8px; text-align: center; }
+    .chiffres .v { font-size: 15px; font-weight: bold; color: #00A15D; }
+    .chiffres .l { font-size: 8px; text-transform: uppercase; color: #666; }
+    .liste th { background: #00A15D; color: #fff; padding: 5px; text-align: left; font-size: 8.5px; }
+    .liste td { border-bottom: 1px solid #e8e8e8; padding: 4px 5px; vertical-align: top; }
+    .liste tr.total td { font-weight: bold; background: #f2f8f5; border-bottom: 0; }
+    .num { text-align: right; white-space: nowrap; }
+    .vide { color: #999; font-style: italic; padding: 4px 0; }
+    .deux td.col { width: 50%; vertical-align: top; }
+    .pied { position: fixed; bottom: -26px; left: 0; right: 0; font-size: 8px; color: #999; }
+</style>
+</head>
+<body>
+<div class="pied">{{ app_nom }} — Rapport d'activité {{ periode.libelle }} — généré le {{ genereLe|date('d/m/Y à H:i') }}</div>
+
+<table>
+    <tr>
+        <td>
+            {% if logo_data_uri() %}<img src="{{ logo_data_uri() }}" alt="" style="height:56px;float:left;margin-right:12px">{% endif %}
+            <h1 class="vert">{{ app_nom }}</h1>
+            <div style="font-size:12px;font-weight:bold;margin-top:2px">Rapport d'activité {{ periode.libelle }}</div>
+            <div class="petit">Du {{ periode.debut|date('d/m/Y') }} au {{ periode.fin|date_modify('-1 day')|date('d/m/Y') }} inclus</div>
+        </td>
+    </tr>
+</table>
+
+<table class="chiffres" style="margin-top:12px">
+    <tr>
+        <td><div class="l">Colis enregistrés</div><div class="v">{{ r.enregistres|length }}</div><div class="petit">{{ r.enregistresMontant|money }} · {{ r.enregistresPoids|poids }}</div></td>
+        <td><div class="l">Colis remis</div><div class="v">{{ r.remis|length }}</div><div class="petit">aux destinataires</div></td>
+        <td><div class="l">Paiements reçus</div><div class="v">{{ r.paiementsTotal|money }}</div><div class="petit">{{ r.paiements|length }} paiement(s){% if r.paiementsRemises %} · remises {{ r.paiementsRemises|money }}{% endif %}</div></td>
+        <td><div class="l">Ramassages</div><div class="v">{{ r.ramassagesPrevus|length }}</div><div class="petit">prévus · {{ r.ramassagesCrees }} planifié(s)</div></td>
+    </tr>
+</table>
+
+<table class="deux" style="margin-top:6px">
+    <tr>
+        <td class="col" style="padding-right:8px">
+            <h2>Encaissements par mode</h2>
+            {% if r.parMode %}
+            <table class="liste">
+                <tr><th>Mode</th><th class="num">Nombre</th><th class="num">Montant</th></tr>
+                {% for m in r.parMode %}<tr><td>{{ m.libelle }}</td><td class="num">{{ m.nombre }}</td><td class="num">{{ m.montant|money }}</td></tr>{% endfor %}
+                <tr class="total"><td>Total</td><td class="num">{{ r.paiements|length }}</td><td class="num">{{ r.paiementsTotal|money }}</td></tr>
+            </table>
+            {% else %}<div class="vide">Aucun paiement.</div>{% endif %}
+        </td>
+        <td class="col" style="padding-left:8px">
+            <h2>Encaissements par caissier</h2>
+            {% if r.parCaissier %}
+            <table class="liste">
+                <tr><th>Caissier</th><th class="num">Nombre</th><th class="num">Montant</th></tr>
+                {% for c in r.parCaissier %}<tr><td>{{ c.nom }}</td><td class="num">{{ c.nombre }}</td><td class="num">{{ c.montant|money }}</td></tr>{% endfor %}
+            </table>
+            {% else %}<div class="vide">Aucun paiement.</div>{% endif %}
+        </td>
+    </tr>
+</table>
+
+{% if r.statuts or r.parDestination %}
+<table class="deux">
+    <tr>
+        <td class="col" style="padding-right:8px">
+            <h2>Colis enregistrés par destination</h2>
+            {% for d, n in r.parDestination %}{{ d }} : <strong>{{ n }}</strong>{{ not loop.last ? ' · ' }}{% else %}<div class="vide">Aucun.</div>{% endfor %}
+        </td>
+        <td class="col" style="padding-left:8px">
+            <h2>Suivi des colis (changements de statut)</h2>
+            {% for l, n in r.statuts %}{{ l }} : <strong>{{ n }}</strong>{{ not loop.last ? ' · ' }}{% else %}<div class="vide">Aucun.</div>{% endfor %}
+        </td>
+    </tr>
+</table>
+{% endif %}
+
+<h2>Paiements reçus ({{ r.paiements|length }})</h2>
+{% if r.paiements %}
+<table class="liste">
+    <tr><th>Date</th><th>Colis</th><th>Client</th><th>Mode</th><th>Caissier</th><th class="num">Remise</th><th class="num">Montant</th></tr>
+    {% for p in r.paiements %}
+    <tr>
+        <td>{{ p.date|date('d/m H:i') }}</td>
+        <td>{{ p.colis.numeroSuivi }}</td>
+        <td>{{ p.colis.client.nomComplet }}</td>
+        <td>{{ p.mode.label }}{% if p.reference %} <span class="petit">{{ p.reference }}</span>{% endif %}</td>
+        <td>{{ p.caissier ? p.caissier.nomComplet : '—' }}</td>
+        <td class="num">{{ p.remise ? p.remise|money : '' }}</td>
+        <td class="num">{{ p.montant|money }}</td>
+    </tr>
+    {% endfor %}
+    <tr class="total"><td colspan="5">Total</td><td class="num">{{ r.paiementsRemises ? r.paiementsRemises|money }}</td><td class="num">{{ r.paiementsTotal|money }}</td></tr>
+</table>
+{% else %}<div class="vide">Aucun paiement sur la période.</div>{% endif %}
+
+<h2>Colis enregistrés ({{ r.enregistres|length }})</h2>
+{% if r.enregistres %}
+<table class="liste">
+    <tr><th>Date</th><th>N° de suivi</th><th>Client</th><th>Destinataire</th><th>Destination</th><th class="num">Poids</th><th class="num">Montant</th><th class="num">Reste</th></tr>
+    {% for c in r.enregistres %}
+    <tr>
+        <td>{{ c.dateReception|date('d/m H:i') }}</td>
+        <td>{{ c.numeroSuivi }}</td>
+        <td>{{ c.client.nomComplet }}</td>
+        <td>{{ c.destinataireNom }}</td>
+        <td>{{ c.expedition ? c.expedition.destination.ville : '—' }}</td>
+        <td class="num">{{ c.poidsTotal|poids }}</td>
+        <td class="num">{{ c.montantNet|money }}</td>
+        <td class="num">{{ c.montantRestant ? c.montantRestant|money : '✔' }}</td>
+    </tr>
+    {% endfor %}
+    <tr class="total"><td colspan="5">Total</td><td class="num">{{ r.enregistresPoids|poids }}</td><td class="num">{{ r.enregistresMontant|money }}</td><td></td></tr>
+</table>
+{% else %}<div class="vide">Aucun colis enregistré sur la période.</div>{% endif %}
+
+<h2>Colis remis aux destinataires ({{ r.remis|length }})</h2>
+{% if r.remis %}
+<table class="liste">
+    <tr><th>Date</th><th>N° de suivi</th><th>Destinataire</th><th>Remis à</th><th>Destination</th></tr>
+    {% for c in r.remis %}
+    <tr>
+        <td>{{ c.dateRecuperation|date('d/m H:i') }}</td>
+        <td>{{ c.numeroSuivi }}</td>
+        <td>{{ c.destinataireNom }}</td>
+        <td>{{ c.recupererPar ?: '—' }}</td>
+        <td>{{ c.expedition ? c.expedition.destination.ville : '—' }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}<div class="vide">Aucun colis remis sur la période.</div>{% endif %}
+
+<h2>Ramassages prévus ({{ r.ramassagesPrevus|length }})</h2>
+{% if r.ramassagesPrevus %}
+<table class="liste">
+    <tr><th>Date</th><th>Client</th><th>Adresse</th><th>Agent</th><th>Statut</th></tr>
+    {% for ram in r.ramassagesPrevus %}
+    <tr>
+        <td>{{ ram.datePrevue|date('d/m H:i') }}</td>
+        <td>{{ ram.client.nomComplet }}<br><span class="petit">{{ ram.client.telephone }}</span></td>
+        <td>{{ ram.adresse ?: (ram.client.adresse ~ ' ' ~ ram.client.codePostal ~ ' ' ~ ram.client.ville) }}</td>
+        <td>{{ ram.agent ? ram.agent.nomComplet : '—' }}</td>
+        <td>{{ ram.statut.label }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}<div class="vide">Aucun ramassage prévu sur la période.</div>{% endif %}
+</body>
+</html>

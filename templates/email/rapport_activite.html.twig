@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="fr">
+<body style="margin:0;background:#f4f5f7;font-family:Arial,sans-serif;color:#222">
+<table width="100%" cellpadding="0" cellspacing="0" style="padding:24px 0"><tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:12px;overflow:hidden">
+    <tr><td style="background:#00A15D;color:#fff;padding:20px 28px">
+        <div style="font-size:20px;font-weight:bold">{{ app_nom }}</div>
+        <div style="font-size:14px;opacity:.9">Rapport d'activité {{ periode.libelle }}</div>
+    </td></tr>
+    <tr><td style="padding:24px 28px">
+        <table width="100%" cellpadding="0" cellspacing="8">
+            <tr>
+                {% for bloc in [
+                    {l: 'Colis enregistrés', v: r.enregistres|length, s: r.enregistresMontant|money},
+                    {l: 'Colis remis', v: r.remis|length, s: 'aux destinataires'},
+                    {l: 'Paiements reçus', v: r.paiementsTotal|money, s: r.paiements|length ~ ' paiement(s)'},
+                    {l: 'Ramassages', v: r.ramassagesPrevus|length, s: 'prévus sur la période'},
+                ] %}
+                <td width="25%" style="background:#f3faf6;border-radius:10px;padding:12px;text-align:center;vertical-align:top">
+                    <div style="font-size:11px;color:#666;text-transform:uppercase">{{ bloc.l }}</div>
+                    <div style="font-size:20px;font-weight:bold;color:#00A15D;margin:4px 0">{{ bloc.v }}</div>
+                    <div style="font-size:11px;color:#888">{{ bloc.s }}</div>
+                </td>
+                {% endfor %}
+            </tr>
+        </table>
+
+        {% if r.parMode %}
+        <p style="margin:18px 0 6px;font-weight:bold">Encaissements par mode</p>
+        <table width="100%" cellpadding="6" cellspacing="0" style="font-size:13px;border-collapse:collapse">
+            {% for m in r.parMode %}<tr style="border-bottom:1px solid #eee"><td>{{ m.libelle }}</td><td style="color:#888">{{ m.nombre }}</td><td align="right"><strong>{{ m.montant|money }}</strong></td></tr>{% endfor %}
+            {% if r.paiementsRemises %}<tr><td colspan="2" style="color:#888">Remises accordées</td><td align="right">{{ r.paiementsRemises|money }}</td></tr>{% endif %}
+        </table>
+        {% endif %}
+
+        {% if r.ramassagesParStatut %}
+        <p style="margin:18px 0 6px;font-weight:bold">Ramassages</p>
+        <p style="margin:0;font-size:13px">{% for s in r.ramassagesParStatut %}{{ s.libelle }} : <strong>{{ s.nombre }}</strong>{{ not loop.last ? ' · ' }}{% endfor %}{% if r.ramassagesCrees %} · nouveaux planifiés : <strong>{{ r.ramassagesCrees }}</strong>{% endif %}</p>
+        {% elseif r.ramassagesCrees %}
+        <p style="margin:18px 0 0;font-size:13px">Ramassages planifiés : <strong>{{ r.ramassagesCrees }}</strong></p>
+        {% endif %}
+
+        {% if r.statuts %}
+        <p style="margin:18px 0 6px;font-weight:bold">Suivi des colis</p>
+        <p style="margin:0;font-size:13px">{% for l, n in r.statuts %}{{ l }} : <strong>{{ n }}</strong>{{ not loop.last ? ' · ' }}{% endfor %}</p>
+        {% endif %}
+
+        <p style="margin:22px 0 0;font-size:13px;color:#555">📎 Le détail (liste des colis, paiements et ramassages) est dans le PDF joint.</p>
+        {% if societe is defined %}<p style="color:#999;font-size:11px;border-top:1px solid #eee;padding-top:12px;margin-top:20px">Rapport automatique envoyé aux administrateurs de {{ app_nom }}.</p>{% endif %}
+    </td></tr>
+</table>
+</td></tr></table>
+</body>
+</html>
