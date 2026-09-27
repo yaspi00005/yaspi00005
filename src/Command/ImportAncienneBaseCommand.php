@@ -325,10 +325,12 @@ final class ImportAncienneBaseCommand extends Command
                 $this->avertissements[] = "Colis {$colis->getNumeroSuivi()} : $details ignoré, doublon exact du précédent.";
                 continue;
             }
-            $dejaSolde = $colis->getFrais() > 0 && $c['paye'] + max($colis->getRemise(), $c['remises']) >= $colis->getFrais();
-            if ($dejaSolde) {
-                $this->avertissements[] = \sprintf('Colis %s : %s ignoré, le colis était déjà soldé (%s € payés pour un tarif de %s €).',
-                    $colis->getNumeroSuivi(), $details, $c['paye'] / 100, $colis->getFrais() / 100);
+            // Une ligne de remise seule (bonus, geste commercial) est toujours gardée.
+            $remiseAcquise = max($colis->getRemise(), $c['remises']);
+            if ($montant > 0 && $colis->getFrais() > 0 && $c['paye'] + $remiseAcquise >= $colis->getFrais()) {
+                $this->avertissements[] = \sprintf('Colis %s : %s ignoré, le colis était déjà soldé (%s € payés%s pour un tarif de %s €).',
+                    $colis->getNumeroSuivi(), $details, $c['paye'] / 100,
+                    $remiseAcquise > 0 ? \sprintf(' + %s € de remise', $remiseAcquise / 100) : '', $colis->getFrais() / 100);
                 continue;
             }
             $c['paye'] += $montant;
@@ -357,9 +359,17 @@ final class ImportAncienneBaseCommand extends Command
             // L'ancienne application enregistrait les remises tantôt sur le colis, tantôt sur le paiement.
             $colis->setMontantPaye($paye)->setRemise(max($colis->getRemise(), $remisesPaiements));
             if ($colis->getRemise() + $paye > $colis->getFrais()) {
-                $this->avertissements[] = \sprintf('Colis %s : payé + remises (%s) > tarif (%s), tarif ajusté.',
-                    $colis->getNumeroSuivi(), ($colis->getRemise() + $paye) / 100, $colis->getFrais() / 100);
-                $colis->setFrais($colis->getRemise() + $paye);
+                // Le client a payé plus que le tarif moins la remise : la remise n'a pas été accordée
+                // (ou pas en entier). Elle est réduite ; le tarif ne bouge que si le payé seul le dépasse.
+                $remise = max(0, $colis->getFrais() - $paye);
+                $this->avertissements[] = \sprintf('Colis %s : %s € payés + %s € de remise > tarif de %s €, remise ramenée à %s €%s.',
+                    $colis->getNumeroSuivi(), $paye / 100, $colis->getRemise() / 100, $colis->getFrais() / 100, $remise / 100,
+                    $paye > $colis->getFrais() ? \sprintf(' et tarif porté à %s €', $paye / 100) : '');
+                $colis->setRemise($remise)->setFrais(max($colis->getFrais(), $paye));
+                foreach ($colis->getPaiements() as $p) {
+                    $p->setRemise(min($p->getRemise(), $remise));
+                    $remise -= $p->getRemise();
+                }
             }
             $colis->rafraichirStatutPaiement();
         }

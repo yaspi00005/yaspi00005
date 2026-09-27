@@ -80,7 +80,7 @@ final class JournalActiviteTest extends WebTestCase
 
         $crawler = $this->client->request('GET', '/connexion');
         $this->client->submit($crawler->selectButton('Se connecter')->form(['_username' => 'admin', '_password' => 'demo1234']));
-        $this->assertSame(Journal::CONNEXION, $this->dernier()->getAction());
+        $this->assertSame(Journal::CONNEXION, $this->dernier()->getAction(), $this->dernier()->getLibelle());
         $this->assertSame('admin', $this->dernier()->getUtilisateur()?->getUsername());
     }
 

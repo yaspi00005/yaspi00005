@@ -116,7 +116,9 @@ final class SecuriteTest extends WebTestCase
         }
         $client->submit($form->setValues(['code' => $colis->getCodeRetrait()]));
         $client->followRedirect();
-        $this->assertSelectorTextContains('.alert-danger', 'Trop de codes erronés');
+        // Les messages des essais précédents peuvent s'afficher avant : on cherche parmi toutes les alertes.
+        $alertes = implode(' ', $client->getCrawler()->filter('.alert-danger')->each(fn ($a) => $a->text()));
+        $this->assertStringContainsString('Trop de codes erronés', $alertes);
     }
 
     public function testExportCsvSansFormule(): void
