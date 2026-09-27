@@ -297,18 +297,49 @@ final class ImportAncienneBaseCommand extends Command
         $this->em->flush();
     }
 
+    /**
+     * L'ancienne application laissait enregistrer des paiements en trop : double clic (deux lignes identiques
+     * à la même seconde) ou nouvel encaissement à la remise d'un colis déjà soldé. Ces lignes sont écartées
+     * (et listées dans les avertissements) pour ne pas gonfler le chiffre d'affaires ; les lignes vides aussi.
+     */
     private function importerPaiements(): void
     {
-        foreach ($this->ancienne->fetchAllAssociative('SELECT * FROM paiements ORDER BY id') as $r) {
+        /** @var array<int, array{paye: int, remises: int, derniere: ?string}> $cumul */
+        $cumul = [];
+        foreach ($this->ancienne->fetchAllAssociative('SELECT * FROM paiements ORDER BY colis_id, date_paiements, id') as $r) {
             $colis = $this->map['colis'][(int) $r['colis_id']] ?? null;
             if (!$colis) {
                 $this->avertissements[] = "Paiement {$r['id']} ignoré : colis {$r['colis_id']} introuvable.";
                 continue;
             }
+            $montant = max(0, (int) $r['montants']) * 100;
+            $remise = max(0, (int) $r['remises']) * 100;
+            if (0 === $montant && 0 === $remise) {
+                continue;
+            }
+            $c = &$cumul[(int) $r['colis_id']];
+            $c ??= ['paye' => 0, 'remises' => 0, 'derniere' => null];
+            $signature = $montant.'|'.$remise.'|'.$r['mode_paiement'].'|'.$r['date_paiements'];
+            $details = \sprintf('paiement %d de %s € du %s', $r['id'], $montant / 100, $r['date_paiements']);
+            if ($signature === $c['derniere']) {
+                $this->avertissements[] = "Colis {$colis->getNumeroSuivi()} : $details ignoré, doublon exact du précédent.";
+                continue;
+            }
+            $dejaSolde = $colis->getFrais() > 0 && $c['paye'] + max($colis->getRemise(), $c['remises']) >= $colis->getFrais();
+            if ($dejaSolde) {
+                $this->avertissements[] = \sprintf('Colis %s : %s ignoré, le colis était déjà soldé (%s € payés pour un tarif de %s €).',
+                    $colis->getNumeroSuivi(), $details, $c['paye'] / 100, $colis->getFrais() / 100);
+                continue;
+            }
+            $c['paye'] += $montant;
+            $c['remises'] += $remise;
+            $c['derniere'] = $signature;
+            unset($c);
+
             $paiement = (new Paiement())
                 ->setColis($colis)
-                ->setMontant(max(0, (int) $r['montants']) * 100)
-                ->setRemise(max(0, (int) $r['remises']) * 100)
+                ->setMontant($montant)
+                ->setRemise($remise)
                 ->setMode($this->modePaiement($r['mode_paiement']))
                 ->setDate($this->date($r['date_paiements']) ?? $colis->getDateReception())
                 ->setCaissier($this->map['user'][(int) $r['caissier_id']] ?? null);
