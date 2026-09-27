@@ -174,6 +174,7 @@ code { background: var(--vert-clair); color: var(--vert-fonce); padding: .05em .
 .grille-equipe { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
 .membre { background: var(--blanc); border-radius: 22px; padding: 30px 24px; text-align: center; border: 1px solid var(--bord); }
 .membre-initiales { display: inline-grid; place-items: center; width: 76px; height: 76px; border-radius: 50%; background: linear-gradient(135deg, var(--vert), var(--vert-fonce)); color: #fff; font-family: var(--titre); font-weight: 800; font-size: 1.6rem; box-shadow: 0 0 0 6px var(--jaune-clair); margin-bottom: 1rem; }
+.membre-photo { object-fit: cover; padding: 0; }
 .membre h3 { font-size: 1.3rem; margin-bottom: .1rem; }
 .membre-role { color: var(--gris); margin-bottom: .5rem; }
 .membre-tel { display: block; font-weight: 600; color: var(--encre); text-decoration: none; margin-bottom: 1rem; font-size: 1.05rem; }

@@ -12,6 +12,8 @@ use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
+use function Symfony\Component\String\u;
+
 /**
  * Site vitrine public (sotrama.net) : présentation de SOTRAMA et suivi des colis par les clients.
  * Routes actives uniquement sur les domaines de VITRINE_DOMAINES (voir App\Vitrine\Vitrine).
@@ -36,6 +38,7 @@ class VitrineController extends AbstractController
             'bamako' => $this->photo('bamako') ?? 'images/vitrine/illustrations/bamako.svg',
             'dakar' => $this->photo('dakar') ?? 'images/vitrine/illustrations/dakar.svg',
             'galerie' => $this->galerie(),
+            'photosEquipe' => $this->photosEquipe(),
         ]);
     }
 
@@ -110,6 +113,24 @@ class VitrineController extends AbstractController
         $fichiers = glob($this->public.'/images/vitrine/'.$nom.'.'.self::PHOTOS, \GLOB_BRACE) ?: [];
 
         return $fichiers ? substr($fichiers[0], \strlen($this->public) + 1) : null;
+    }
+
+    /**
+     * Photo de chaque membre de l'équipe : equipe/<prénom>.jpg (« Yacouba Traoré » → equipe/yacouba.jpg).
+     *
+     * @return array<string, string> nom → chemin
+     */
+    private function photosEquipe(): array
+    {
+        $photos = [];
+        foreach ($this->infos['equipe'] ?? [] as $membre) {
+            $prenom = u(explode(' ', trim($membre['nom']))[0])->ascii()->lower()->toString();
+            if ($photo = $this->photo('equipe/'.$prenom)) {
+                $photos[$membre['nom']] = $photo;
+            }
+        }
+
+        return $photos;
     }
 
     /** @return list<string> photos de public/images/vitrine/galerie/, triées par nom */
