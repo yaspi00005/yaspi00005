@@ -38,6 +38,7 @@ security:
         ROLE_REPRESENTANT: [ROLE_USER]
 
     access_control:
+        - { route: '^vitrine_', roles: PUBLIC_ACCESS }   # site vitrine (sotrama.net)
         - { path: ^/connexion, roles: PUBLIC_ACCESS }
         - { path: ^/suivi, roles: PUBLIC_ACCESS }
         - { path: ^/application, roles: PUBLIC_ACCESS }

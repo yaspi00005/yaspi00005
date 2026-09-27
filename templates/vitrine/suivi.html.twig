@@ -1,0 +1,26 @@
+{% extends 'vitrine/base.html.twig' %}
+
+{% block title %}Suivre mon colis · SOTRAMA{% endblock %}
+{% block description %}Suivez votre colis SOTRAMA vers Bamako ou Dakar avec votre numéro de suivi et votre téléphone.{% endblock %}
+
+{% block body %}
+<section class="page-suivi">
+    <div class="conteneur page-suivi-grille">
+        <div>
+            <p class="surtitre">Suivi de colis</p>
+            <h1>Où est mon colis ?</h1>
+            <p class="chapeau">Le numéro de suivi est inscrit sur le reçu remis lors de l'enregistrement (par exemple <strong>ST2609-0001</strong>). Indiquez aussi le téléphone de l'expéditeur ou du destinataire.</p>
+            <ul class="coche">
+                <li>Étapes du colis : reçu, expédié, en transit, arrivé, remis</li>
+                <li>Date de départ et d'arrivée prévue</li>
+                <li>Montant restant à payer</li>
+            </ul>
+            <p class="aide">Numéro perdu ? <a href="https://wa.me/{{ infos.whatsapp }}?text={{ 'Bonjour SOTRAMA, je cherche le numéro de suivi de mon colis.'|url_encode }}" target="_blank" rel="noopener">Demandez-le sur WhatsApp</a>.</p>
+        </div>
+        <div class="carte-suivi">
+            <h2><i class="fas fa-search-location"></i> Suivre mon colis</h2>
+            {% include 'vitrine/_formulaire_suivi.html.twig' %}
+        </div>
+    </div>
+</section>
+{% endblock %}

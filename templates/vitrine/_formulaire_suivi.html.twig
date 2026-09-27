@@ -1,0 +1,10 @@
+{# Paramètres facultatifs : numero, erreur #}
+<form method="post" action="{{ path('vitrine_suivi') }}" class="formulaire-suivi" novalidate>
+    <input type="hidden" name="_token" value="{{ csrf_token('suivi') }}">
+    <label for="suivi-numero">Numéro de suivi</label>
+    <input id="suivi-numero" name="numero" value="{{ numero|default('') }}" placeholder="ST2609-0001" autocomplete="off" autocapitalize="characters" spellcheck="false" required>
+    <label for="suivi-telephone">Téléphone de l'expéditeur ou du destinataire</label>
+    <input id="suivi-telephone" name="telephone" type="tel" inputmode="tel" placeholder="06 12 34 56 78 ou 76 12 34 56" autocomplete="tel" required>
+    {% if erreur|default(null) %}<p class="formulaire-erreur" role="alert"><i class="fas fa-exclamation-circle"></i> {{ erreur }}</p>{% endif %}
+    <button class="bouton bouton-plein"><i class="fas fa-search"></i> Voir où est mon colis</button>
+</form>

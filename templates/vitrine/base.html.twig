@@ -1,0 +1,94 @@
+{% set wa = 'https://wa.me/' ~ infos.whatsapp %}
+{% set message_wa = 'Bonjour SOTRAMA, je souhaite envoyer un colis.' %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}SOTRAMA · Envoi de colis France → Bamako & Dakar{% endblock %}</title>
+    <meta name="description" content="{% block description %}SOTRAMA, transport de colis en conteneur vers Bamako (Mali) et Dakar (Sénégal), GP avion pour Bamako, ramassage gratuit en Île-de-France. {{ infos.experience }} ans d'expérience. Suivez votre colis en ligne.{% endblock %}">
+    <meta name="theme-color" content="#00873F">
+    <link rel="icon" type="image/png" href="{{ asset('images/app/icone-192.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/app/apple-touch-icon.png') }}">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="SOTRAMA">
+    <meta property="og:title" content="{{ block('title') }}">
+    <meta property="og:description" content="{{ block('description') }}">
+    <meta property="og:image" content="{{ absolute_url(asset(hero|default(null) ?: 'images/app/icone-512.png')) }}">
+    <meta property="og:locale" content="fr_FR">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="{{ asset('theme/icons/font-awesome/css/all.min.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/vitrine.css') }}" rel="stylesheet">
+    {% block head %}{% endblock %}
+</head>
+<body>
+<a class="lien-evitement" href="#contenu">Aller au contenu</a>
+
+<header class="entete" id="haut">
+    <div class="conteneur entete-barre">
+        <a href="{{ path('vitrine_accueil') }}" class="marque" aria-label="SOTRAMA, accueil">
+            <img src="{{ asset(logo) }}" alt="" width="52" height="52">
+            <span><strong>SOTRAMA</strong><small>Colis France · Mali · Sénégal</small></span>
+        </a>
+        <button class="menu-bouton" type="button" aria-expanded="false" aria-controls="menu" aria-label="Ouvrir le menu">
+            <span></span><span></span><span></span>
+        </button>
+        <nav class="menu" id="menu" aria-label="Navigation principale">
+            <a href="{{ path('vitrine_accueil') }}#services">Services</a>
+            <a href="{{ path('vitrine_accueil') }}#destinations">Destinations</a>
+            <a href="{{ path('vitrine_accueil') }}#etapes">Comment ça marche</a>
+            <a href="{{ path('vitrine_suivi') }}">Suivre un colis</a>
+            <a href="{{ path('vitrine_accueil') }}#contact">Contact</a>
+            <a href="{{ wa }}?text={{ message_wa|url_encode }}" class="bouton bouton-wa bouton-petit" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> WhatsApp</a>
+        </nav>
+    </div>
+</header>
+
+<main id="contenu">
+{% block body %}{% endblock %}
+</main>
+
+<footer class="pied">
+    <div class="conteneur pied-grille">
+        <div>
+            <a href="{{ path('vitrine_accueil') }}" class="marque marque-claire">
+                <img src="{{ asset(logo) }}" alt="" width="44" height="44">
+                <span><strong>SOTRAMA</strong><small>Depuis {{ infos.experience }} ans à vos côtés</small></span>
+            </a>
+            <p class="pied-texte">Transport de colis en conteneur vers Bamako et Dakar, GP avion pour Bamako. Ramassage gratuit en Île-de-France.</p>
+            <div class="reseaux">
+                {% for r in infos.reseaux %}
+                    <a href="{{ r.url }}" target="_blank" rel="noopener" aria-label="{{ r.nom }}"><i class="{{ r.icone }}"></i></a>
+                {% endfor %}
+            </div>
+        </div>
+        <div>
+            <h3>Contact</h3>
+            <ul class="pied-liste">
+                <li><a href="{{ wa }}?text={{ message_wa|url_encode }}" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> WhatsApp {{ infos.telephone }}</a></li>
+                {% for p in infos.equipe %}
+                    <li><a href="tel:{{ p.telephone|replace({' ': ''}) }}"><i class="fas fa-phone"></i> {{ p.nom }} · {{ p.telephone }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div>
+            <h3>Liens</h3>
+            <ul class="pied-liste">
+                <li><a href="{{ path('vitrine_suivi') }}">Suivre mon colis</a></li>
+                <li><a href="{{ path('vitrine_accueil') }}#services">Nos services</a></li>
+                <li><a href="{{ path('vitrine_accueil') }}#faq">Questions fréquentes</a></li>
+                <li><a href="{{ path('vitrine_mentions') }}">Mentions légales</a></li>
+                <li><a href="{{ app_url }}/connexion" rel="nofollow"><i class="fas fa-lock"></i> Espace équipe</a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="conteneur pied-bas">© {{ 'now'|date('Y') }} SOTRAMA · France → Bamako (BKO) · Dakar (DKR)</div>
+</footer>
+
+<a href="{{ wa }}?text={{ message_wa|url_encode }}" class="wa-flottant" target="_blank" rel="noopener" aria-label="Écrire à SOTRAMA sur WhatsApp"><i class="fab fa-whatsapp"></i></a>
+
+<script src="{{ asset('js/vitrine.js') }}" defer></script>
+</body>
+</html>

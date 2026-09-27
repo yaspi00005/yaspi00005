@@ -1,3 +1,6 @@
+imports:
+    - { resource: vitrine.yaml }
+
 parameters:
     app.nom: '%env(APP_NOM)%'
     app.devise: '%env(APP_DEVISE)%'

@@ -146,6 +146,22 @@ alors `/.well-known/assetlinks.json`, ce qui permet à l'application de s'affich
 **Conservez précieusement la clé de signature et son mot de passe** : sans elle, impossible de publier une
 mise à jour installable par-dessus l'application existante.
 
+## Site vitrine (sotrama.net)
+
+Le même projet sert aussi le **site public** de SOTRAMA, affiché quand on visite un domaine de
+`VITRINE_DOMAINES` (par défaut `sotrama.net`, `www.sotrama.net`, et `sotrama.localhost` pour tester en local) :
+
+- présentation (services, destinations Bamako/Dakar, étapes, équipe, réseaux sociaux, FAQ), boutons WhatsApp ;
+- **suivi des colis** (`/suivi`) : numéro de suivi + téléphone, directement relié aux données de l'application ;
+- `robots.txt`, `sitemap.xml`, mentions légales.
+
+Sur ce domaine, les pages de gestion (`/connexion`, `/colis`…) redirigent vers `APP_URL` (`https://app.sotrama.net`).
+
+- Contacts, équipe, réseaux : `config/vitrine.yaml`.
+- Photos : `public/images/vitrine/` (voir `LISEZMOI.md` : `hero.jpg`, `galerie/*.jpg`).
+- Mise en ligne : faire pointer `sotrama.net` (et `www`) vers le **même dossier `public/`** que `app.sotrama.net`.
+- En local : `http://sotrama.localhost:8000`.
+
 ## Reprise des données de l'ancienne application
 
 Dans une base neuve (migrations exécutées, aucun client ni colis) :

@@ -1,0 +1,99 @@
+{% extends 'vitrine/base.html.twig' %}
+
+{% block title %}Colis {{ colis.numeroSuivi }} · SOTRAMA{% endblock %}
+
+{% block head %}<meta name="robots" content="noindex">{% endblock %}
+
+{% block body %}
+{% set etapes = [
+    {s: 'en_preparation', l: 'Reçu', i: 'fa-box'},
+    {s: 'expedie', l: 'Expédié', i: 'fa-shipping-fast'},
+    {s: 'en_transit', l: 'En transit', i: 'fa-route'},
+    {s: 'arrive', l: 'Arrivé', i: 'fa-map-marker-alt'},
+    {s: 'recupere', l: 'Remis', i: 'fa-check'},
+] %}
+{% set rangActuel = colis.statut.rang %}
+<section class="page-suivi">
+    <div class="conteneur conteneur-etroit">
+        <a href="{{ path('vitrine_suivi') }}" class="retour"><i class="fas fa-arrow-left"></i> Suivre un autre colis</a>
+        <div class="fiche-colis">
+            <div class="fiche-entete">
+                <div>
+                    <p class="surtitre">Colis</p>
+                    <h1>{{ colis.numeroSuivi }}</h1>
+                </div>
+                <span class="statut statut-{{ colis.statut.value }}">{{ colis.statut.label }}</span>
+            </div>
+
+            <ol class="progression" aria-label="Étapes du colis">
+                {% for e in etapes %}
+                    {% set rang = enum('App\\Enum\\StatutColis').from(e.s).rang %}
+                    <li class="{{ rang < rangActuel ? 'faite' : (rang == rangActuel ? 'actuelle') }}"{% if rang == rangActuel %} aria-current="step"{% endif %}>
+                        <span class="progression-rond"><i class="fas {{ e.i }}"></i></span>
+                        <span class="progression-libelle">{{ e.l }}</span>
+                    </li>
+                {% endfor %}
+            </ol>
+
+            {% if colis.statut.value == 'retenu_douane' %}
+                <p class="alerte alerte-jaune"><i class="fas fa-exclamation-triangle"></i> Votre colis est actuellement retenu en douane. Nous vous tiendrons informé.</p>
+            {% elseif colis.statut.value == 'arrive' %}
+                <p class="alerte alerte-verte"><i class="fas fa-check-circle"></i> Votre colis vous attend à l'agence. Présentez-vous avec le <strong>code de retrait</strong> reçu par SMS et une pièce d'identité.</p>
+            {% elseif colis.statut.value == 'recupere' %}
+                <p class="alerte alerte-verte"><i class="fas fa-check-circle"></i> Colis remis{{ colis.dateRecuperation ? ' le ' ~ colis.dateRecuperation|date('d/m/Y') }}. Merci de votre confiance !</p>
+            {% endif %}
+
+            <div class="fiche-infos">
+                <div>
+                    <span class="libelle">Destinataire</span>
+                    <strong>{{ colis.destinataireNom }}</strong>
+                </div>
+                {% if colis.expedition %}
+                <div>
+                    <span class="libelle">Destination</span>
+                    <strong>{{ colis.expedition.destination.ville }} ({{ colis.expedition.destination.label }})</strong>
+                </div>
+                <div>
+                    <span class="libelle">Transport</span>
+                    <strong>{{ colis.expedition.modeTransport.label }}</strong>
+                </div>
+                <div>
+                    <span class="libelle">Départ</span>
+                    <strong>{{ colis.expedition.dateDepart|date('d/m/Y') }}</strong>
+                </div>
+                {% if colis.expedition.dateArriveePrevue %}
+                <div>
+                    <span class="libelle">Arrivée prévue</span>
+                    <strong>{{ colis.expedition.dateArriveePrevue|date('d/m/Y') }}</strong>
+                </div>
+                {% endif %}
+                {% else %}
+                <div>
+                    <span class="libelle">Départ</span>
+                    <strong>Prochain départ en préparation</strong>
+                </div>
+                {% endif %}
+                <div>
+                    <span class="libelle">Contenu</span>
+                    <strong>{{ colis.nombreArticles }} article{{ colis.nombreArticles > 1 ? 's' }} · {{ colis.poidsTotal|poids }}</strong>
+                </div>
+                <div>
+                    <span class="libelle">Reste à payer</span>
+                    <strong class="{{ colis.montantRestant ? 'texte-rouge' : 'texte-vert' }}">{{ colis.montantRestant ? colis.montantRestant|money : 'Soldé ✔' }}</strong>
+                </div>
+            </div>
+
+            <h2 class="fiche-sous-titre">Historique</h2>
+            <ul class="historique">
+                {% for h in colis.historique|reverse %}
+                    <li><strong>{{ h.statut.label }}</strong><span>{{ h.date|date('d/m/Y à H:i') }}</span></li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <p class="aide aide-centre">Une question sur ce colis ?
+            <a href="https://wa.me/{{ infos.whatsapp }}?text={{ ('Bonjour SOTRAMA, une question sur mon colis ' ~ colis.numeroSuivi ~ '.')|url_encode }}" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> Écrivez-nous sur WhatsApp</a>
+        </p>
+    </div>
+</section>
+{% endblock %}

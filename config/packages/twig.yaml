@@ -9,6 +9,7 @@ twig:
         app_devise: '%app.devise%'
         app_telephone_agence: '%app.telephone_agence%'
         push_cle_publique: '%env(VAPID_PUBLIC_KEY)%'
+        app_url: '%env(APP_URL)%'
 
 when@test:
     twig:

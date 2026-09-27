@@ -1,0 +1,297 @@
+{% extends 'vitrine/base.html.twig' %}
+
+{% block head %}
+<script type="application/ld+json">
+{{ {
+    '@context': 'https://schema.org',
+    '@type': 'MovingCompany',
+    'name': 'SOTRAMA',
+    'description': 'Transport de colis en conteneur de la France vers Bamako (Mali) et Dakar (Sénégal), GP avion pour Bamako, ramassage gratuit en Île-de-France.',
+    'url': url('vitrine_accueil'),
+    'telephone': '+' ~ infos.whatsapp,
+    'image': absolute_url(asset(logo)),
+    'areaServed': ['France', 'Mali', 'Sénégal'],
+    'sameAs': infos.reseaux|map(r => r.url),
+}|json_encode(constant('JSON_UNESCAPED_SLASHES') b-or constant('JSON_UNESCAPED_UNICODE'))|raw }}
+</script>
+{% endblock %}
+
+{% block body %}
+{% set wa = 'https://wa.me/' ~ infos.whatsapp %}
+
+{# ---------- Accueil ---------- #}
+<section class="hero{{ hero ? ' hero-photo' }}"{% if hero %} style="--hero: url('{{ asset(hero) }}')"{% endif %}>
+    <div class="conteneur hero-grille">
+        <div class="hero-texte">
+            <p class="surtitre"><span class="pastille"></span> {{ infos.experience }} ans d'expérience · France → Afrique de l'Ouest</p>
+            <h1>Vos colis de France jusqu'à <em>Bamako</em> et <em>Dakar</em></h1>
+            <p class="chapeau">Envoi en conteneur vers le Mali et le Sénégal, GP avion pour Bamako, et <strong>ramassage gratuit dans toute l'Île-de-France</strong>. Vous suivez votre colis en ligne jusqu'à sa remise.</p>
+            <div class="actions">
+                <a href="{{ wa }}?text={{ 'Bonjour SOTRAMA, je souhaite envoyer un colis.'|url_encode }}" class="bouton bouton-wa" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> Écrire sur WhatsApp</a>
+                <a href="tel:+{{ infos.whatsapp }}" class="bouton bouton-contour"><i class="fas fa-phone"></i> {{ infos.telephone }}</a>
+            </div>
+            <ul class="atouts">
+                <li><i class="fas fa-truck"></i> Ramassage gratuit IDF</li>
+                <li><i class="fas fa-ship"></i> Conteneur BKO · DKR</li>
+                <li><i class="fas fa-plane"></i> GP avion Bamako</li>
+            </ul>
+        </div>
+
+        <div class="carte-suivi" id="suivi">
+            <h2><i class="fas fa-search-location"></i> Suivre mon colis</h2>
+            <p>Saisissez le numéro inscrit sur votre reçu et votre téléphone.</p>
+            {% include 'vitrine/_formulaire_suivi.html.twig' %}
+        </div>
+    </div>
+
+    {% if not hero %}
+    <svg class="hero-trajet" viewBox="0 0 1200 220" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M40 180 C 300 20, 700 20, 1160 150" />
+        <path d="M40 180 C 360 90, 760 110, 1160 200" class="trajet-2" />
+    </svg>
+    {% endif %}
+</section>
+
+{# ---------- Chiffres ---------- #}
+<section class="bandeau-chiffres" aria-label="SOTRAMA en bref">
+    <div class="conteneur chiffres">
+        <div><strong>{{ infos.experience }} ans</strong><span>d'expérience</span></div>
+        <div><strong>2</strong><span>destinations : Bamako & Dakar</span></div>
+        <div><strong>0 €</strong><span>le ramassage en Île-de-France</span></div>
+        <div><strong>24 h/24</strong><span>suivi du colis en ligne</span></div>
+    </div>
+</section>
+
+{# ---------- Services ---------- #}
+<section class="section" id="services">
+    <div class="conteneur">
+        <div class="titre-section">
+            <p class="surtitre">Nos services</p>
+            <h2>Tout pour envoyer vos colis au pays, sans vous déplacer</h2>
+        </div>
+        <div class="grille-services">
+            <article class="service">
+                <span class="service-icone vert"><i class="fas fa-ship"></i></span>
+                <h3>Conteneur Bamako & Dakar</h3>
+                <p>Vos cartons, valises, électroménager et marchandises partent en conteneur vers Bamako (Mali) et désormais Dakar (Sénégal).</p>
+            </article>
+            <article class="service">
+                <span class="service-icone jaune"><i class="fas fa-plane-departure"></i></span>
+                <h3>GP avion pour Bamako</h3>
+                <p>Un envoi urgent ? Notre service GP achemine vos colis par avion jusqu'à Bamako.</p>
+            </article>
+            <article class="service">
+                <span class="service-icone rouge"><i class="fas fa-truck-loading"></i></span>
+                <h3>Ramassage gratuit</h3>
+                <p>Nous venons chercher vos colis chez vous, <strong>gratuitement dans toute l'Île-de-France</strong>. Ramassage dans toute la France bientôt disponible.</p>
+            </article>
+            <article class="service">
+                <span class="service-icone vert"><i class="fas fa-warehouse"></i></span>
+                <h3>Livraison au dépôt</h3>
+                <p>Commandez sur internet et faites livrer directement au dépôt SOTRAMA : nous nous chargeons de l'envoi vers Bamako (BKO) ou Dakar (DKR).</p>
+            </article>
+            <article class="service">
+                <span class="service-icone jaune"><i class="fas fa-shopping-bag"></i></span>
+                <h3>Achats pour vous</h3>
+                <p>Vous êtes au pays ? Nous faisons vos achats en magasin ou vos commandes sur internet en France, puis nous vous les envoyons.</p>
+            </article>
+            <article class="service">
+                <span class="service-icone rouge"><i class="fas fa-mobile-alt"></i></span>
+                <h3>Suivi en ligne</h3>
+                <p>Chaque colis a un numéro de suivi. Le destinataire est prévenu par SMS à l'arrivée et retire le colis avec son code personnel.</p>
+            </article>
+        </div>
+    </div>
+</section>
+
+{# ---------- Destinations ---------- #}
+<section class="section section-sable" id="destinations">
+    <div class="conteneur">
+        <div class="titre-section">
+            <p class="surtitre">Destinations</p>
+            <h2>De la France vers le Mali et le Sénégal</h2>
+        </div>
+        <div class="grille-destinations">
+            <article class="destination destination-mali">
+                <div class="destination-entete">
+                    <span class="drapeau drapeau-mali" aria-hidden="true"><i></i><i></i><i></i></span>
+                    <div><h3>Bamako</h3><p>Mali · BKO</p></div>
+                </div>
+                <ul class="coche">
+                    <li>Conteneur : colis, valises, marchandises</li>
+                    <li>GP avion pour les envois urgents</li>
+                    <li>Retrait à l'agence avec votre code, après SMS d'arrivée</li>
+                </ul>
+                <a href="{{ wa }}?text={{ 'Bonjour SOTRAMA, je souhaite envoyer un colis à Bamako.'|url_encode }}" class="lien-fleche" target="_blank" rel="noopener">Envoyer à Bamako <i class="fas fa-arrow-right"></i></a>
+            </article>
+            <article class="destination destination-senegal">
+                <span class="etiquette-nouveau">Nouveau</span>
+                <div class="destination-entete">
+                    <span class="drapeau drapeau-senegal" aria-hidden="true"><i></i><i></i><i></i></span>
+                    <div><h3>Dakar</h3><p>Sénégal · DKR</p></div>
+                </div>
+                <ul class="coche">
+                    <li>Conteneur : colis, valises, marchandises</li>
+                    <li>Même suivi en ligne que pour Bamako</li>
+                    <li>Retrait avec votre code, après SMS d'arrivée</li>
+                </ul>
+                <a href="{{ wa }}?text={{ 'Bonjour SOTRAMA, je souhaite envoyer un colis à Dakar.'|url_encode }}" class="lien-fleche" target="_blank" rel="noopener">Envoyer à Dakar <i class="fas fa-arrow-right"></i></a>
+            </article>
+        </div>
+    </div>
+</section>
+
+{# ---------- Comment ça marche ---------- #}
+<section class="section" id="etapes">
+    <div class="conteneur">
+        <div class="titre-section">
+            <p class="surtitre">Comment ça marche</p>
+            <h2>Votre envoi en 4 étapes</h2>
+        </div>
+        <ol class="etapes">
+            <li>
+                <span class="etape-numero">1</span>
+                <h3>Contactez-nous</h3>
+                <p>Sur WhatsApp au {{ infos.telephone }} : dites-nous ce que vous envoyez et vers quelle ville.</p>
+            </li>
+            <li>
+                <span class="etape-numero">2</span>
+                <h3>Ramassage ou dépôt</h3>
+                <p>Nous passons chez vous (gratuit en Île-de-France), ou vous faites livrer vos commandes à notre dépôt.</p>
+            </li>
+            <li>
+                <span class="etape-numero">3</span>
+                <h3>Votre reçu</h3>
+                <p>Chaque colis est enregistré et pesé. Vous recevez un reçu avec le numéro de suivi et un QR code.</p>
+            </li>
+            <li>
+                <span class="etape-numero">4</span>
+                <h3>Suivi & retrait</h3>
+                <p>Suivez le colis ici. À l'arrivée, le destinataire reçoit un SMS et retire le colis avec son code.</p>
+            </li>
+        </ol>
+    </div>
+</section>
+
+{# ---------- Achats & dépôt ---------- #}
+<section class="section-mise-en-avant">
+    <div class="conteneur mise-en-avant">
+        <div>
+            <p class="surtitre surtitre-clair">Achats en France</p>
+            <h2>Vous commandez, on s'occupe du reste</h2>
+            <p>Faites livrer vos achats en ligne au dépôt SOTRAMA, ou confiez-nous la liste : nous achetons en magasin ou sur internet pour vous, puis nous envoyons le tout à Bamako ou Dakar.</p>
+        </div>
+        <a href="{{ wa }}?text={{ 'Bonjour SOTRAMA, je voudrais faire livrer une commande au dépôt / faire faire des achats.'|url_encode }}" class="bouton bouton-jaune" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> Demander l'adresse du dépôt</a>
+    </div>
+</section>
+
+{# ---------- Galerie (photos déposées dans public/images/vitrine/galerie/) ---------- #}
+{% if galerie %}
+<section class="section" id="galerie">
+    <div class="conteneur">
+        <div class="titre-section">
+            <p class="surtitre">En images</p>
+            <h2>Chargements, départs et arrivées</h2>
+        </div>
+        <div class="galerie">
+            {% for photo in galerie %}
+                <a href="{{ asset(photo) }}" target="_blank"><img src="{{ asset(photo) }}" alt="Photo SOTRAMA {{ loop.index }}" loading="lazy"></a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+{# ---------- Équipe & contact ---------- #}
+<section class="section section-sable" id="contact">
+    <div class="conteneur">
+        <div class="titre-section">
+            <p class="surtitre">Une entreprise familiale</p>
+            <h2>L'équipe SOTRAMA à votre écoute</h2>
+            <p>SOTRAMA est dirigée par Yacouba Traoré, avec ses frères Daby et Mamadou. Appelez-nous ou écrivez-nous sur WhatsApp.</p>
+        </div>
+        <div class="grille-equipe">
+            {% for p in infos.equipe %}
+            <article class="membre">
+                <span class="membre-initiales" aria-hidden="true">{{ p.nom|split(' ')|map(m => m|first)|join('')|upper }}</span>
+                <h3>{{ p.nom }}</h3>
+                <p class="membre-role">{{ p.role }}</p>
+                <a href="tel:{{ p.telephone|replace({' ': ''}) }}" class="membre-tel">{{ p.telephone }}</a>
+                <div class="membre-actions">
+                    <a href="tel:{{ p.telephone|replace({' ': ''}) }}" class="bouton bouton-contour bouton-petit" aria-label="Appeler {{ p.nom }}"><i class="fas fa-phone"></i> Appeler</a>
+                    <a href="https://wa.me/{{ p.whatsapp }}?text={{ 'Bonjour, je vous contacte depuis le site SOTRAMA.'|url_encode }}" class="bouton bouton-wa bouton-petit" target="_blank" rel="noopener" aria-label="WhatsApp {{ p.nom }}"><i class="fab fa-whatsapp"></i> WhatsApp</a>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+{# ---------- Réseaux ---------- #}
+<section class="section" id="reseaux">
+    <div class="conteneur">
+        <div class="titre-section">
+            <p class="surtitre">Suivez-nous</p>
+            <h2>Départs, arrivages, bons plans : tout est sur nos réseaux</h2>
+            <p>N'hésitez pas à liker et à vous abonner !</p>
+        </div>
+        <div class="grille-reseaux">
+            {% for r in infos.reseaux %}
+                <a href="{{ r.url }}" class="reseau reseau-{{ r.nom|lower }}" target="_blank" rel="noopener">
+                    <i class="{{ r.icone }}"></i>
+                    <span><strong>{{ r.nom }}</strong>{{ r.compte }}</span>
+                    <i class="fas fa-arrow-right reseau-fleche"></i>
+                </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+{# ---------- FAQ ---------- #}
+<section class="section section-sable" id="faq">
+    <div class="conteneur conteneur-etroit">
+        <div class="titre-section">
+            <p class="surtitre">Questions fréquentes</p>
+            <h2>Vous vous demandez…</h2>
+        </div>
+        <div class="faq">
+            <details>
+                <summary>Comment suivre mon colis ?</summary>
+                <p>Avec le numéro de suivi inscrit sur votre reçu (ex. <code>ST2609-0001</code>) et le numéro de téléphone de l'expéditeur ou du destinataire, dans le formulaire <a href="{{ path('vitrine_suivi') }}">Suivre mon colis</a>. Vous pouvez aussi scanner le QR code du reçu.</p>
+            </details>
+            <details>
+                <summary>Le ramassage est-il vraiment gratuit ?</summary>
+                <p>Oui, dans toute l'Île-de-France. Le ramassage dans le reste de la France est en cours de mise en place : contactez-nous sur WhatsApp pour connaître les possibilités près de chez vous.</p>
+            </details>
+            <details>
+                <summary>Quand part le prochain conteneur ?</summary>
+                <p>Les dates de départ et d'arrivée sont annoncées sur nos réseaux et communiquées sur WhatsApp. La date d'arrivée prévue s'affiche aussi dans le suivi du colis.</p>
+            </details>
+            <details>
+                <summary>Comment le destinataire récupère-t-il le colis ?</summary>
+                <p>À l'arrivée, il reçoit un SMS. Il se présente à l'agence avec une pièce d'identité et le code de retrait figurant sur le reçu. Le colis doit être entièrement réglé avant la remise.</p>
+            </details>
+            <details>
+                <summary>Puis-je faire livrer mes commandes internet chez vous ?</summary>
+                <p>Oui : faites livrer au dépôt SOTRAMA, nous enregistrons le colis et l'envoyons à Bamako ou Dakar. Demandez l'adresse du dépôt sur WhatsApp. Nous pouvons aussi faire les achats pour vous.</p>
+            </details>
+            <details>
+                <summary>Combien coûte un envoi ?</summary>
+                <p>Le tarif dépend du poids, du volume et du type de marchandise. Envoyez-nous une photo ou une description sur WhatsApp pour obtenir un prix. Les clients fidèles cumulent un bonus sur leurs envois.</p>
+            </details>
+        </div>
+    </div>
+</section>
+
+{# ---------- Appel final ---------- #}
+<section class="section appel-final">
+    <div class="conteneur appel-final-contenu">
+        <img src="{{ asset(logo) }}" alt="" class="appel-final-logo" loading="lazy">
+        <div>
+            <h2>Un colis à envoyer à Bamako ou Dakar ?</h2>
+            <p>Écrivez-nous sur WhatsApp : réponse rapide, ramassage gratuit en Île-de-France.</p>
+        </div>
+        <a href="{{ wa }}?text={{ 'Bonjour SOTRAMA, je souhaite envoyer un colis.'|url_encode }}" class="bouton bouton-wa" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> {{ infos.telephone }}</a>
+    </div>
+</section>
+{% endblock %}
