@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 220" role="img" aria-label="Dakar : océan, phare et pirogue colorée">
+  <defs>
+    <linearGradient id="ciel-d" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cdeee6"/><stop offset="1" stop-color="#eef8f4"/></linearGradient>
+    <linearGradient id="ocean" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2f9fb0"/><stop offset="1" stop-color="#1c6f86"/></linearGradient>
+  </defs>
+  <rect width="600" height="220" fill="url(#ciel-d)"/>
+  <circle cx="250" cy="52" r="28" fill="#ffd23f"/>
+  <g fill="#fff" opacity=".95">
+    <path d="M300 60c0-12 10-22 22-22 9 0 16 5 19 12 3-1 5-1 8-1 11 0 19 8 19 19h-68z"/>
+    <path d="M470 40c0-9 7-16 16-16 7 0 12 4 14 9 2-1 4-1 6-1 8 0 14 6 14 14h-50z"/>
+  </g>
+  <!-- colline des Mamelles et phare -->
+  <path d="M330 150 C 380 96, 440 92, 490 120 C 530 140, 570 142, 600 140 V220 H330Z" fill="#c9a86a"/>
+  <path d="M330 150 C 380 110, 430 104, 480 126 C 520 144, 570 150, 600 150 V220 H330Z" fill="#b8955a"/>
+  <g transform="translate(430 42)" stroke="#102419" stroke-width="3" stroke-linejoin="round">
+    <path d="M6 64 12 12h18l6 52z" fill="#fff"/>
+    <path d="M9 40h24l2 12H7z" fill="#d7263d"/>
+    <rect x="10" y="0" width="22" height="14" rx="2" fill="#ffd23f"/>
+    <path d="M8 0h26l-13-12z" fill="#d7263d"/>
+    <path d="M32 6l40-10M32 8l40 10" stroke="#ffd23f" stroke-width="2.5" opacity=".8"/>
+  </g>
+  <!-- océan -->
+  <path d="M0 150 C 120 140, 240 158, 360 150 C 460 144, 540 154, 600 150 V220 H0Z" fill="url(#ocean)"/>
+  <path d="M30 172c24-5 48 5 72 0M200 188c24-5 48 5 72 0M420 178c24-5 48 5 72 0M110 206c20-4 40 4 60 0" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity=".55"/>
+  <!-- pirogue sénégalaise -->
+  <g transform="translate(90 138)" stroke="#102419" stroke-width="3" stroke-linejoin="round">
+    <path d="M-10 18c40 14 170 14 210 0-6 18-40 30-105 30S-4 36-10 18z" fill="#00853f"/>
+    <path d="M-4 24c40 12 160 12 198 0" fill="none" stroke="#fdef42" stroke-width="5"/>
+    <path d="M2 31c36 10 150 10 186 0" fill="none" stroke="#e31b23" stroke-width="4"/>
+    <path d="M-10 18l-8-14 14 10M200 18l10-16-14 12" fill="#fdef42"/>
+    <text x="95" y="44" text-anchor="middle" font-family="Outfit, Arial, sans-serif" font-weight="800" font-size="11" fill="#fff" stroke="none" letter-spacing="1">DAKAR</text>
+    <path d="M60 18V-40M60 -38l46 50H60z" fill="#fff"/>
+    <!-- colis -->
+    <rect x="118" y="2" width="24" height="16" fill="#c68c4d"/><rect x="144" y="6" width="18" height="12" fill="#ffd23f"/>
+  </g>
+</svg>

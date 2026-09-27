@@ -1,0 +1,116 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 420" role="img" aria-label="Camion SOTRAMA, porte-conteneurs et avion en route vers l'Afrique">
+  <defs>
+    <linearGradient id="mer" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3fa7a0"/>
+      <stop offset="1" stop-color="#1f7a74"/>
+    </linearGradient>
+    <linearGradient id="colline" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#d9c79a"/>
+      <stop offset="1" stop-color="#c9b27c"/>
+    </linearGradient>
+    <linearGradient id="colline2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#9cc58a"/>
+      <stop offset="1" stop-color="#7fb06d"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Soleil et nuages -->
+  <circle cx="1010" cy="120" r="70" fill="#ffd23f" opacity=".55"/>
+  <circle cx="1010" cy="120" r="48" fill="#ffd23f" opacity=".9"/>
+  <g fill="#fff" opacity=".9">
+    <path d="M250 110c0-17 14-30 31-30 12 0 22 6 27 16 4-2 8-3 12-3 15 0 27 12 27 27H250z"/>
+    <path d="M1300 70c0-14 11-25 25-25 10 0 18 5 22 13 3-1 6-2 10-2 12 0 22 10 22 22h-79z"/>
+    <path d="M620 150c0-12 10-22 22-22 8 0 15 4 19 11 2-1 5-1 8-1 11 0 19 8 19 19h-68z" opacity=".8"/>
+  </g>
+
+  <!-- Avion et trajectoire -->
+  <path d="M430 250 C 620 120, 860 60, 1180 90" fill="none" stroke="#0b7a3b" stroke-width="3" stroke-dasharray="3 12" stroke-linecap="round" opacity=".55"/>
+  <g transform="translate(1185 88) rotate(6)">
+    <path d="M-62 0c0-7 6-12 14-12h82c14 0 26 5 34 12-8 7-20 12-34 12h-82c-8 0-14-5-14-12z" fill="#fff" stroke="#102419" stroke-width="3"/>
+    <path d="M-50 -10l-16-26h14l24 26z" fill="#0b7a3b" stroke="#102419" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M-6 6l-26 34h16l40-34z" fill="#e6ecef" stroke="#102419" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M-6 -6l-20 -22h14l30 22z" fill="#e6ecef" stroke="#102419" stroke-width="3" stroke-linejoin="round"/>
+    <g fill="#3fa7a0"><circle cx="0" cy="-2" r="3.5"/><circle cx="14" cy="-2" r="3.5"/><circle cx="28" cy="-2" r="3.5"/><circle cx="42" cy="-2" r="3.5"/></g>
+    <path d="M-40 4h60" stroke="#d7263d" stroke-width="3" stroke-linecap="round"/>
+  </g>
+
+  <!-- Mer et port -->
+  <path d="M760 306 C 900 296, 1050 290, 1200 296 C 1350 290, 1480 300, 1600 294 L 1600 420 L 760 420 Z" fill="url(#mer)"/>
+  <path d="M960 330c30-6 60 6 90 0M1130 350c30-6 60 6 90 0M1400 322c30-6 60 6 90 0M1000 390c30-6 60 6 90 0" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".5"/>
+  <!-- Collines -->
+  <path d="M0 330 C 160 270, 330 280, 470 310 C 620 340, 760 290, 880 302 C 930 310, 960 350, 990 420 L 0 420 Z" fill="url(#colline)"/>
+  <path d="M0 360 C 200 320, 380 340, 560 350 C 700 358, 800 340, 880 350 C 920 360, 940 390, 950 420 L 0 420 Z" fill="url(#colline2)"/>
+
+  <!-- Baobabs -->
+  <g fill="#6b4a2b">
+    <path d="M700 350c4-30 2-52-6-70h24c-8 18-10 40-6 70z"/>
+    <path d="M696 286c-18-6-34-4-46 6 12-16 30-22 48-16zM716 286c18-6 34-4 46 6-12-16-30-22-48-16zM703 280c-4-18 0-30 8-38-2 14-2 26 2 38z"/>
+  </g>
+  <g fill="#3f8f4c">
+    <ellipse cx="652" cy="286" rx="30" ry="14"/><ellipse cx="760" cy="286" rx="32" ry="15"/><ellipse cx="712" cy="246" rx="30" ry="16"/>
+  </g>
+  <g fill="#6b4a2b" transform="translate(120 20) scale(.7)">
+    <path d="M700 350c4-30 2-52-6-70h24c-8 18-10 40-6 70z"/>
+    <path d="M696 286c-18-6-34-4-46 6 12-16 30-22 48-16zM716 286c18-6 34-4 46 6-12-16-30-22-48-16z"/>
+  </g>
+  <g fill="#3f8f4c" transform="translate(120 20) scale(.7)"><ellipse cx="652" cy="286" rx="30" ry="14"/><ellipse cx="760" cy="286" rx="32" ry="15"/><ellipse cx="706" cy="262" rx="28" ry="15"/></g>
+
+  <!-- Route -->
+  <path d="M0 392 C 260 380, 520 386, 840 380" fill="none" stroke="#5c5346" stroke-width="30" stroke-linecap="round"/>
+  <path d="M0 392 C 260 380, 520 386, 840 380" fill="none" stroke="#f3e9cf" stroke-width="3" stroke-dasharray="26 22"/>
+
+  <!-- Camion SOTRAMA (d'après le logo) -->
+  <g transform="translate(250 262)" stroke="#102419" stroke-width="4" stroke-linejoin="round">
+    <!-- chargement -->
+    <ellipse cx="62" cy="-14" rx="34" ry="18" fill="#b0763a"/>
+    <path d="M40 -22c10 6 34 6 44 0M40 -10c10 6 34 6 44 0" fill="none" stroke-width="2.5"/>
+    <ellipse cx="104" cy="-10" rx="26" ry="15" fill="#c68c4d"/>
+    <rect x="18" y="0" width="120" height="26" rx="4" fill="#ffd23f"/>
+    <rect x="120" y="-18" width="26" height="30" rx="3" fill="#d7263d"/>
+    <path d="M40 8h70M40 17h70" stroke-width="2.5"/>
+    <!-- carrosserie -->
+    <path d="M10 26h150v70H10z" fill="#1c9a44"/>
+    <path d="M160 40h34c10 0 18 6 22 16l12 28v12h-68z" fill="#1c9a44"/>
+    <path d="M168 48h24c6 0 10 3 12 8l8 18h-44z" fill="#bfe6f2"/>
+    <rect x="28" y="46" width="104" height="30" rx="6" fill="#0b7a3b"/>
+    <text x="80" y="68" text-anchor="middle" font-family="Outfit, Arial, sans-serif" font-weight="800" font-size="19" fill="#ffd23f" stroke="none">sotrama</text>
+    <rect x="212" y="80" width="18" height="10" rx="3" fill="#ffd23f"/>
+    <!-- roues -->
+    <circle cx="52" cy="100" r="19" fill="#26312b"/><circle cx="52" cy="100" r="7" fill="#c9c2b0"/>
+    <circle cx="190" cy="100" r="19" fill="#26312b"/><circle cx="190" cy="100" r="7" fill="#c9c2b0"/>
+  </g>
+  <g stroke="#b9b09a" stroke-width="3" stroke-linecap="round" opacity=".8">
+    <path d="M200 318h-40M210 336h-60M196 354h-34"/>
+  </g>
+
+  <!-- quai et grue -->
+  <path d="M900 300h120v14H900z" fill="#8a7f6a"/><path d="M910 314v40M1000 314v40" stroke="#6b6254" stroke-width="6"/>
+  <g stroke="#d7263d" stroke-width="7" stroke-linecap="square" fill="none">
+    <path d="M950 300V170M950 175h110M950 210l40-35M1060 175v40"/>
+  </g>
+  <path d="M1060 215v18" stroke="#102419" stroke-width="3"/>
+  <rect x="1046" y="233" width="28" height="16" fill="#ffd23f" stroke="#102419" stroke-width="3"/>
+
+  <!-- Porte-conteneurs -->
+  <g transform="translate(1110 214)" stroke="#102419" stroke-width="4" stroke-linejoin="round">
+    <path d="M0 70h420l-36 58H30z" fill="#102419"/>
+    <path d="M10 70h400l-4 8H14z" fill="#d7263d" stroke="none"/>
+    <text x="210" y="112" text-anchor="middle" font-family="Outfit, Arial, sans-serif" font-weight="800" font-size="22" fill="#ffd23f" stroke="none" letter-spacing="3">SOTRAMA</text>
+    <rect x="360" y="4" width="46" height="66" fill="#f3e9cf"/>
+    <rect x="368" y="14" width="30" height="12" fill="#bfe6f2"/>
+    <rect x="378" y="-18" width="14" height="22" fill="#d7263d"/>
+    <!-- conteneurs -->
+    <g stroke-width="3">
+      <rect x="30" y="42" width="62" height="28" fill="#1c9a44"/><rect x="92" y="42" width="62" height="28" fill="#ffd23f"/>
+      <rect x="154" y="42" width="62" height="28" fill="#d7263d"/><rect x="216" y="42" width="62" height="28" fill="#1c9a44"/>
+      <rect x="278" y="42" width="62" height="28" fill="#e8a33d"/>
+      <rect x="60" y="14" width="62" height="28" fill="#d7263d"/><rect x="122" y="14" width="62" height="28" fill="#1c9a44"/>
+      <rect x="184" y="14" width="62" height="28" fill="#ffd23f"/><rect x="246" y="14" width="62" height="28" fill="#3fa7a0"/>
+      <rect x="150" y="-14" width="62" height="28" fill="#ffd23f"/><rect x="212" y="-14" width="62" height="28" fill="#d7263d"/>
+    </g>
+    <g stroke-width="2" opacity=".35">
+      <path d="M44 46v20M58 46v20M72 46v20M106 46v20M120 46v20M134 46v20M168 46v20M182 46v20M196 46v20M230 46v20M244 46v20M258 46v20M292 46v20M306 46v20M320 46v20"/>
+      <path d="M74 18v20M88 18v20M102 18v20M136 18v20M150 18v20M164 18v20M198 18v20M212 18v20M226 18v20M260 18v20M274 18v20M288 18v20M164 -10v20M178 -10v20M192 -10v20M226 -10v20M240 -10v20M254 -10v20"/>
+    </g>
+  </g>
+</svg>

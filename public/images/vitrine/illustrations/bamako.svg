@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 220" role="img" aria-label="Bamako : mosquée en banco, fleuve Niger et baobab">
+  <defs>
+    <linearGradient id="ciel-b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe9a8"/><stop offset="1" stop-color="#fff6d6"/></linearGradient>
+    <linearGradient id="fleuve" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5fb3a6"/><stop offset="1" stop-color="#2f8a7f"/></linearGradient>
+  </defs>
+  <rect width="600" height="220" fill="url(#ciel-b)"/>
+  <circle cx="470" cy="62" r="34" fill="#ffd23f"/>
+  <circle cx="470" cy="62" r="50" fill="#ffd23f" opacity=".3"/>
+  <!-- collines lointaines -->
+  <path d="M0 150 C 90 118, 170 128, 250 140 C 340 152, 420 118, 520 124 C 560 126, 590 134, 600 138 V220 H0Z" fill="#e8c98a"/>
+  <!-- mosquée en banco -->
+  <g stroke="#6b4323" stroke-width="3" stroke-linejoin="round">
+    <path d="M150 170V104h150v66z" fill="#c9884a"/>
+    <path d="M168 104V70l12-14 12 14v34zM214 104V58l12-16 12 16v46zM262 104V70l12-14 12 14v34z" fill="#d49655"/>
+    <path d="M174 70h12M220 58h12M268 70h12" />
+    <path d="M205 170v-36c0-12 10-20 21-20s21 8 21 20v36z" fill="#6b4323"/>
+    <path d="M165 130h22M165 146h22M265 130h22M265 146h22" stroke-width="4"/>
+  </g>
+  <g stroke="#6b4323" stroke-width="3" stroke-linecap="round">
+    <path d="M160 104v-6M176 70v-6M186 104v-6M200 104v-6M222 58v-7M232 58v-7M252 104v-6M270 70v-6M280 70v-6M290 104v-6M300 112h6M300 132h6M300 152h6M144 112h6M144 132h6M144 152h6"/>
+  </g>
+  <circle cx="226" cy="40" r="4" fill="#fff6d6" stroke="#6b4323" stroke-width="2"/>
+  <!-- baobab -->
+  <g transform="translate(420 70)">
+    <path d="M28 100c4-34 2-58-6-80h24c-8 22-10 46-6 80z" fill="#7a5433"/>
+    <path d="M24 26c-18-8-36-6-50 6 14-18 34-24 52-18zM44 26c18-8 36-6 50 6-14-18-34-24-52-18zM32 20c-4-16 0-28 8-36-2 14-2 24 2 36z" fill="#7a5433"/>
+    <g fill="#4f9a53"><ellipse cx="-26" cy="30" rx="26" ry="12"/><ellipse cx="96" cy="30" rx="28" ry="13"/><ellipse cx="42" cy="-14" rx="26" ry="13"/></g>
+  </g>
+  <!-- fleuve Niger et pirogue -->
+  <path d="M0 176 C 150 166, 300 186, 450 174 C 520 168, 570 172, 600 176 V220 H0Z" fill="url(#fleuve)"/>
+  <path d="M40 196c24-5 48 5 72 0M300 204c24-5 48 5 72 0M470 192c20-4 40 4 60 0" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity=".55"/>
+  <g transform="translate(330 170)" stroke="#102419" stroke-width="3" stroke-linejoin="round">
+    <path d="M0 10h90c-8 10-22 16-45 16S8 20 0 10z" fill="#d7263d"/>
+    <path d="M10 13h70" stroke="#ffd23f" stroke-width="4"/>
+    <path d="M48 10V-24" /><path d="M48 -22l22 22H48z" fill="#fff6d6"/>
+  </g>
+</svg>

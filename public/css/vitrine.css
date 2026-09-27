@@ -81,9 +81,8 @@ code { background: var(--vert-clair); color: var(--vert-fonce); padding: .05em .
 .actions { display: flex; flex-wrap: wrap; gap: .8rem; margin: 1.6rem 0 1.4rem; }
 .atouts { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: .6rem 1.4rem; font-weight: 500; color: var(--encre); }
 .atouts i { color: var(--vert); margin-right: .35rem; }
-.hero-trajet { position: absolute; left: 0; right: 0; bottom: -10px; width: 100%; height: 160px; z-index: 0; }
-.hero-trajet path { fill: none; stroke: var(--vert); stroke-width: 2.5; stroke-dasharray: 2 12; stroke-linecap: round; opacity: .35; }
-.hero-trajet .trajet-2 { stroke: var(--rouge); opacity: .25; }
+.hero:has(.hero-scene) { padding-bottom: 0; }
+.hero-scene { position: relative; z-index: 1; width: 100%; height: auto; max-height: 360px; object-fit: cover; object-position: center bottom; margin-top: 8px; }
 
 .hero-photo { background: linear-gradient(100deg, rgba(10, 30, 20, .88) 0%, rgba(10, 30, 20, .65) 55%, rgba(10, 30, 20, .35) 100%), var(--hero) center / cover no-repeat; }
 .hero-photo::before { display: none; }
@@ -136,6 +135,7 @@ code { background: var(--vert-clair); color: var(--vert-fonce); padding: .05em .
 .destination::after { content: ''; position: absolute; right: -60px; bottom: -60px; width: 200px; height: 200px; border-radius: 50%; opacity: .08; }
 .destination-mali::after { background: var(--jaune); opacity: .35; }
 .destination-senegal::after { background: var(--vert); }
+.destination-image { display: block; width: calc(100% + 64px); max-width: none; height: 170px; object-fit: cover; margin: -32px -32px 24px; }
 .destination-entete { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.2rem; }
 .destination-entete h3 { font-size: 1.8rem; margin: 0; }
 .destination-entete p { margin: 0; color: var(--gris); font-weight: 500; }
@@ -144,7 +144,7 @@ code { background: var(--vert-clair); color: var(--vert-fonce); padding: .05em .
 .drapeau-mali i:nth-child(1) { background: #14b53a; } .drapeau-mali i:nth-child(2) { background: #fcd116; } .drapeau-mali i:nth-child(3) { background: #ce1126; }
 .drapeau-senegal i:nth-child(1) { background: #00853f; } .drapeau-senegal i:nth-child(2) { background: #fdef42; } .drapeau-senegal i:nth-child(3) { background: #e31b23; }
 .drapeau-senegal::after { content: '★'; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -52%); color: #00853f; font-size: 17px; line-height: 1; }
-.etiquette-nouveau { position: absolute; top: 20px; right: 20px; background: var(--rouge); color: #fff; font-weight: 700; font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; padding: .3rem .7rem; border-radius: 999px; }
+.etiquette-nouveau { position: absolute; top: 16px; left: 16px; background: var(--rouge); color: #fff; font-weight: 700; font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; padding: .3rem .7rem; border-radius: 999px; }
 .coche { list-style: none; padding: 0; margin: 0 0 1.4rem; }
 .coche li { position: relative; padding-left: 1.8rem; margin-bottom: .55rem; }
 .coche li::before { content: '\f00c'; font-family: 'Font Awesome 5 Free'; font-weight: 900; position: absolute; left: 0; top: .05em; color: var(--vert); }
@@ -297,6 +297,8 @@ code { background: var(--vert-clair); color: var(--vert-fonce); padding: .05em .
     .carte-suivi, .fiche-colis { padding: 22px 18px; }
     .grille-services, .grille-destinations, .etapes { grid-template-columns: 1fr; }
     .destination { padding: 26px 22px; }
+    .destination-image { width: calc(100% + 44px); margin: -26px -22px 20px; height: 140px; }
+    .hero-scene { min-height: 150px; }
     .fiche-infos { grid-template-columns: 1fr 1fr; }
     .progression li { font-size: .72rem; }
     .progression-rond { width: 38px; height: 38px; font-size: .85rem; }

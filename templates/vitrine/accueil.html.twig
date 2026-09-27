@@ -45,10 +45,7 @@
     </div>
 
     {% if not hero %}
-    <svg class="hero-trajet" viewBox="0 0 1200 220" preserveAspectRatio="none" aria-hidden="true">
-        <path d="M40 180 C 300 20, 700 20, 1160 150" />
-        <path d="M40 180 C 360 90, 760 110, 1160 200" class="trajet-2" />
-    </svg>
+    <img class="hero-scene" src="{{ asset('images/vitrine/illustrations/scene.svg') }}" alt="" width="1600" height="420">
     {% endif %}
 </section>
 
@@ -113,6 +110,7 @@
         </div>
         <div class="grille-destinations">
             <article class="destination destination-mali">
+                <img class="destination-image" src="{{ asset(bamako) }}" alt="Bamako" loading="lazy" width="600" height="220">
                 <div class="destination-entete">
                     <span class="drapeau drapeau-mali" aria-hidden="true"><i></i><i></i><i></i></span>
                     <div><h3>Bamako</h3><p>Mali · BKO</p></div>
@@ -125,6 +123,7 @@
                 <a href="{{ wa }}?text={{ 'Bonjour SOTRAMA, je souhaite envoyer un colis à Bamako.'|url_encode }}" class="lien-fleche" target="_blank" rel="noopener">Envoyer à Bamako <i class="fas fa-arrow-right"></i></a>
             </article>
             <article class="destination destination-senegal">
+                <img class="destination-image" src="{{ asset(dakar) }}" alt="Dakar" loading="lazy" width="600" height="220">
                 <span class="etiquette-nouveau">Nouveau</span>
                 <div class="destination-entete">
                     <span class="drapeau drapeau-senegal" aria-hidden="true"><i></i><i></i><i></i></span>

@@ -32,6 +32,9 @@ class VitrineController extends AbstractController
     {
         return $this->page('vitrine/accueil.html.twig', [
             'hero' => $this->photo('hero'),
+            // Illustrations par défaut, remplacées par bamako.jpg / dakar.jpg si déposées.
+            'bamako' => $this->photo('bamako') ?? 'images/vitrine/illustrations/bamako.svg',
+            'dakar' => $this->photo('dakar') ?? 'images/vitrine/illustrations/dakar.svg',
             'galerie' => $this->galerie(),
         ]);
     }
