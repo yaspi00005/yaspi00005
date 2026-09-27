@@ -42,6 +42,16 @@
             </div>
         </form>
 
+        {% if recuperesMasques %}
+            <p class="text-muted small mb-3">
+                <i class="fas fa-eye-slash me-1"></i>
+                {{ recuperesMasques }} colis déjà récupéré{{ recuperesMasques > 1 ? 's' }} ne {{ recuperesMasques > 1 ? 'sont' : 'est' }} pas affiché{{ recuperesMasques > 1 ? 's' }} : faites une recherche pour les retrouver, ou
+                <a href="{{ path('colis_index', {tous: 1}) }}">affichez tous les colis</a>.
+            </p>
+        {% elseif app.request.query.get('tous') %}
+            <p class="text-muted small mb-3"><i class="fas fa-eye me-1"></i> Tous les colis sont affichés, y compris ceux déjà récupérés. <a href="{{ path('colis_index') }}">Masquer les colis récupérés</a>.</p>
+        {% endif %}
+
         <div class="table-responsive">
             <table class="table table-hover">
                 <thead>

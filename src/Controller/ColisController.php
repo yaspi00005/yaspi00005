@@ -58,7 +58,11 @@ class ColisController extends AbstractController
             'du' => $request->query->getString('du'),
             'au' => $request->query->getString('au'),
         ];
-        $qb = $colisRepository->filtreQb($this->getUser(), $filtres);
+        // Liste allégée : sans recherche ni filtre, les colis déjà récupérés par le destinataire sont masqués
+        // (l'export Excel, lui, reste complet).
+        $recherche = [] !== array_filter($filtres);
+        $masquerRecuperes = !$recherche && !$request->query->getBoolean('tous') && 'csv' !== $request->query->get('export');
+        $qb = $colisRepository->filtreQb($this->getUser(), $filtres + ['sansRecuperes' => $masquerRecuperes]);
 
         if ('csv' === $request->query->get('export')) {
             return Csv::reponse('colis-'.date('Y-m-d').'.csv',
@@ -82,6 +86,9 @@ class ColisController extends AbstractController
         return $this->render('colis/index.html.twig', [
             'colis' => Pagination::depuis($qb, $request->query->get('page', 1)),
             'filtres' => $filtres,
+            'recuperesMasques' => $masquerRecuperes
+                ? $colisRepository->filtreQb($this->getUser(), ['statut' => StatutColis::Recupere->value])->select('COUNT(c.id)')->resetDQLPart('orderBy')->getQuery()->getSingleScalarResult()
+                : 0,
             'statuts' => StatutColis::cases(),
             'statutsPaiement' => StatutPaiement::cases(),
             'expeditions' => $expeditions->filtreQb($this->getUser())->setMaxResults(50)->getQuery()->getResult(),

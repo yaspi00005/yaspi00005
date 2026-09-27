@@ -42,6 +42,9 @@ class ColisRepository extends ServiceEntityRepository
         if (!empty($filtres['statut']) && $s = StatutColis::tryFrom($filtres['statut'])) {
             $qb->andWhere('c.statut = :statut')->setParameter('statut', $s);
         }
+        if (!empty($filtres['sansRecuperes'])) {
+            $qb->andWhere('c.statut <> :recupere')->setParameter('recupere', StatutColis::Recupere);
+        }
         if (!empty($filtres['paiement']) && $p = StatutPaiement::tryFrom($filtres['paiement'])) {
             $qb->andWhere('c.statutPaiement = :paiement')->setParameter('paiement', $p);
         }
