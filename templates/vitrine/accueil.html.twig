@@ -214,7 +214,11 @@
         <div class="grille-equipe">
             {% for p in infos.equipe %}
             <article class="membre">
+                {% if photosEquipe[p.nom] is defined %}
+                <img src="{{ asset(photosEquipe[p.nom]) }}" alt="{{ p.nom }}" class="membre-initiales membre-photo" loading="lazy">
+                {% else %}
                 <span class="membre-initiales" aria-hidden="true">{{ p.nom|split(' ')|map(m => m|first)|join('')|upper }}</span>
+                {% endif %}
                 <h3>{{ p.nom }}</h3>
                 <p class="membre-role">{{ p.role }}</p>
                 <a href="tel:{{ p.telephone|replace({' ': ''}) }}" class="membre-tel">{{ p.telephone }}</a>

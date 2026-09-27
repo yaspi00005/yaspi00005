@@ -26,3 +26,6 @@
 # Application Android : fichier déposé sur le serveur, hors Git
 /apk/*.apk
 ###< sotrama ###
+
+# Fichiers système du Mac
+.DS_Store
