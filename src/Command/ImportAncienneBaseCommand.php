@@ -56,6 +56,7 @@ final class ImportAncienneBaseCommand extends Command
         private readonly EntityManagerInterface $em,
         private readonly Numerotation $numerotation,
         #[Autowire('%app.uploads_dir%')] private readonly string $uploadsDir,
+        #[Autowire('%kernel.logs_dir%')] private readonly string $dossierLogs,
     ) {
         parent::__construct();
     }
@@ -115,6 +116,11 @@ final class ImportAncienneBaseCommand extends Command
         }
         if (\count($this->avertissements) > 50) {
             $this->io->writeln(' … et '.(\count($this->avertissements) - 50).' autres avertissements.');
+        }
+        if ($this->avertissements) {
+            $fichier = $this->dossierLogs.'/import-ancienne-base.txt';
+            file_put_contents($fichier, implode(\PHP_EOL, $this->avertissements).\PHP_EOL);
+            $this->io->note('Liste complète des '.\count($this->avertissements).' avertissements : '.$fichier);
         }
         $this->io->success($dryRun ? 'Simulation terminée.' : 'Import terminé.');
 
