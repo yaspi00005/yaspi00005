@@ -274,7 +274,7 @@
             <div class="card-body">
                 {% if colis.expedition %}
                     <p class="mb-3"><i class="fas {{ colis.expedition.modeTransport.icone }} text-primary me-1"></i>
-                        <a href="{{ path('expedition_show', {id: colis.expedition.id}) }}">{{ colis.expedition.numero }}</a>
+                        {% if is_granted('ROLE_REPRESENTANT') %}<a href="{{ path('expedition_show', {id: colis.expedition.id}) }}">{{ colis.expedition.numero }}</a>{% else %}{{ colis.expedition.numero }}{% endif %}
                         · {{ colis.expedition.destination.label }} · départ {{ colis.expedition.dateDepart|date('d/m/Y') }}</p>
                 {% else %}
                     <p class="text-warning"><i class="fas fa-exclamation-triangle me-1"></i> Pas encore affecté à une expédition.</p>

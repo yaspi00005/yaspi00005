@@ -7,6 +7,7 @@ use App\Entity\Expedition;
 use App\Entity\User;
 use App\Enum\StatutColis;
 use App\Enum\StatutPaiement;
+use App\Security\Perimetre;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
@@ -61,18 +62,10 @@ class ColisRepository extends ServiceEntityRepository
         return $qb;
     }
 
-    /** Un représentant ne voit que les colis dont l'expédition part vers son pays. */
+    /** Colis visibles par l'utilisateur : voir App\Security\Perimetre. */
     public function restreindrePourUtilisateur(QueryBuilder $qb, ?User $user, string $alias = 'c'): void
     {
-        if (!$user || \in_array(User::ROLE_ADMIN, $user->getRoles(), true)) {
-            return;
-        }
-        if (\in_array(User::ROLE_REPRESENTANT, $user->getRoles(), true) && $user->getPays()) {
-            if (!\in_array('e', $qb->getAllAliases(), true)) {
-                $qb->leftJoin($alias.'.expedition', 'e');
-            }
-            $qb->andWhere('e.destination = :paysUser')->setParameter('paysUser', $user->getPays());
-        }
+        Perimetre::appliquer($qb, $user, $alias);
     }
 
     public function findOneByCode(string $code): ?Colis
@@ -162,5 +155,54 @@ class ColisRepository extends ServiceEntityRepository
             ->setParameter('limite', new \DateTimeImmutable("-$jours days"));
 
         return $qb->getQuery()->getResult();
+    }
+
+    /**
+     * Performance d'un agent (colis qu'il a enregistrés) : ce mois-ci, le mois dernier et au total.
+     * Chiffre d'affaires = tarifs moins remises.
+     *
+     * @return array{mois: array{nb: int, ca: int}, moisPrecedent: array{nb: int, ca: int}, total: array{nb: int, ca: int}}
+     */
+    public function performance(User $agent): array
+    {
+        $debutMois = new \DateTimeImmutable('first day of this month 00:00');
+        $calcul = function (?\DateTimeImmutable $du, ?\DateTimeImmutable $au) use ($agent): array {
+            $qb = $this->createQueryBuilder('c')
+                ->select('COUNT(c.id) AS nb, COALESCE(SUM(c.frais - c.remise), 0) AS ca')
+                ->andWhere('c.agent = :agent')->setParameter('agent', $agent);
+            if ($du) {
+                $qb->andWhere('c.dateReception >= :du')->setParameter('du', $du);
+            }
+            if ($au) {
+                $qb->andWhere('c.dateReception < :au')->setParameter('au', $au);
+            }
+            $r = $qb->getQuery()->getSingleResult();
+
+            return ['nb' => (int) $r['nb'], 'ca' => (int) $r['ca']];
+        };
+
+        return [
+            'mois' => $calcul($debutMois, null),
+            'moisPrecedent' => $calcul($debutMois->modify('-1 month'), $debutMois),
+            'total' => $calcul(null, null),
+        ];
+    }
+
+    /**
+     * Classement des agents sur une période (colis enregistrés, chiffre d'affaires, encaissé).
+     *
+     * @return list<array{agent: string, nb: int, ca: int, paye: int}>
+     */
+    public function performanceAgents(\DateTimeImmutable $du): array
+    {
+        $lignes = $this->createQueryBuilder('c')
+            ->select("COALESCE(CONCAT(u.prenom, ' ', u.nom), '—') AS agent, COUNT(c.id) AS nb, COALESCE(SUM(c.frais - c.remise), 0) AS ca, COALESCE(SUM(c.montantPaye), 0) AS paye")
+            ->leftJoin('c.agent', 'u')
+            ->andWhere('c.dateReception >= :du')->setParameter('du', $du)
+            ->groupBy('u.id, u.prenom, u.nom')
+            ->orderBy('nb', 'DESC')
+            ->getQuery()->getArrayResult();
+
+        return array_map(fn ($r) => ['agent' => $r['agent'], 'nb' => (int) $r['nb'], 'ca' => (int) $r['ca'], 'paye' => (int) $r['paye']], $lignes);
     }
 }

@@ -9,6 +9,7 @@ use App\Repository\ColisRepository;
 use App\Repository\ExpeditionRepository;
 use App\Repository\PaiementRepository;
 use App\Repository\RamassageRepository;
+use App\Security\Perimetre;
 use App\Util\DateFr;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
@@ -31,7 +32,7 @@ class DashboardController extends AbstractController
         $totaux = $colisRepository->totaux($user);
         $totauxMois = $colisRepository->totaux($user, new \DateTimeImmutable('first day of this month 00:00'));
         $colisParMois = $colisRepository->colisParMois(12, $user);
-        $encaissements = $paiementRepository->encaissementsParJour(30, $user);
+        $encaissements = $this->isGranted(User::ROLE_REPRESENTANT) ? $paiementRepository->encaissementsParJour(30, $user) : [];
 
         return $this->render('dashboard/index.html.twig', [
             'parStatut' => $parStatut,
@@ -40,8 +41,13 @@ class DashboardController extends AbstractController
             'totauxMois' => $totauxMois,
             'resteAEncaisser' => max(0, $totaux['frais'] - $totaux['remise'] - $totaux['paye']),
             // Les représentants ne voient que les colis de leur pays : pas le nombre total de clients.
-            'totalClients' => $this->isGranted(User::ROLE_RAMASSAGE) ? $clientRepository->count([]) : null,
-            'expeditions' => $expeditionRepository->filtreQb($user)->setMaxResults(5)->getQuery()->getResult(),
+            'totalClients' => $this->isGranted(User::ROLE_ADMIN) ? $clientRepository->count([]) : null,
+            // Performance personnelle : agents de ramassage et administrateurs (qui enregistrent aussi des colis).
+            'performance' => $this->isGranted(User::ROLE_RAMASSAGE) ? $colisRepository->performance($user) : null,
+            'performanceAgents' => $this->isGranted(User::ROLE_ADMIN) ? $colisRepository->performanceAgents(new \DateTimeImmutable('first day of this month 00:00')) : [],
+            'estRepresentant' => Perimetre::estRepresentant($user),
+            'estRamassage' => Perimetre::estRamassage($user),
+            'expeditions' => $this->isGranted(User::ROLE_REPRESENTANT) ? $expeditionRepository->filtreQb($user)->setMaxResults(5)->getQuery()->getResult() : [],
             'derniersColis' => $colisRepository->derniers($user, 8),
             'enAttenteRetrait' => \count($colisRepository->enAttenteRetrait($user, 7)),
             'ramassages' => $this->isGranted(User::ROLE_RAMASSAGE) ? $ramassageRepository->aVenir(5) : [],

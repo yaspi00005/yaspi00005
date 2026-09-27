@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\Expedition;
 use App\Entity\Paiement;
 use App\Entity\User;
+use App\Security\Perimetre;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
@@ -32,9 +33,7 @@ class PaiementRepository extends ServiceEntityRepository
             ->leftJoin('c.expedition', 'e')
             ->orderBy('p.date', 'DESC');
 
-        if ($user && !\in_array(User::ROLE_ADMIN, $user->getRoles(), true) && $user->getPays()) {
-            $qb->andWhere('e.destination = :pays')->setParameter('pays', $user->getPays());
-        }
+        Perimetre::appliquer($qb, $user, 'c');
         if (!empty($filtres['du'])) {
             $qb->andWhere('p.date >= :du')->setParameter('du', new \DateTimeImmutable($filtres['du'].' 00:00:00'));
         }

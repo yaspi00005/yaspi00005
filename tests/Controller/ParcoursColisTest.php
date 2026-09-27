@@ -107,14 +107,18 @@ final class ParcoursColisTest extends WebTestCase
         $colis = $this->creerColis();
         $id = static::getContainer()->get(IdChiffreur::class)->encode($colis->getId());
 
-        // Encaissement partiel au ramassage
+        // L'agent de ramassage enregistre les colis mais n'encaisse pas.
+        $crawler = $this->client->request('GET', "/colis/$id");
+        $this->assertCount(0, $crawler->selectButton('Enregistrer le paiement'));
+        $this->client->request('POST', "/colis/$id/encaisser");
+        $this->assertResponseStatusCodeSame(403);
+
+        // Admin : acompte, puis l'expédition arrive
+        $this->connecte('admin');
         $crawler = $this->client->request('GET', "/colis/$id");
         $this->client->submit($crawler->selectButton('Enregistrer le paiement')->form(['encaissement[montant]' => '50']));
         $this->client->followRedirect();
         $this->assertSelectorTextContains('.alert-success', '52,50');
-
-        // Admin : l'expédition arrive
-        $this->connecte('admin');
         $expeditionId = static::getContainer()->get(IdChiffreur::class)->encode(static::getContainer()->get(ColisRepository::class)->find($colis->getId())->getExpedition()->getId());
         $crawler = $this->client->request('GET', "/expeditions/$expeditionId");
         $this->client->submit($crawler->selectButton('Mettre à jour')->form(['statut' => 'arrivee']));

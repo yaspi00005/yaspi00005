@@ -49,7 +49,7 @@
                     <table class="table table-hover">
                         <thead><tr><th>N° suivi</th><th>Client</th><th>Destinataire</th><th class="num">Poids</th><th class="num">Montant</th><th class="num">Reste</th><th>Statut</th><th></th></tr></thead>
                         <tbody>
-                        {% for c in expedition.colis %}
+                        {% for c in expedition.colis|filter(c => is_granted('COLIS_VOIR', c)) %}
                             <tr>
                                 <td><a href="{{ path('colis_show', {id: c.id}) }}" class="text-primary font-w600">{{ c.numeroSuivi }}</a></td>
                                 <td>{{ c.client.nomComplet }}</td>

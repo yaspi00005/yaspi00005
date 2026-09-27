@@ -18,12 +18,16 @@
                 {{ m.item(route, ['agence_'], path('agence_guichet'), 'fas fa-qrcode', 'Guichet agence') }}
             {% endif %}
             {{ m.item(route, ['colis_'], path('colis_index'), 'fas fa-box-open', 'Colis') }}
-            {{ m.item(route, ['expedition_'], path('expedition_index'), 'fas fa-shipping-fast', 'Expéditions') }}
+            {% if is_granted('ROLE_REPRESENTANT') %}
+                {{ m.item(route, ['expedition_'], path('expedition_index'), 'fas fa-shipping-fast', 'Expéditions') }}
+            {% endif %}
             {% if is_granted('ROLE_RAMASSAGE') %}
                 {{ m.item(route, ['client_'], path('client_index'), 'fas fa-users', 'Clients') }}
                 {{ m.item(route, ['ramassage_'], path('ramassage_index'), 'fas fa-calendar-alt', 'Ramassages') }}
             {% endif %}
-            {{ m.item(route, ['paiement_'], path('paiement_index'), 'fas fa-wallet', 'Paiements') }}
+            {% if is_granted('ROLE_REPRESENTANT') %}
+                {{ m.item(route, ['paiement_'], path('paiement_index'), 'fas fa-wallet', 'Paiements') }}
+            {% endif %}
             {% if is_granted('ROLE_ADMIN') %}
                 <li class="{{ route starts with 'admin_' ? 'mm-active' }}">
                     <a class="has-arrow" href="javascript:void(0)" aria-expanded="{{ route starts with 'admin_' ? 'true' : 'false' }}">

@@ -25,8 +25,12 @@
                 <div>
                     <h3 class="text-white mb-1">Bonjour {{ app.user.prenom }} 👋</h3>
                     <p class="mb-0 opacity-75">
-                        {{ totalColis }} colis suivis{% if app.user.pays and not is_granted('ROLE_ADMIN') %} vers le {{ app.user.pays.label }}{% endif %}
-                        · {{ enAttenteRetrait }} arrivés depuis plus de 7 jours sans être retirés.
+                        {% if estRamassage %}
+                            Vous avez enregistré {{ totalColis }} colis{% if performance %}, dont {{ performance.mois.nb }} ce mois-ci{% endif %}.
+                        {% else %}
+                            {{ totalColis }} colis {{ estRepresentant ? 'arrivés' : 'suivis' }}{% if estRepresentant and app.user.pays %} au {{ app.user.pays.label }}{% endif %}
+                            · {{ enAttenteRetrait }} arrivés depuis plus de 7 jours sans être retirés.
+                        {% endif %}
                     </p>
                 </div>
                 <div class="d-flex gap-2 flex-wrap">
@@ -41,15 +45,72 @@
         </div>
     </div>
 
-    {{ m.stat('fas fa-box-open', 'primary', totalColis, 'Colis au total', path('colis_index')) }}
-    {{ m.stat('fas fa-truck-loading', 'warning', parStatut['en_preparation']|default(0), 'En préparation', path('colis_index', {statut: 'en_preparation'})) }}
-    {{ m.stat('fas fa-plane', 'info', (parStatut['expedie']|default(0)) + (parStatut['en_transit']|default(0)) + (parStatut['retenu_douane']|default(0)), 'En route', path('expedition_index')) }}
-    {{ m.stat('fas fa-map-marker-alt', 'secondary', parStatut['arrive']|default(0), 'À retirer en agence', path('colis_index', {statut: 'arrive'})) }}
+    {% if estRepresentant %}
+        {# Représentant : colis arrivés dans son pays, à remettre et à encaisser. #}
+        {{ m.stat('fas fa-map-marker-alt', 'secondary', parStatut['arrive']|default(0), 'À retirer en agence', path('colis_index', {statut: 'arrive'})) }}
+        {{ m.stat('fas fa-hand-holding', 'success', parStatut['recupere']|default(0), 'Remis aux destinataires', path('colis_index', {statut: 'recupere'})) }}
+        {{ m.stat('fas fa-euro-sign', 'success', totaux.paye|money, 'Encaissé (total)', path('paiement_index')) }}
+        {{ m.stat('fas fa-hourglass-half', 'danger', resteAEncaisser|money, 'Reste à encaisser', path('colis_index', {paiement: 'non_paye'})) }}
+    {% else %}
+        {{ m.stat('fas fa-box-open', 'primary', totalColis, estRamassage ? 'Mes colis' : 'Colis au total', path('colis_index', {tous: 1})) }}
+        {{ m.stat('fas fa-truck-loading', 'warning', parStatut['en_preparation']|default(0), 'En préparation', path('colis_index', {statut: 'en_preparation'})) }}
+        {{ m.stat('fas fa-plane', 'info', (parStatut['expedie']|default(0)) + (parStatut['en_transit']|default(0)) + (parStatut['retenu_douane']|default(0)), 'En route', estRamassage ? path('colis_index', {statut: 'en_transit'}) : path('expedition_index')) }}
+        {{ m.stat('fas fa-map-marker-alt', 'secondary', parStatut['arrive']|default(0), 'À retirer en agence', path('colis_index', {statut: 'arrive'})) }}
+    {% endif %}
 
-    {{ m.stat('fas fa-euro-sign', 'success', totaux.paye|money, 'Encaissé (total)', path('paiement_index')) }}
-    {{ m.stat('fas fa-hourglass-half', 'danger', resteAEncaisser|money, 'Reste à encaisser', path('colis_index', {paiement: 'non_paye'})) }}
-    {{ m.stat('fas fa-calendar-check', 'primary', totauxMois.paye|money, 'Encaissé ce mois-ci', path('paiement_index')) }}
-    {% if totalClients is not null %}{{ m.stat('fas fa-users', 'info', totalClients, 'Clients', path('client_index')) }}{% endif %}
+    {% if is_granted('ROLE_ADMIN') %}
+        {{ m.stat('fas fa-euro-sign', 'success', totaux.paye|money, 'Encaissé (total)', path('paiement_index')) }}
+        {{ m.stat('fas fa-hourglass-half', 'danger', resteAEncaisser|money, 'Reste à encaisser', path('colis_index', {paiement: 'non_paye'})) }}
+        {{ m.stat('fas fa-calendar-check', 'primary', totauxMois.paye|money, 'Encaissé ce mois-ci', path('paiement_index')) }}
+        {{ m.stat('fas fa-users', 'info', totalClients, 'Clients', path('client_index')) }}
+    {% endif %}
+
+    {% if performance %}
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header border-0 pb-0">
+                <h4 class="card-title"><i class="fas fa-medal text-warning me-2"></i>Mes performances{% if is_granted('ROLE_ADMIN') %} <small class="text-muted fs-14">(colis que j'ai enregistrés)</small>{% endif %}</h4>
+            </div>
+            <div class="card-body">
+                <div class="row text-center g-3">
+                    <div class="col-6 col-md-3"><div class="stat-value">{{ performance.mois.nb }}</div><span class="text-muted fs-14">colis ce mois-ci</span></div>
+                    <div class="col-6 col-md-3"><div class="stat-value">{{ performance.mois.ca|money }}</div><span class="text-muted fs-14">chiffre d'affaires ce mois-ci</span></div>
+                    <div class="col-6 col-md-3">
+                        <div class="stat-value">{{ performance.moisPrecedent.nb }}</div>
+                        <span class="text-muted fs-14">colis le mois dernier</span>
+                        {% if performance.moisPrecedent.nb > 0 %}
+                            {% set evolution = ((performance.mois.nb - performance.moisPrecedent.nb) / performance.moisPrecedent.nb * 100)|round %}
+                            <div class="fs-13 {{ evolution >= 0 ? 'text-success' : 'text-danger' }}"><i class="fas fa-arrow-{{ evolution >= 0 ? 'up' : 'down' }}"></i> {{ evolution >= 0 ? '+' }}{{ evolution }} % ce mois-ci</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-6 col-md-3"><div class="stat-value">{{ performance.total.nb }}</div><span class="text-muted fs-14">colis au total · {{ performance.total.ca|money }}</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if performanceAgents %}
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header border-0 pb-0">
+                <h4 class="card-title"><i class="fas fa-users text-primary me-2"></i>Performance des agents ce mois-ci</h4>
+            </div>
+            <div class="card-body pt-2">
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead><tr><th>Agent</th><th class="num">Colis</th><th class="num">Chiffre d'affaires</th><th class="num">Déjà encaissé</th></tr></thead>
+                        <tbody>
+                        {% for a in performanceAgents %}
+                            <tr><td class="font-w600">{% if loop.first %}<i class="fas fa-trophy text-warning me-1"></i>{% endif %}{{ a.agent }}</td><td class="num">{{ a.nb }}</td><td class="num">{{ a.ca|money }}</td><td class="num">{{ a.paye|money }}</td></tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
     <div class="col-xl-8">
         <div class="card">
@@ -75,7 +136,7 @@
     <div class="col-xl-8">
         <div class="card">
             <div class="card-header border-0">
-                <h4 class="card-title">Derniers colis</h4>
+                <h4 class="card-title">{{ estRamassage ? 'Mes derniers colis' : 'Derniers colis' }}</h4>
                 <a href="{{ path('colis_index') }}" class="btn btn-primary light btn-sm btn-rounded">Tout voir</a>
             </div>
             <div class="card-body pt-0">
@@ -101,6 +162,7 @@
         </div>
     </div>
     <div class="col-xl-4">
+        {% if is_granted('ROLE_REPRESENTANT') %}
         <div class="card">
             <div class="card-header border-0">
                 <h4 class="card-title">Expéditions récentes</h4>
@@ -123,6 +185,7 @@
                 {% endfor %}
             </div>
         </div>
+        {% endif %}
         {% if ramassages %}
         <div class="card">
             <div class="card-header border-0">
@@ -141,6 +204,7 @@
         {% endif %}
     </div>
 
+    {% if chartEncaissements.data %}
     <div class="col-12">
         <div class="card">
             <div class="card-header border-0 pb-0">
@@ -151,6 +215,7 @@
             </div>
         </div>
     </div>
+    {% endif %}
 </div>
 {% endblock %}
 
@@ -167,7 +232,7 @@
         data: { labels: {{ chartMois.labels|json_encode|raw }}, datasets: [{ label: 'Colis', data: {{ chartMois.data|json_encode|raw }}, backgroundColor: vert, borderRadius: 6, barPercentage: .55 }] },
         options: options
     });
-    new Chart(document.getElementById('chart-encaissements'), {
+    document.getElementById('chart-encaissements') && new Chart(document.getElementById('chart-encaissements'), {
         type: 'line',
         data: { labels: {{ chartEncaissements.labels|json_encode|raw }}, datasets: [{ label: 'Encaissé', data: {{ chartEncaissements.data|json_encode|raw }}, borderColor: vert, backgroundColor: 'rgba(0,161,93,.12)', pointRadius: 2, lineTension: .35, fill: true }] },
         options: options

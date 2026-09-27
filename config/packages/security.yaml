@@ -52,6 +52,8 @@ security:
         - { path: ^/admin, roles: ROLE_ADMIN }
         - { path: ^/ramassage, roles: ROLE_RAMASSAGE }
         - { path: ^/agence, roles: ROLE_REPRESENTANT }
+        - { path: ^/expeditions, roles: ROLE_REPRESENTANT }   # admin compris (hiérarchie), pas les agents de ramassage
+        - { path: ^/paiements, roles: ROLE_REPRESENTANT }
         - { path: ^/, roles: ROLE_USER }
 
 when@test:

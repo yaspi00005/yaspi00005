@@ -10,11 +10,12 @@ use Symfony\Component\Security\Core\Authorization\Voter\Vote;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 
 /**
- * Règles d'accès aux colis :
- *  - VOIR      : admin, agent de ramassage, ou représentant du pays de destination ;
- *  - MODIFIER  : admin, ou agent de ramassage tant que le colis est en préparation ;
- *  - ENCAISSER : toute personne pouvant voir le colis ;
- *  - LIVRER    : admin ou représentant du pays de destination.
+ * Règles d'accès aux colis (périmètre de chaque rôle : voir Perimetre) :
+ *  - VOIR      : admin ; agent de ramassage pour les colis qu'il a enregistrés ;
+ *                représentant pour les colis arrivés dans son pays ;
+ *  - MODIFIER  : admin, ou l'agent qui l'a enregistré tant que le colis est en préparation ;
+ *  - ENCAISSER : admin, ou représentant pour les colis arrivés dans son pays ;
+ *  - LIVRER    : admin, ou représentant pour les colis arrivés dans son pays.
  *
  * @extends Voter<string, Colis>
  */
@@ -44,15 +45,12 @@ final class ColisVoter extends Voter
             return true;
         }
 
-        $ramassage = $this->security->isGranted(User::ROLE_RAMASSAGE);
-        $representantDuPays = $this->security->isGranted(User::ROLE_REPRESENTANT)
-            && null !== $user->getPays()
-            && $subject->getExpedition()?->getDestination() === $user->getPays();
+        $visible = Perimetre::peutVoir($user, $subject);
 
         return match ($attribute) {
-            self::VOIR, self::ENCAISSER => $ramassage || $representantDuPays,
-            self::MODIFIER => $ramassage && $subject->isSupprimable(),
-            self::LIVRER => $representantDuPays,
+            self::VOIR => $visible,
+            self::MODIFIER => $visible && Perimetre::estRamassage($user) && $subject->isSupprimable(),
+            self::ENCAISSER, self::LIVRER => $visible && Perimetre::estRepresentant($user),
             default => false,
         };
     }

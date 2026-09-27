@@ -86,13 +86,13 @@
 
     <div class="col-xl-8">
         <div class="card">
-            <div class="card-header"><h4 class="card-title">Colis envoyés ({{ client.colis|length }})</h4></div>
+            <div class="card-header">{% set colisVisibles = client.colis|filter(c => is_granted('COLIS_VOIR', c)) %}<h4 class="card-title">Colis envoyés ({{ colisVisibles|length }})</h4></div>
             <div class="card-body pt-0">
                 <div class="table-responsive">
                     <table class="table table-hover">
                         <thead><tr><th>N° suivi</th><th>Destinataire</th><th class="num">Montant</th><th class="num">Reste</th><th>Statut</th></tr></thead>
                         <tbody>
-                        {% for c in client.colis %}
+                        {% for c in colisVisibles %}
                             <tr>
                                 <td><a href="{{ path('colis_show', {id: c.id}) }}" class="text-primary font-w600">{{ c.numeroSuivi }}</a><br><small class="text-muted">{{ c.dateReception|date('d/m/Y') }}</small></td>
                                 <td>{{ c.destinataireNom }}<br><small class="text-muted">{{ c.destinataireTelephone|tel }}</small></td>
