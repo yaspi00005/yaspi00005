@@ -37,7 +37,7 @@ final class AppExtension extends AbstractExtension
             new TwigFilter('poids', fn ($kg) => number_format((float) $kg, 2, ',', ' ').' kg'),
             new TwigFilter('jour_fr', fn (\DateTimeInterface $d) => \App\Util\DateFr::jour($d)),
             new TwigFilter('jour_heure_fr', fn (\DateTimeInterface $d) => \App\Util\DateFr::jourHeure($d)),
-            new TwigFilter('tel', fn (?string $t) => $t ? trim(chunk_split(preg_replace('/\s+/', '', $t), 2, ' ')) : ''),
+            new TwigFilter('tel', fn (?string $t) => $t ? \App\Util\Telephone::affichage($t) : ''),
         ];
     }
 

@@ -33,4 +33,27 @@ final class Telephone
             default => $chiffres,
         };
     }
+
+    /**
+     * Affichage lisible : « 33758801507 » → « 07 58 80 15 07 », « 22366547781 » → « +223 66 54 77 81 »,
+     * « 221771234567 » → « +221 77 123 45 67 » ; sinon groupes de deux chiffres.
+     */
+    public static function affichage(?string $numero): string
+    {
+        $numero = trim((string) $numero);
+        $chiffres = preg_replace('/\D/', '', $numero);
+        if (str_starts_with($chiffres, '00')) {
+            $chiffres = substr($chiffres, 2);
+        }
+        $paires = fn (string $c) => trim(chunk_split($c, 2, ' '));
+
+        return match (true) {
+            '' === $chiffres => $numero,
+            11 === \strlen($chiffres) && str_starts_with($chiffres, '33') => $paires('0'.substr($chiffres, 2)),
+            11 === \strlen($chiffres) && str_starts_with($chiffres, '223') => '+223 '.$paires(substr($chiffres, 3)),
+            12 === \strlen($chiffres) && str_starts_with($chiffres, '221') => '+221 '.substr($chiffres, 3, 2).' '.substr($chiffres, 5, 3).' '.substr($chiffres, 8, 2).' '.substr($chiffres, 10),
+            9 === \strlen($chiffres) && '7' === $chiffres[0] => substr($chiffres, 0, 2).' '.substr($chiffres, 2, 3).' '.substr($chiffres, 5, 2).' '.substr($chiffres, 7),
+            default => $paires($chiffres),
+        };
+    }
 }
