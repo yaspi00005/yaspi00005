@@ -80,6 +80,10 @@ final class ImportAncienneBaseCommand extends Command
     {
         $this->io = new SymfonyStyle($input, $output);
         $dryRun = $this->simulation = (bool) $input->getOption('dry-run');
+        // Grandes photos à réduire : GD a besoin de mémoire (une photo 12 Mpx ≈ 50 Mo).
+        if ((int) ini_get('memory_limit') > 0 && (int) ini_get('memory_limit') < 1024) {
+            @ini_set('memory_limit', '1024M');
+        }
 
         if ($this->em->getRepository(Colis::class)->count([]) || $this->em->getRepository(Client::class)->count([])) {
             $this->io->error('La nouvelle base contient déjà des clients ou des colis. Importez dans une base vide.');
@@ -541,8 +545,13 @@ final class ImportAncienneBaseCommand extends Command
 
             return null;
         }
-        ++$this->photosTrouvees;
         $extension = strtolower(pathinfo($source, \PATHINFO_EXTENSION));
+        if (!@getimagesize($source) && !\in_array($extension, ['heic', 'heif'], true)) {
+            $this->avertissements[] = "Photo $nom : le fichier n'est pas une image valide, ignoré.";
+
+            return null;
+        }
+        ++$this->photosTrouvees;
         if (\in_array($extension, ['heic', 'heif'], true)) {
             $this->avertissements[] = "Photo $nom au format iPhone (HEIC), non affichable par Chrome : convertissez-la en JPEG si besoin.";
         }
@@ -559,6 +568,7 @@ final class ImportAncienneBaseCommand extends Command
         if ($this->reduirePhoto($source, $cible.'.jpg')) {
             return $relatif.'.jpg';
         }
+        @unlink($cible.'.jpg'); // réduction commencée puis abandonnée
         // Extension d'après le contenu réel : .jfif, .jpe, .JPEG… sont des JPEG.
         $extension = match (@getimagesize($source)[2] ?? null) {
             \IMAGETYPE_JPEG => 'jpg',
@@ -567,7 +577,11 @@ final class ImportAncienneBaseCommand extends Command
             \IMAGETYPE_GIF => 'gif',
             default => $extension ?: 'jpg',
         };
-        copy($source, $cible.'.'.$extension);
+        if (!@copy($source, $cible.'.'.$extension)) {
+            $this->avertissements[] = "Photo $nom : copie impossible, ignorée.";
+
+            return null;
+        }
 
         return $relatif.'.'.$extension;
     }
@@ -611,41 +625,50 @@ final class ImportAncienneBaseCommand extends Command
         return $trouves[0] ?? null;
     }
 
-    /** Réduit une photo JPEG/PNG/WebP trop grande ; false si GD ne sait pas la lire (copie telle quelle). */
+    /**
+     * Réduit une photo JPEG/PNG/WebP trop grande. Renvoie false (la photo est alors copiée telle quelle)
+     * si elle n'a pas besoin d'être réduite ou si GD n'y arrive pas : photo abîmée, trop grande pour la mémoire…
+     */
     private function reduirePhoto(string $source, string $cible): bool
     {
-        $infos = @getimagesize($source);
-        if (!$infos || !\in_array($infos[2], [\IMAGETYPE_JPEG, \IMAGETYPE_PNG, \IMAGETYPE_WEBP], true)) {
-            return false;
-        }
-        [$largeur, $hauteur] = $infos;
-        $orientation = \IMAGETYPE_JPEG === $infos[2] && \function_exists('exif_read_data') ? (int) (@exif_read_data($source)['Orientation'] ?? 1) : 1;
-        if (max($largeur, $hauteur) <= 1600 && filesize($source) < 1_500_000 && 1 === $orientation) {
-            return false;
-        }
-        $image = match ($infos[2]) {
-            \IMAGETYPE_JPEG => @imagecreatefromjpeg($source),
-            \IMAGETYPE_PNG => @imagecreatefrompng($source),
-            default => @imagecreatefromwebp($source),
-        };
-        if (!$image) {
-            return false;
-        }
-        $image = match ($orientation) {
-            3 => imagerotate($image, 180, 0),
-            6 => imagerotate($image, -90, 0),
-            8 => imagerotate($image, 90, 0),
-            default => $image,
-        };
-        $echelle = min(1, 1600 / max(imagesx($image), imagesy($image)));
-        if ($echelle < 1) {
-            $image = imagescale($image, (int) round(imagesx($image) * $echelle), (int) round(imagesy($image) * $echelle), \IMG_BICUBIC);
-        }
-        $fond = imagecreatetruecolor(imagesx($image), imagesy($image));
-        imagefill($fond, 0, 0, imagecolorallocate($fond, 255, 255, 255));
-        imagecopy($fond, $image, 0, 0, 0, 0, imagesx($image), imagesy($image));
+        try {
+            $infos = @getimagesize($source);
+            if (!$infos || !\in_array($infos[2], [\IMAGETYPE_JPEG, \IMAGETYPE_PNG, \IMAGETYPE_WEBP], true)) {
+                return false;
+            }
+            [$largeur, $hauteur] = $infos;
+            $orientation = \IMAGETYPE_JPEG === $infos[2] && \function_exists('exif_read_data') ? (int) (@exif_read_data($source)['Orientation'] ?? 1) : 1;
+            if (max($largeur, $hauteur) <= 1600 && filesize($source) < 1_500_000 && 1 === $orientation) {
+                return false;
+            }
+            $image = match ($infos[2]) {
+                \IMAGETYPE_JPEG => @imagecreatefromjpeg($source),
+                \IMAGETYPE_PNG => @imagecreatefrompng($source),
+                default => @imagecreatefromwebp($source),
+            };
+            if (!$image instanceof \GdImage) {
+                return false;
+            }
+            // Réduction d'abord (moins de mémoire), rotation ensuite.
+            $echelle = min(1, 1600 / max(imagesx($image), imagesy($image)));
+            if ($echelle < 1) {
+                $image = @imagescale($image, max(1, (int) round(imagesx($image) * $echelle)), max(1, (int) round(imagesy($image) * $echelle)), \IMG_BICUBIC);
+            }
+            if ($image instanceof \GdImage && \in_array($orientation, [3, 6, 8], true)) {
+                $image = @imagerotate($image, [3 => 180, 6 => -90, 8 => 90][$orientation], 0);
+            }
+            if (!$image instanceof \GdImage) {
+                return false;
+            }
+            $fond = imagecreatetruecolor(imagesx($image), imagesy($image));
+            imagefill($fond, 0, 0, imagecolorallocate($fond, 255, 255, 255));
+            imagecopy($fond, $image, 0, 0, 0, 0, imagesx($image), imagesy($image));
+            unset($image);
 
-        return imagejpeg($fond, $cible, 82);
+            return imagejpeg($fond, $cible, 82);
+        } catch (\Throwable) {
+            return false;
+        }
     }
 
     /** Renseigne une propriété sans setter public (dates de création historiques). */
