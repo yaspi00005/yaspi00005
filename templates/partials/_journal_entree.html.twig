@@ -1,0 +1,39 @@
+{# Paramètres : j (App\Entity\Journal), lien (bool, lien vers l'élément) #}
+<tr>
+    <td class="text-nowrap fs-13">{{ j.date|date('d/m/Y') }}<br><span class="text-muted">{{ j.date|date('H:i:s') }}</span></td>
+    <td class="fs-13">
+        <strong class="text-black">{{ j.utilisateurNom }}</strong>
+        {% if j.ip %}<br><span class="text-muted fs-12">{{ j.ip }}</span>{% endif %}
+    </td>
+    <td><span class="badge light badge-{{ j.actionCouleur }} text-nowrap"><i class="fas {{ j.actionIcone }} me-1"></i>{{ j.actionLibelle }}</span></td>
+    <td class="fs-13">
+        {% set url = null %}
+        {% if lien|default(false) and j.action != 'suppression' %}
+            {% if j.entite == 'Colis' and j.entiteId %}{% set url = path('colis_show', {id: j.entiteId}) %}
+            {% elseif j.colisId %}{% set url = path('colis_show', {id: j.colisId}) %}
+            {% elseif j.entite == 'Client' and j.entiteId %}{% set url = path('client_show', {id: j.entiteId}) %}
+            {% elseif j.clientId %}{% set url = path('client_show', {id: j.clientId}) %}
+            {% endif %}
+        {% endif %}
+        {% if url %}<a href="{{ url }}" class="text-primary">{{ j.libelle }}</a>{% else %}{{ j.libelle }}{% endif %}
+        {% if j.changements %}
+            <details class="journal-details">
+                <summary>{{ j.action == 'modification' ? j.changements|length ~ ' champ(s) modifié(s)' : 'Détail' }}</summary>
+                <table class="table table-sm mb-0 mt-1">
+                    {% for champ, valeurs in j.changements %}
+                        <tr>
+                            <th class="fw-normal text-muted">{{ champ }}</th>
+                            {% if j.action == 'modification' %}
+                                <td><del class="text-danger">{{ valeurs[0] ?? '—' }}</del></td>
+                                <td><i class="fas fa-arrow-right text-muted"></i></td>
+                                <td class="text-success">{{ valeurs[1] ?? '—' }}</td>
+                            {% else %}
+                                <td colspan="3">{{ valeurs[1] ?? '—' }}</td>
+                            {% endif %}
+                        </tr>
+                    {% endfor %}
+                </table>
+            </details>
+        {% endif %}
+    </td>
+</tr>

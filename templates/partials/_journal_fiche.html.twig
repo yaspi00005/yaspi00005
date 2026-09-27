@@ -1,0 +1,22 @@
+{# Historique des modifications d'une fiche (administrateurs). Paramètre : journal (list<Journal>) #}
+{% if journal is defined and journal is not null %}
+<div class="card">
+    <div class="card-header">
+        <h4 class="card-title"><i class="fas fa-history text-primary me-2"></i>Historique des modifications</h4>
+        <span class="text-muted fs-13">{{ journal|length }} action{{ journal|length > 1 ? 's' }}</span>
+    </div>
+    <div class="card-body pt-0">
+        {% if journal %}
+        <div class="table-responsive" style="max-height: 420px; overflow-y: auto">
+            <table class="table table-sm table-journal mb-0">
+                <tbody>
+                {% for j in journal %}{% include 'partials/_journal_entree.html.twig' with {j: j, lien: false} %}{% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+            <p class="text-muted mb-0 fs-13">Aucune modification enregistrée depuis la mise en service du journal.</p>
+        {% endif %}
+    </div>
+</div>
+{% endif %}

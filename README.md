@@ -134,6 +134,24 @@ Tâche cron (cPanel → *Tâches cron*) :
 
 Essais : `--apercu` (chiffres sans envoi), `--type=mois --date=2026-09-01`, `--a=moi@exemple.com`, `--pdf=/tmp`.
 
+## Journal d'activité et suppression automatique des photos
+
+**Journal** (*Administration → Journal d'activité*) : chaque ajout, modification et suppression (colis, articles,
+paiements, clients, expéditions, ramassages, bonus, utilisateurs, types de marchandises) est enregistré
+automatiquement avec l'auteur, la date, l'adresse IP et les valeurs **avant / après** ; ainsi que les connexions,
+connexions refusées et déconnexions. Filtres par utilisateur, action, élément, dates ; l'historique de chaque
+colis et de chaque client apparaît aussi sur sa fiche (administrateurs).
+
+**Photos** : `app:purger-photos` supprime les photos des colis **remis depuis plus de 5 mois**
+(`PHOTOS_CONSERVATION_MOIS`), comme l'ancienne application ; le colis et ses informations sont conservés.
+Tâche cron quotidienne :
+
+```
+30 0 * * * cd /home/<compte>/public_html/app-sotrama && php bin/console app:purger-photos --env=prod >> var/log/photos.log 2>&1
+```
+
+Aperçu sans rien supprimer : `php bin/console app:purger-photos --apercu`.
+
 ## Application Android
 
 L'application Android (dossier `android/`) est une *Trusted Web Activity* : elle ouvre le site SOTRAMA

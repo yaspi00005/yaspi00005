@@ -87,3 +87,9 @@ ol.etapes li { margin-bottom: .35rem; }
 /* Envoi du reçu */
 .btn-whatsapp { background: #25d366; border-color: #25d366; color: #06361a; font-weight: 600; }
 .btn-whatsapp:hover, .btn-whatsapp:focus { background: #1fc25b; border-color: #1fc25b; color: #06361a; }
+
+/* Journal d'activité */
+.journal-details summary { cursor: pointer; color: var(--primary, #00A15D); font-size: .8rem; margin-top: .2rem; }
+.journal-details table th { width: 30%; font-size: .8rem; }
+.journal-details table td { font-size: .8rem; word-break: break-word; }
+.table-journal td { vertical-align: top; }

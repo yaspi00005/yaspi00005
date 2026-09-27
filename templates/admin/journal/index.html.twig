@@ -1,0 +1,59 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Journal d'activité{% endblock %}
+
+{% block body %}
+<div class="card">
+    <div class="card-body">
+        <form method="get" class="row g-2 align-items-end filtres">
+            <div class="col-md-3">
+                <label class="form-label" for="f-utilisateur">Utilisateur</label>
+                <select name="utilisateur" id="f-utilisateur" class="form-select form-control">
+                    <option value="">Tous</option>
+                    {% for u in utilisateurs %}<option value="{{ u.id }}" {{ filtres.utilisateur == u.id ? 'selected' }}>{{ u.nomComplet }} ({{ u.username }})</option>{% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label" for="f-action">Action</label>
+                <select name="action" id="f-action" class="form-select form-control">
+                    <option value="">Toutes</option>
+                    {% for cle, a in actions %}<option value="{{ cle }}" {{ filtres.action == cle ? 'selected' }}>{{ a[0] }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label" for="f-entite">Élément</label>
+                <select name="entite" id="f-entite" class="form-select form-control">
+                    <option value="">Tous</option>
+                    {% for e in entites %}<option value="{{ e }}" {{ filtres.entite == e ? 'selected' }}>{{ e }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="col-6 col-md-2"><label class="form-label" for="f-du">Du</label><input type="date" name="du" id="f-du" class="form-control" value="{{ filtres.du ? filtres.du|date('Y-m-d') }}"></div>
+            <div class="col-6 col-md-2"><label class="form-label" for="f-au">Au</label><input type="date" name="au" id="f-au" class="form-control" value="{{ filtres.au ? filtres.au|date('Y-m-d') }}"></div>
+            <div class="col-md-9"><label class="form-label" for="f-q">Recherche</label><input type="search" name="q" id="f-q" class="form-control" placeholder="N° de colis, nom du client, utilisateur…" value="{{ filtres.q }}"></div>
+            <div class="col-md-3 d-flex gap-2">
+                <button class="btn btn-primary flex-grow-1"><i class="fas fa-filter me-1"></i> Filtrer</button>
+                <a href="{{ path('admin_journal_index') }}" class="btn btn-light" title="Effacer les filtres"><i class="fas fa-times"></i></a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><h4 class="card-title">{{ entrees.total }} action{{ entrees.total > 1 ? 's' }}</h4></div>
+    <div class="card-body pt-0">
+        <div class="table-responsive">
+            <table class="table table-journal">
+                <thead><tr><th>Date</th><th>Qui</th><th>Action</th><th>Quoi</th></tr></thead>
+                <tbody>
+                {% for j in entrees %}
+                    {% include 'partials/_journal_entree.html.twig' with {j: j, lien: true} %}
+                {% else %}
+                    <tr><td colspan="4"><div class="empty-state"><i class="fas fa-history"></i>Aucune action pour ces critères.</div></td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% include 'partials/_pagination.html.twig' with {pagination: entrees} %}
+    </div>
+</div>
+{% endblock %}

@@ -11,6 +11,7 @@ use App\Form\ColisType;
 use App\Form\EncaissementType;
 use App\Repository\ClientRepository;
 use App\Repository\ColisRepository;
+use App\Repository\JournalRepository;
 use App\Repository\ExpeditionRepository;
 use App\Repository\TypeMarchandiseRepository;
 use App\Security\ColisVoter;
@@ -130,7 +131,7 @@ class ColisController extends AbstractController
     }
 
     #[Route('/{id}', name: 'colis_show', requirements: ['id' => self::ID], methods: ['GET'])]
-    public function show(Colis $colis, DocumentService $documents, BonusFidelite $bonus, RecuPartage $partage): Response
+    public function show(Colis $colis, DocumentService $documents, BonusFidelite $bonus, RecuPartage $partage, JournalRepository $journal): Response
     {
         $this->denyAccessUnlessGranted(ColisVoter::VOIR, $colis);
 
@@ -151,6 +152,7 @@ class ColisController extends AbstractController
             'whatsappExpediteur' => $partage->whatsappExpediteur($colis),
             'whatsappDestinataire' => $partage->whatsappDestinataire($colis),
             'lienRecuPublic' => $partage->lienPdf($colis),
+            'journal' => $this->isGranted(User::ROLE_ADMIN) ? $journal->pourColis($colis->getId()) : null,
         ]);
     }
 

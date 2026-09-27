@@ -7,6 +7,7 @@ use App\Entity\User;
 use App\Form\BonusType;
 use App\Form\ClientType;
 use App\Repository\ClientRepository;
+use App\Repository\JournalRepository;
 use App\Service\CodePostal;
 use App\Service\Geocodage;
 use App\Service\PaiementService;
@@ -87,7 +88,7 @@ class ClientController extends AbstractController
     }
 
     #[Route('/{id}', name: 'client_show', requirements: ['id' => self::ID], methods: ['GET'])]
-    public function show(Client $client): Response
+    public function show(Client $client, JournalRepository $journal): Response
     {
         $bonusForm = $this->isGranted(User::ROLE_ADMIN)
             ? $this->createForm(BonusType::class, null, ['action' => $this->generateUrl('client_bonus', ['id' => $client->getId()])])
@@ -96,6 +97,7 @@ class ClientController extends AbstractController
         return $this->render('client/show.html.twig', [
             'client' => $client,
             'bonusForm' => $bonusForm,
+            'journal' => $this->isGranted(User::ROLE_ADMIN) ? $journal->pourClient($client->getId()) : null,
         ]);
     }
 

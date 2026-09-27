@@ -5,6 +5,8 @@ namespace App\Command;
 use App\Entity\Article;
 use App\Entity\Client;
 use App\Entity\Colis;
+use App\Entity\Journal;
+use App\Journal\Journaliseur;
 use App\Entity\Expedition;
 use App\Entity\HistoriqueStatut;
 use App\Entity\MouvementBonus;
@@ -61,6 +63,7 @@ final class ImportAncienneBaseCommand extends Command
         private readonly Numerotation $numerotation,
         #[Autowire('%app.uploads_dir%')] private readonly string $uploadsDir,
         #[Autowire('%kernel.logs_dir%')] private readonly string $dossierLogs,
+        private readonly Journaliseur $journal,
     ) {
         parent::__construct();
     }
@@ -88,6 +91,8 @@ final class ImportAncienneBaseCommand extends Command
         $params['charset'] ??= 'utf8mb4';
         $this->ancienne = DriverManager::getConnection($params);
 
+        // Pas une ligne de journal par élément importé : un résumé est écrit à la fin.
+        $this->journal->suspendre();
         $this->em->getConnection()->beginTransaction();
         try {
             $this->importerUtilisateurs();
@@ -106,6 +111,11 @@ final class ImportAncienneBaseCommand extends Command
                 $this->io->note('Simulation : rien n\'a été enregistré.');
             } else {
                 $this->em->getConnection()->commit();
+                $this->journal->suspendre(false);
+                $this->journal->ecrire($this->em, Journal::CREATION, \sprintf(
+                    "Import de l'ancienne base : %d utilisateurs, %d clients, %d expéditions, %d colis",
+                    \count($this->map['user']), \count($this->map['client']), \count($this->map['expedition']), \count($this->map['colis']),
+                ), 'Import');
             }
         } catch (\Throwable $e) {
             $this->em->getConnection()->rollBack();
