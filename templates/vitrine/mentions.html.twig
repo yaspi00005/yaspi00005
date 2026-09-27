@@ -10,13 +10,13 @@
         <h2>Éditeur du site</h2>
         <p>SOTRAMA, transport de colis France → Mali et Sénégal.<br>
         Responsable de la publication : Yacouba Traoré.<br>
-        Contact : <a href="tel:+{{ infos.whatsapp }}">{{ infos.telephone }}</a> (téléphone et WhatsApp).</p>
+        Contact : <a href="tel:+{{ infos.whatsapp }}">{{ infos.telephone }}</a> (téléphone et WhatsApp){% if infos.email|default(null) %}, <a href="mailto:{{ infos.email }}">{{ infos.email }}</a>{% endif %}.</p>
 
         <h2>Hébergement</h2>
         <p>Le site est hébergé par le prestataire d'hébergement de SOTRAMA, en France.</p>
 
         <h2>Données personnelles</h2>
-        <p>Les informations saisies dans le formulaire de suivi (numéro de suivi, téléphone) servent uniquement à retrouver votre colis ; elles ne sont pas conservées à d'autres fins. Les données des clients (nom, téléphone, adresse) sont utilisées pour l'envoi et la remise des colis, et pour prévenir le destinataire par SMS. Pour exercer vos droits d'accès, de rectification ou de suppression, contactez-nous au {{ infos.telephone }}.</p>
+        <p>Les informations saisies dans le formulaire de suivi (numéro de suivi, téléphone) servent uniquement à retrouver votre colis ; elles ne sont pas conservées à d'autres fins. Les données des clients (nom, téléphone, adresse) sont utilisées pour l'envoi et la remise des colis, et pour prévenir le destinataire par SMS. Pour exercer vos droits d'accès, de rectification ou de suppression, contactez-nous au {{ infos.telephone }}{% if infos.email|default(null) %} ou à {{ infos.email }}{% endif %}.</p>
 
         <h2>Cookies</h2>
         <p>Le site n'utilise qu'un cookie technique, nécessaire à la sécurité du formulaire de suivi. Aucun cookie publicitaire ni de mesure d'audience.</p>

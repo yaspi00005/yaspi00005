@@ -3,6 +3,8 @@
 namespace App\Controller;
 
 use App\Repository\ColisRepository;
+use App\Service\DocumentService;
+use App\Service\RecuPartage;
 use App\Service\SuiviColis;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -42,5 +44,22 @@ class SuiviController extends AbstractController
         $colis = $colisRepository->findOneBy(['token' => $token]) ?? throw $this->createNotFoundException('Colis introuvable.');
 
         return $this->render('suivi/colis.html.twig', ['colis' => $colis]);
+    }
+
+    /** Reçu PDF envoyé au client par WhatsApp : lien signé, distinct du lien de suivi. */
+    #[Route('/{token}/recu-{signature}.pdf', name: 'suivi_recu', requirements: ['token' => '[a-f0-9]{40}', 'signature' => '[a-f0-9]{20}'], methods: ['GET'])]
+    public function recu(string $token, string $signature, ColisRepository $colisRepository, RecuPartage $partage, DocumentService $documents): Response
+    {
+        $colis = $colisRepository->findOneBy(['token' => $token]);
+        if (!$colis || !$partage->signatureValide($colis, $signature)) {
+            throw $this->createNotFoundException('Reçu introuvable.');
+        }
+
+        return new Response($documents->recuPdf($colis), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="recu-'.$colis->getNumeroSuivi().'.pdf"',
+            'X-Robots-Tag' => 'noindex',
+            'Cache-Control' => 'private, no-store',
+        ]);
     }
 }

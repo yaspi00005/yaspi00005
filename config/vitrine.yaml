@@ -1,9 +1,12 @@
-# Contenu du site vitrine (sotrama.net) : modifiez ici les contacts et liens, puis
+# Coordonnées de SOTRAMA, utilisées par le site vitrine (sotrama.net), les reçus PDF, les e-mails
+# et les pages de suivi : modifiez ici les contacts et liens, puis
 # « php bin/console cache:clear ». Les photos se déposent dans public/images/vitrine/ (voir LISEZMOI).
 parameters:
     app.vitrine:
         whatsapp: '33612336572'            # numéro WhatsApp principal, format international sans « + »
         telephone: '06 12 33 65 72'
+        email: 'contact@sotrama.net'
+        site: 'sotrama.net'
         experience: 10                     # années d'activité
         equipe:
             - { nom: 'Yacouba Traoré', role: 'Gérant', telephone: '+33 6 12 33 65 72', whatsapp: '33612336572' }

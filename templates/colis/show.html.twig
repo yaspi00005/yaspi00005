@@ -9,7 +9,10 @@
 {% if app.request.query.get('nouveau') %}
 <div class="alert alert-success solid-alert d-flex flex-wrap align-items-center justify-content-between gap-2">
     <span><i class="fas fa-check-circle me-2"></i>Colis enregistré. Remettez le reçu au client : il contient le code de retrait <strong class="code-retrait">{{ colis.codeRetrait }}</strong>.</span>
-    <a href="{{ path('colis_recu', {id: colis.id}) }}" target="_blank" class="btn btn-light btn-sm"><i class="fas fa-print me-1"></i> Imprimer le reçu</a>
+    <span class="d-flex flex-wrap gap-2">
+        <a href="{{ path('colis_recu', {id: colis.id}) }}" target="_blank" class="btn btn-light btn-sm"><i class="fas fa-print me-1"></i> Imprimer le reçu</a>
+        {% if whatsappExpediteur %}<a href="{{ whatsappExpediteur }}" target="_blank" rel="noopener" class="btn btn-light btn-sm"><i class="fab fa-whatsapp me-1"></i> Envoyer par WhatsApp</a>{% endif %}
+    </span>
 </div>
 {% endif %}
 
@@ -140,6 +143,31 @@
     </div>
 
     <div class="col-xl-4">
+        <div class="card carte-envoi-recu">
+            <div class="card-header"><h4 class="card-title"><i class="fas fa-paper-plane text-primary me-2"></i>Envoyer le reçu</h4></div>
+            <div class="card-body pt-0">
+                <div class="d-grid gap-2">
+                    {% if whatsappExpediteur %}
+                        <a href="{{ whatsappExpediteur }}" target="_blank" rel="noopener" class="btn btn-whatsapp"><i class="fab fa-whatsapp me-1"></i> Reçu à {{ colis.client.prenom }} (expéditeur)</a>
+                    {% else %}
+                        <span class="text-muted fs-13">Téléphone de l'expéditeur inutilisable pour WhatsApp.</span>
+                    {% endif %}
+                    {% if whatsappDestinataire %}
+                        <a href="{{ whatsappDestinataire }}" target="_blank" rel="noopener" class="btn btn-outline-success"><i class="fab fa-whatsapp me-1"></i> Prévenir {{ colis.destinataireNom }} (destinataire)</a>
+                    {% endif %}
+                    <button type="button" class="btn btn-light d-none js-partager-recu" data-url="{{ path('colis_recu', {id: colis.id}) }}" data-nom="recu-{{ colis.numeroSuivi }}.pdf" data-titre="Reçu SOTRAMA {{ colis.numeroSuivi }}"><i class="fas fa-share-alt me-1"></i> Partager le fichier PDF…</button>
+                    {% if colis.client.email %}
+                        <form method="post" action="{{ path('colis_recu_email', {id: colis.id}) }}" class="d-grid">
+                            <input type="hidden" name="_token" value="{{ csrf_token('recu-email-' ~ colis.id) }}">
+                            <button class="btn btn-outline-primary"><i class="fas fa-envelope me-1"></i> Par e-mail à {{ colis.client.email }}</button>
+                        </form>
+                    {% else %}
+                        <a href="{{ path('client_edit', {id: colis.client.id}) }}" class="fs-13 text-muted"><i class="fas fa-envelope me-1"></i> Ajouter un e-mail au client pour l'envoi par e-mail</a>
+                    {% endif %}
+                </div>
+                <p class="fs-12 text-muted mt-2 mb-0">WhatsApp s'ouvre avec le message et le lien du reçu déjà écrits : il reste à appuyer sur « Envoyer ». Le destinataire reçoit le suivi, pas le reçu (qui porte le code de retrait).</p>
+            </div>
+        </div>
         <div class="card">
             <div class="card-header"><h4 class="card-title">Montants</h4></div>
             <div class="card-body">

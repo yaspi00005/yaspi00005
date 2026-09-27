@@ -10,6 +10,7 @@ twig:
         app_telephone_agence: '%app.telephone_agence%'
         push_cle_publique: '%env(VAPID_PUBLIC_KEY)%'
         app_url: '%env(APP_URL)%'
+        societe: '%app.vitrine%'   # coordonnées (config/vitrine.yaml) : reçus, e-mails, suivi
 
 when@test:
     twig:

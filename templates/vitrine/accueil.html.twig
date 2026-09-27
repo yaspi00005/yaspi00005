@@ -9,6 +9,7 @@
     'description': 'Transport de colis en conteneur de la France vers Bamako (Mali) et Dakar (Sénégal), GP avion pour Bamako, ramassage gratuit en Île-de-France.',
     'url': url('vitrine_accueil'),
     'telephone': '+' ~ infos.whatsapp,
+    'email': infos.email|default(''),
     'image': absolute_url(asset(logo)),
     'areaServed': ['France', 'Mali', 'Sénégal'],
     'sameAs': infos.reseaux|map(r => r.url),
@@ -208,6 +209,7 @@
             <p class="surtitre">Une entreprise familiale</p>
             <h2>L'équipe SOTRAMA à votre écoute</h2>
             <p>SOTRAMA est dirigée par Yacouba Traoré, avec ses frères Daby et Mamadou. Appelez-nous ou écrivez-nous sur WhatsApp.</p>
+            {% if infos.email|default(null) %}<p><a href="mailto:{{ infos.email }}" class="lien-fleche"><i class="fas fa-envelope"></i> {{ infos.email }}</a></p>{% endif %}
         </div>
         <div class="grille-equipe">
             {% for p in infos.equipe %}

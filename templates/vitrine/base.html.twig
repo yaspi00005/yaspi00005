@@ -68,6 +68,7 @@
             <h3>Contact</h3>
             <ul class="pied-liste">
                 <li><a href="{{ wa }}?text={{ message_wa|url_encode }}" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> WhatsApp {{ infos.telephone }}</a></li>
+                {% if infos.email|default(null) %}<li><a href="mailto:{{ infos.email }}"><i class="fas fa-envelope"></i> {{ infos.email }}</a></li>{% endif %}
                 {% for p in infos.equipe %}
                     <li><a href="tel:{{ p.telephone|replace({' ': ''}) }}"><i class="fas fa-phone"></i> {{ p.nom }} · {{ p.telephone }}</a></li>
                 {% endfor %}

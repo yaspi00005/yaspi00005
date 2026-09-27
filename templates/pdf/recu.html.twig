@@ -26,7 +26,8 @@
         <td>
             {% if logo_data_uri() %}<img src="{{ logo_data_uri() }}" alt="" style="height:70px;float:left;margin-right:12px">{% endif %}
             <h1 class="vert">{{ app_nom }}</h1>
-            <div class="petit">Reçu de dépôt de colis{% if app_telephone_agence %} · {{ app_telephone_agence }}{% endif %}</div>
+            <div class="petit">Reçu de dépôt de colis</div>
+            <div class="petit" style="margin-top:3px">Tél. / WhatsApp : <strong style="color:#222">{{ societe.telephone }}</strong>{% if societe.email|default(null) %} · {{ societe.email }}{% endif %}{% if societe.site|default(null) %} · {{ societe.site }}{% endif %}</div>
         </td>
         <td style="text-align:right">
             <div class="titre">N° de suivi</div>
@@ -112,5 +113,10 @@
     <td class="petit" style="width:50%">Signature de l'agent : {{ colis.agent ? colis.agent.nomComplet }}<br><br>______________________</td>
     <td class="petit" style="width:50%;text-align:right">Signature du client<br><br>______________________</td>
 </tr></table>
+<div style="margin-top:14px;border-top:1px solid #ddd;padding-top:6px;text-align:center" class="petit">
+    <strong class="vert">{{ app_nom }}</strong> · Transport de colis France → Bamako (Mali) · Dakar (Sénégal)<br>
+    {% for p in societe.equipe|default([]) %}{{ p.nom }} : {{ p.telephone }}{{ not loop.last ? ' · ' }}{% endfor %}<br>
+    {% if societe.email|default(null) %}{{ societe.email }}{% endif %}{% if societe.site|default(null) %} · Suivi de colis et infos : {{ societe.site }}{% endif %}{% for r in societe.reseaux|default([]) %} · {{ r.nom }} {{ r.compte }}{% endfor %}
+</div>
 </body>
 </html>

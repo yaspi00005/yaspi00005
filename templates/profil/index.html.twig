@@ -30,7 +30,15 @@
                     </div>
                     <p class="fs-12 text-muted mt-2 mb-0 js-push-etat"></p>
                 {% else %}
-                    <div class="alert alert-warning mb-0">Les notifications du navigateur ne sont pas encore configurées sur le serveur (clés VAPID, voir le README).</div>
+                    <div class="alert alert-warning mb-0">
+                        Les notifications du navigateur ne sont pas encore configurées sur ce serveur.
+                        {% if is_granted('ROLE_ADMIN') %}
+                            <br>Sur le serveur, dans le dossier de l'application, lancez une seule fois :
+                            <code class="d-block mt-2">php bin/console app:generer-cles-push --ecrire<br>php bin/console cache:clear</code>
+                        {% else %}
+                            Prévenez un administrateur.
+                        {% endif %}
+                    </div>
                 {% endif %}
             </div>
         </div>

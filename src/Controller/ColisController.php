@@ -20,6 +20,7 @@ use App\Service\ColisService;
 use App\Service\DocumentService;
 use App\Service\PaiementService;
 use App\Service\PhotoUploader;
+use App\Service\RecuPartage;
 use App\Util\Csv;
 use App\Util\Pagination;
 use Doctrine\ORM\EntityManagerInterface;
@@ -129,7 +130,7 @@ class ColisController extends AbstractController
     }
 
     #[Route('/{id}', name: 'colis_show', requirements: ['id' => self::ID], methods: ['GET'])]
-    public function show(Colis $colis, DocumentService $documents, BonusFidelite $bonus): Response
+    public function show(Colis $colis, DocumentService $documents, BonusFidelite $bonus, RecuPartage $partage): Response
     {
         $this->denyAccessUnlessGranted(ColisVoter::VOIR, $colis);
 
@@ -147,6 +148,9 @@ class ColisController extends AbstractController
             'bonusDisponible' => min($bonus->disponiblePour($colis), $colis->getMontantRestant()),
             'bonusGagne' => $bonus->gainDuColis($colis)?->getMontant() ?? 0,
             'statuts' => array_filter(StatutColis::cases(), fn (StatutColis $s) => StatutColis::Recupere !== $s),
+            'whatsappExpediteur' => $partage->whatsappExpediteur($colis),
+            'whatsappDestinataire' => $partage->whatsappDestinataire($colis),
+            'lienRecuPublic' => $partage->lienPdf($colis),
         ]);
     }
 
@@ -209,6 +213,20 @@ class ColisController extends AbstractController
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'inline; filename="recu-'.$colis->getNumeroSuivi().'.pdf"',
         ]);
+    }
+
+    #[Route('/{id}/recu/email', name: 'colis_recu_email', requirements: ['id' => self::ID], methods: ['POST'])]
+    public function recuEmail(Request $request, Colis $colis, RecuPartage $partage): Response
+    {
+        $this->denyAccessUnlessGranted(ColisVoter::VOIR, $colis);
+        $this->verifierCsrf($request, 'recu-email-'.$colis->getId());
+        try {
+            $this->addFlash('success', 'Reçu envoyé par e-mail à '.$partage->envoyerEmail($colis).'.');
+        } catch (\DomainException $e) {
+            $this->addFlash('danger', $e->getMessage());
+        }
+
+        return $this->redirectToRoute('colis_show', ['id' => $colis->getId()], Response::HTTP_SEE_OTHER);
     }
 
     #[Route('/{id}/encaisser', name: 'colis_encaisser', requirements: ['id' => self::ID], methods: ['POST'])]

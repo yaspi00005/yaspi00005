@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="fr">
+<body style="margin:0;background:#f4f5f7;font-family:Arial,sans-serif;color:#222">
+<table width="100%" cellpadding="0" cellspacing="0" style="padding:24px 0"><tr><td align="center">
+<table width="560" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:12px;overflow:hidden">
+    <tr><td style="background:#00A15D;color:#fff;padding:20px 28px;font-size:20px;font-weight:bold">{{ app_nom }}</td></tr>
+    <tr><td style="padding:28px">
+        <p>Bonjour {{ colis.client.prenom }},</p>
+        <p>Merci d'avoir confié votre colis à {{ app_nom }}. Vous trouverez votre <strong>reçu en pièce jointe</strong> (PDF).</p>
+        <table cellpadding="6" cellspacing="0" style="margin:16px 0;font-size:14px">
+            <tr><td style="color:#777">Colis</td><td><strong>{{ colis.numeroSuivi }}</strong></td></tr>
+            <tr><td style="color:#777">Destinataire</td><td>{{ colis.destinataireNom }}</td></tr>
+            <tr><td style="color:#777">Montant</td><td>{{ colis.montantNet|money }}</td></tr>
+            <tr><td style="color:#777">Reste à payer</td><td>{{ colis.montantRestant > 0 ? colis.montantRestant|money : 'Soldé' }}</td></tr>
+        </table>
+        <p style="margin:26px 0"><a href="{{ lien }}" style="background:#00A15D;color:#fff;text-decoration:none;padding:12px 22px;border-radius:24px">Suivre mon colis</a></p>
+        <p style="color:#777;font-size:13px">Le reçu contient le code de retrait : ne le communiquez qu'au destinataire du colis.</p>
+        {% if societe is defined %}<p style="color:#777;font-size:12px;border-top:1px solid #eee;padding-top:12px;margin-top:20px">{{ app_nom }} · Tél. / WhatsApp {{ societe.telephone }}{% if societe.email|default(null) %} · <a href="mailto:{{ societe.email }}" style="color:#00A15D">{{ societe.email }}</a>{% endif %}{% if societe.site|default(null) %} · <a href="https://{{ societe.site }}" style="color:#00A15D">{{ societe.site }}</a>{% endif %}</p>{% endif %}
+    </td></tr>
+</table>
+</td></tr></table>
+</body>
+</html>

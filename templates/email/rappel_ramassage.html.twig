@@ -16,6 +16,7 @@
         </table>
         <p style="margin:26px 0"><a href="{{ lien }}" style="background:#00A15D;color:#fff;text-decoration:none;padding:12px 22px;border-radius:24px">Voir le ramassage</a></p>
         <p style="color:#777;font-size:12px">Message automatique envoyé la veille puis une heure avant chaque ramassage en attente.</p>
+        {% if societe is defined %}<p style="color:#777;font-size:12px;border-top:1px solid #eee;padding-top:12px;margin-top:20px">{{ app_nom }} · Tél. / WhatsApp {{ societe.telephone }}{% if societe.email|default(null) %} · <a href="mailto:{{ societe.email }}" style="color:#00A15D">{{ societe.email }}</a>{% endif %}{% if societe.site|default(null) %} · <a href="https://{{ societe.site }}" style="color:#00A15D">{{ societe.site }}</a>{% endif %}</p>{% endif %}
     </td></tr>
 </table>
 </td></tr></table>

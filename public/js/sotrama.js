@@ -296,6 +296,24 @@
     }
 })();
 
+/* ---------- Partage du reçu PDF (téléphone : WhatsApp, Gmail…) ---------- */
+(function () {
+    'use strict';
+    document.querySelectorAll('.js-partager-recu').forEach(function (bouton) {
+        const test = new File([''], 'recu.pdf', { type: 'application/pdf' });
+        if (!navigator.canShare || !navigator.canShare({ files: [test] })) { return; }
+        bouton.classList.remove('d-none');
+        bouton.addEventListener('click', function () {
+            bouton.disabled = true;
+            fetch(bouton.dataset.url, { credentials: 'same-origin' })
+                .then(r => { if (!r.ok) { throw new Error('Reçu indisponible'); } return r.blob(); })
+                .then(pdf => navigator.share({ files: [new File([pdf], bouton.dataset.nom, { type: 'application/pdf' })], title: bouton.dataset.titre }))
+                .catch(e => { if (e.name !== 'AbortError') { toastr.error(e.message); } })
+                .finally(() => { bouton.disabled = false; });
+        });
+    });
+})();
+
 /* ---------- Notifications du navigateur (rappels des ramassages) ---------- */
 (function () {
     'use strict';

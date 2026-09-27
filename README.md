@@ -99,7 +99,7 @@ du navigateur et par e-mail. Chaque rappel n'est envoyé qu'une fois ; il repart
 Mise en place (une seule fois) :
 
 ```bash
-php bin/console app:generer-cles-push      # copier les 3 lignes VAPID_… affichées dans .env.local
+php bin/console app:generer-cles-push --ecrire   # écrit les 3 clés VAPID_… dans .env.local
 ```
 
 Puis une tâche planifiée (cron) toutes les 10 minutes :
