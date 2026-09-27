@@ -133,13 +133,13 @@ final class ImportAncienneBaseCommand extends Command
             $role = match (true) {
                 \in_array('ROLE_ADMIN', $roles, true) => User::ROLE_ADMIN,
                 \in_array('ROLE_REPRESENTANT', $roles, true) => User::ROLE_REPRESENTANT,
-                \in_array('ROLE_RAMASSAGE', $roles, true) => User::ROLE_RAMASSAGE,
-                default => null,
+                // Les agents de l'ancienne application n'avaient souvent que ROLE_USER.
+                default => User::ROLE_RAMASSAGE,
             };
-            if (!$role) {
-                continue; // Comptes « client » de l'ancienne application : non repris.
-            }
             $login = mb_strtolower(trim((string) $r['usename']));
+            if (User::ROLE_RAMASSAGE === $role && !\in_array('ROLE_RAMASSAGE', $roles, true)) {
+                $this->avertissements[] = "Compte « $login » ({$r['prenom']} {$r['nom']}) importé comme agent de ramassage : vérifiez son rôle dans Administration → Utilisateurs.";
+            }
             $user = $existants[$login] ?? (new User())->setUsername($login);
             $user->setPrenom($r['prenom'] ?: '—')->setNom($r['nom'] ?: '—')
                 ->setRolePrincipal($role)
@@ -201,7 +201,7 @@ final class ImportAncienneBaseCommand extends Command
             $expedition = (new Expedition())
                 ->setNumero($numero)
                 ->setModeTransport(str_contains($this->normaliser($r['mode_transport']), 'mari') ? ModeTransport::Maritime : ModeTransport::Aerien)
-                ->setDestination(str_contains($this->normaliser($r['destinations']), 'senegal') ? Destination::Senegal : Destination::Mali)
+                ->setDestination(preg_match('/senegal|dakar|dkr/', $this->normaliser($r['destinations'])) ? Destination::Senegal : Destination::Mali)
                 ->setDateDepart($this->date($r['date_expeditions']) ?? new \DateTimeImmutable('2000-01-01'))
                 ->setDateArrivee($this->date($r['date_arrive']))
                 ->setStatut($this->statutExpedition($r['statut']));
@@ -377,7 +377,8 @@ final class ImportAncienneBaseCommand extends Command
             str_contains($s, 'recup'), str_contains($s, 'livr') => StatutColis::Recupere,
             str_contains($s, 'arriv') => StatutColis::Arrive,
             str_contains($s, 'douane') => StatutColis::RetenuDouane,
-            str_contains($s, 'transit') => StatutColis::EnTransit,
+            // « En trasit » : faute de frappe présente dans l'ancienne application.
+            str_contains($s, 'transit'), str_contains($s, 'trasit') => StatutColis::EnTransit,
             str_contains($s, 'expedi') => StatutColis::Expedie,
             default => StatutColis::EnPreparation,
         };
@@ -391,7 +392,7 @@ final class ImportAncienneBaseCommand extends Command
             str_contains($s, 'clot'), str_contains($s, 'termin'), str_contains($s, 'livr') => StatutExpedition::Cloturee,
             str_contains($s, 'arriv') => StatutExpedition::Arrivee,
             str_contains($s, 'douane') => StatutExpedition::RetenueDouane,
-            str_contains($s, 'transit') => StatutExpedition::EnTransit,
+            str_contains($s, 'transit'), str_contains($s, 'trasit') => StatutExpedition::EnTransit,
             str_contains($s, 'expedi') => StatutExpedition::Expediee,
             default => StatutExpedition::EnPreparation,
         };
