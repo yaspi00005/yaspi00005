@@ -144,10 +144,10 @@ colis et de chaque client apparaît aussi sur sa fiche (administrateurs).
 
 **Photos** : `app:purger-photos` supprime les photos des colis **remis depuis plus de 5 mois**
 (`PHOTOS_CONSERVATION_MOIS`), comme l'ancienne application ; le colis et ses informations sont conservés.
-Tâche cron quotidienne :
+Tâche cron mensuelle (le 1er du mois à 00 h 30) :
 
 ```
-30 0 * * * cd /home/<compte>/public_html/app-sotrama && php bin/console app:purger-photos --env=prod >> var/log/photos.log 2>&1
+30 0 1 * * cd /home/<compte>/public_html/app-sotrama && php bin/console app:purger-photos --env=prod >> var/log/photos.log 2>&1
 ```
 
 Aperçu sans rien supprimer : `php bin/console app:purger-photos --apercu`.
