@@ -52,7 +52,7 @@ final class ImportAncienneBaseCommand extends Command
     /** @var list<string> */
     private array $avertissements = [];
     private bool $simulation = false;
-    /** @var array<string, string>|null nom de fichier (minuscules) → chemin, pour les anciennes photos */
+    /** @var array<string, list<string>>|null nom de fichier (minuscules) → chemins, pour les anciennes photos */
     private ?array $indexPhotos = null;
     private int $photosTrouvees = 0;
 
@@ -265,7 +265,7 @@ final class ImportAncienneBaseCommand extends Command
                     ->setPoidsVolume(max(0, (float) str_replace(',', '.', (string) $d['poids_volume'])))
                     ->setPrix(max(0, (int) ($d['prix_poids_volume'] ?? $d['montant_total'] ?? 0)) * 100)
                     ->setObservations($d['observations'] ?: null)
-                    ->setPhoto($this->copierPhoto($d['photo'] ?? null, $dossierPhotos));
+                    ->setPhoto($this->copierPhoto($d['photo'] ?? null, $dossierPhotos, $reception));
                 $colis->addArticle($article);
             }
 
@@ -519,7 +519,7 @@ final class ImportAncienneBaseCommand extends Command
      * Les grandes photos sont réduites à 1600 px (JPEG) et remises à l'endroit (orientation EXIF).
      * En simulation, rien n'est copié : on vérifie seulement que la photo existe.
      */
-    private function copierPhoto(?string $nom, ?string $dossier): ?string
+    private function copierPhoto(?string $nom, ?string $dossier, \DateTimeInterface $date): ?string
     {
         $nom = trim((string) $nom);
         if ('' === $nom || !$dossier) {
@@ -540,7 +540,8 @@ final class ImportAncienneBaseCommand extends Command
             return null;
         }
 
-        $relatif = 'import/'.bin2hex(random_bytes(10));
+        // Rangement par année/mois de réception du colis, comme les nouvelles photos (PhotoUploader).
+        $relatif = $date->format('Y/m/').bin2hex(random_bytes(12));
         $cible = $this->uploadsDir.'/photos/'.$relatif;
         if (!is_dir(\dirname($cible))) {
             mkdir(\dirname($cible), 0775, true);
@@ -561,24 +562,43 @@ final class ImportAncienneBaseCommand extends Command
         return $relatif.'.'.$extension;
     }
 
+    /**
+     * 1) chemin enregistré dans l'ancienne base, relatif au dossier (« 2025/03/x.jfif », avec ou sans
+     *    préfixe « uploads/… ») ; 2) sinon recherche du nom dans tous les sous-dossiers (années…).
+     */
     private function trouverPhoto(string $nom, string $dossier): ?string
     {
+        $dossier = rtrim($dossier, '/');
+        $morceaux = array_values(array_filter(explode('/', str_replace('\\', '/', $nom)), fn ($m) => '' !== $m && '.' !== $m && '..' !== $m));
+        for ($i = 0; $i < \count($morceaux); ++$i) {
+            if (is_file($chemin = $dossier.'/'.implode('/', \array_slice($morceaux, $i)))) {
+                return $chemin;
+            }
+        }
+
         if (null === $this->indexPhotos) {
             $this->indexPhotos = [];
+            $total = 0;
             if (is_dir($dossier)) {
                 $fichiers = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($dossier, \FilesystemIterator::SKIP_DOTS));
                 foreach ($fichiers as $f) {
                     if ($f->isFile()) {
-                        $this->indexPhotos[mb_strtolower($f->getFilename())] ??= $f->getPathname();
-                        $this->indexPhotos['~'.mb_strtolower($f->getBasename('.'.$f->getExtension()))] ??= $f->getPathname();
+                        ++$total;
+                        $this->indexPhotos[mb_strtolower($f->getFilename())][] = $f->getPathname();
+                        $this->indexPhotos['~'.mb_strtolower($f->getBasename('.'.$f->getExtension()))][] = $f->getPathname();
                     }
                 }
             }
-            $this->io->writeln(\sprintf(' Dossier des photos : %d fichiers trouvés.', \count(array_filter(array_keys($this->indexPhotos), fn ($k) => '~' !== $k[0]))));
+            $this->io->writeln(\sprintf(' Dossier des photos : %d fichiers trouvés (sous-dossiers compris).', $total));
         }
-        $base = mb_strtolower(basename(str_replace('\\', '/', $nom)));
+        $base = mb_strtolower(end($morceaux) ?: '');
+        $trouves = $this->indexPhotos[$base] ?? $this->indexPhotos['~'.pathinfo($base, \PATHINFO_FILENAME)] ?? [];
+        if (\count($trouves) > 1) {
+            $this->avertissements[] = \sprintf('Photo %s présente %d fois (%s) : la première est utilisée.', $nom, \count($trouves),
+                implode(', ', array_map(fn ($c) => substr($c, \strlen($dossier) + 1), $trouves)));
+        }
 
-        return $this->indexPhotos[$base] ?? $this->indexPhotos['~'.pathinfo($base, \PATHINFO_FILENAME)] ?? null;
+        return $trouves[0] ?? null;
     }
 
     /** Réduit une photo JPEG/PNG/WebP trop grande ; false si GD ne sait pas la lire (copie telle quelle). */
