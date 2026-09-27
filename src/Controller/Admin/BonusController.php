@@ -7,6 +7,7 @@ use App\Entity\User;
 use App\Repository\ClientRepository;
 use App\Repository\MouvementBonusRepository;
 use App\Util\Csv;
+use App\Util\DateFr;
 use App\Util\Pagination;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -57,7 +58,7 @@ class BonusController extends AbstractController
             'meilleurs' => $clients->meilleursSoldes(10),
             'filtreActif' => (bool) array_filter($filtres),
             'chart' => [
-                'labels' => array_map(fn ($k) => (new \IntlDateFormatter('fr_FR', 0, 0, null, null, 'MMM yy'))->format(new \DateTimeImmutable($k.'-01')), array_keys($parMois)),
+                'labels' => array_map(fn ($k) => DateFr::moisCourt(new \DateTimeImmutable($k.'-01')), array_keys($parMois)),
                 'gagne' => array_map(fn ($v) => round($v['gagne'] / 100, 2), array_values($parMois)),
                 'utilise' => array_map(fn ($v) => round($v['utilise'] / 100, 2), array_values($parMois)),
             ],

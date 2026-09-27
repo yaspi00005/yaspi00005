@@ -8,7 +8,7 @@
         <p>Bonjour {{ agent.prenom }},</p>
         <p style="font-size:18px;margin:18px 0"><strong>{{ quand }}</strong> : ramassage chez <strong>{{ ramassage.client.nomComplet }}</strong>.</p>
         <table cellpadding="6" style="font-size:14px">
-            <tr><td style="color:#777">Date</td><td>{{ ramassage.datePrevue|format_datetime(pattern: "EEEE d MMMM 'à' HH:mm", locale: 'fr') }}</td></tr>
+            <tr><td style="color:#777">Date</td><td>{{ ramassage.datePrevue|jour_heure_fr }}</td></tr>
             <tr><td style="color:#777">Adresse</td><td>{{ adresse }}</td></tr>
             <tr><td style="color:#777">Téléphone</td><td><a href="tel:{{ ramassage.client.telephone }}">{{ ramassage.client.telephone }}</a></td></tr>
             <tr><td style="color:#777">Client</td><td>{{ ramassage.statut.value == 'confirme' ? '✔ Rendez-vous confirmé par le client' : 'Rendez-vous non encore confirmé — pensez à appeler avant de partir' }}</td></tr>

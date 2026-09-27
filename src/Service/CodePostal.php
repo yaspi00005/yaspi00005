@@ -7,6 +7,8 @@ use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
+use function Symfony\Component\String\u;
+
 /**
  * Villes correspondant à un code postal européen.
  *  - France : base officielle des communes (geo.api.gouv.fr) ;
@@ -72,7 +74,7 @@ final class CodePostal
             }
             $villes = array_values(array_unique(array_filter(array_map('trim', $villes))));
             // Tri alphabétique français (« Évry » avec les E, pas après « Z »).
-            class_exists(\Collator::class) ? (new \Collator('fr_FR'))->sort($villes) : sort($villes);
+            \extension_loaded('intl') ? (new \Collator('fr_FR'))->sort($villes) : usort($villes, fn ($a, $b) => strcmp(u($a)->ascii()->lower()->toString(), u($b)->ascii()->lower()->toString()));
 
             return $villes;
         });

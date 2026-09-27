@@ -11,6 +11,7 @@ use App\Entity\User;
 use App\Enum\ModePaiement;
 use App\Enum\StatutColis;
 use App\Enum\StatutRamassage;
+use App\Util\DateFr;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -28,7 +29,6 @@ final class RapportActivite
     public const SEMAINE = 'semaine';
     public const MOIS = 'mois';
 
-    private const MOIS_FR = [1 => 'janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
 
     public function __construct(
         private readonly EntityManagerInterface $em,
@@ -78,7 +78,7 @@ final class RapportActivite
         $libelle = match ($type) {
             self::JOUR => 'du '.$this->jour($debut),
             self::SEMAINE => 'de la semaine du '.$debut->format('d/m').' au '.$dernier->format('d/m/Y'),
-            self::MOIS => 'de '.self::MOIS_FR[(int) $debut->format('n')].' '.$debut->format('Y'),
+            self::MOIS => 'de '.DateFr::MOIS[(int) $debut->format('n')].' '.$debut->format('Y'),
         };
 
         return ['type' => $type, 'debut' => $debut, 'fin' => $fin, 'libelle' => $libelle, 'cle' => $type.'-'.$debut->format('Y-m-d')];
@@ -214,8 +214,6 @@ final class RapportActivite
 
     private function jour(\DateTimeImmutable $d): string
     {
-        $jours = [1 => 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
-
-        return $jours[(int) $d->format('N')].' '.$d->format('j').' '.self::MOIS_FR[(int) $d->format('n')].' '.$d->format('Y');
+        return DateFr::jour($d);
     }
 }

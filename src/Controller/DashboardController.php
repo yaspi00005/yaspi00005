@@ -9,6 +9,7 @@ use App\Repository\ColisRepository;
 use App\Repository\ExpeditionRepository;
 use App\Repository\PaiementRepository;
 use App\Repository\RamassageRepository;
+use App\Util\DateFr;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -45,7 +46,7 @@ class DashboardController extends AbstractController
             'enAttenteRetrait' => \count($colisRepository->enAttenteRetrait($user, 7)),
             'ramassages' => $this->isGranted(User::ROLE_RAMASSAGE) ? $ramassageRepository->aVenir(5) : [],
             'chartMois' => [
-                'labels' => array_map(fn ($k) => (new \IntlDateFormatter('fr_FR', 0, 0, null, null, 'MMM yy'))->format(new \DateTimeImmutable($k.'-01')), array_keys($colisParMois)),
+                'labels' => array_map(fn ($k) => DateFr::moisCourt(new \DateTimeImmutable($k.'-01')), array_keys($colisParMois)),
                 'data' => array_values($colisParMois),
             ],
             'chartEncaissements' => [

@@ -66,7 +66,7 @@
     <tbody>
     {% set jourPrecedent = null %}
     {% for r in ramassages %}
-        {% set jour = r.datePrevue|format_date(pattern: 'EEEE d MMMM y', locale: 'fr') %}
+        {% set jour = r.datePrevue|jour_fr %}
         {% if jour != jourPrecedent %}
             <tr class="jour"><td colspan="8">{{ jour|capitalize }}</td></tr>
             {% set jourPrecedent = jour %}
