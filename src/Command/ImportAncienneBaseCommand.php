@@ -192,11 +192,7 @@ final class ImportAncienneBaseCommand extends Command
     {
         $numeros = [];
         foreach ($this->ancienne->fetchAllAssociative('SELECT * FROM expeditions ORDER BY id') as $r) {
-            $numero = trim((string) $r['numero_expeditions']) ?: 'ANC-'.$r['id'];
-            if (isset($numeros[$numero])) {
-                $numero .= '-'.$r['id'];
-            }
-            $numeros[$numero] = true;
+            $numero = $this->numeroUnique(trim((string) $r['numero_expeditions']) ?: 'ANC-'.$r['id'], $numeros, 'Expédition');
 
             $expedition = (new Expedition())
                 ->setNumero($numero)
@@ -219,6 +215,7 @@ final class ImportAncienneBaseCommand extends Command
         }
 
         $codes = [];
+        $numeros = [];
         foreach ($this->ancienne->fetchAllAssociative('SELECT * FROM base_colis ORDER BY id') as $i => $r) {
             $client = $this->map['client'][(int) $r['clients_id']] ?? null;
             if (!$client) {
@@ -233,7 +230,7 @@ final class ImportAncienneBaseCommand extends Command
 
             $reception = $this->date($r['date_receptions']) ?? new \DateTimeImmutable();
             $colis = (new Colis())
-                ->setNumeroSuivi(trim((string) $r['numero_suivi']) ?: 'ANC-'.$r['id'])
+                ->setNumeroSuivi($this->numeroUnique(trim((string) $r['numero_suivi']) ?: 'ANC-'.$r['id'], $numeros, 'Colis'))
                 ->setCodeRetrait($code)
                 ->setToken($this->numerotation->token())
                 ->setClient($client)
@@ -410,6 +407,27 @@ final class ImportAncienneBaseCommand extends Command
             str_contains($s, 'vir') => ModePaiement::Virement,
             default => ModePaiement::Especes,
         };
+    }
+
+    /**
+     * Numéro unique (l'ancienne application acceptait les doublons) : le 2e reçoit « -B », le 3e « -C »…
+     * La comparaison ignore la casse et les espaces, comme l'index unique de MySQL.
+     *
+     * @param array<string, true> $dejaVus
+     */
+    private function numeroUnique(string $numero, array &$dejaVus, string $quoi): string
+    {
+        $numero = mb_substr(preg_replace('/\s+/', ' ', $numero), 0, 26);
+        $candidat = $numero;
+        for ($i = 1; isset($dejaVus[mb_strtolower($candidat)]); ++$i) {
+            $candidat = $numero.'-'.($i < 26 ? \chr(65 + $i) : $i);
+        }
+        if ($candidat !== $numero) {
+            $this->avertissements[] = "$quoi $numero en double dans l'ancienne base : importé sous le numéro $candidat.";
+        }
+        $dejaVus[mb_strtolower($candidat)] = true;
+
+        return $candidat;
     }
 
     private function normaliser(?string $texte): string
