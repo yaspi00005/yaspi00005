@@ -3,7 +3,13 @@ framework:
     secret: '%env(APP_SECRET)%'
 
     # Note that the session will be started ONLY if you read or write from it.
-    session: true
+    session:
+        name: SOTRAMA_SESSION
+        cookie_secure: auto          # HTTPS uniquement en production
+        cookie_httponly: true        # inaccessible au JavaScript
+        cookie_samesite: lax         # non envoyé par les sites tiers (CSRF)
+        cookie_lifetime: 0           # fermé avec le navigateur (sauf « rester connecté »)
+        gc_maxlifetime: 14400        # session inactive expirée après 4 h
     default_locale: fr
     enabled_locales: ['fr']
     form:

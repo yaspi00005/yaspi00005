@@ -27,7 +27,7 @@ class NotificationNavigateurController extends AbstractController
         $endpoint = (string) ($data['endpoint'] ?? '');
         $p256dh = (string) ($data['keys']['p256dh'] ?? '');
         $auth = (string) ($data['keys']['auth'] ?? '');
-        if (!str_starts_with($endpoint, 'https://') || '' === $p256dh || '' === $auth) {
+        if (!self::endpointAutorise($endpoint) || '' === $p256dh || '' === $auth || \strlen($p256dh) > 200 || \strlen($auth) > 100) {
             return $this->json(['error' => 'Abonnement invalide.'], 400);
         }
         /** @var User $user */
@@ -73,5 +73,20 @@ class NotificationNavigateurController extends AbstractController
         }
 
         return null;
+    }
+
+    /**
+     * Seuls les services de notification des navigateurs sont acceptés : sinon le serveur pourrait être
+     * utilisé pour envoyer des requêtes vers n'importe quelle adresse, y compris interne (SSRF).
+     */
+    public static function endpointAutorise(string $endpoint): bool
+    {
+        $url = parse_url($endpoint);
+        if (\strlen($endpoint) > 1000 || 'https' !== ($url['scheme'] ?? null) || isset($url['port']) || isset($url['user'])) {
+            return false;
+        }
+        $hote = strtolower($url['host'] ?? '');
+
+        return (bool) preg_match('/^(fcm\.googleapis\.com|android\.googleapis\.com|updates\.push\.services\.mozilla\.com|web\.push\.apple\.com|[a-z0-9-]+\.push\.apple\.com|[a-z0-9-]+\.notify\.windows\.com)$/', $hote);
     }
 }

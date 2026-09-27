@@ -22,3 +22,8 @@ when@test:
     framework:
         cache:
             app: cache.adapter.array   # chaque test repart d'un cache vide
+            pools:
+                # Compteurs d'essais (connexion, codes de retrait) : conservés entre les requêtes d'un test ;
+                # vidés au début de chaque lancement des tests (tests/bootstrap.php).
+                cache.rate_limiter:
+                    adapter: cache.adapter.filesystem

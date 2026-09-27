@@ -100,4 +100,18 @@ final class JournalActiviteTest extends WebTestCase
         $this->client->request('GET', '/colis/'.$this->hid($colis->getId()));
         $this->assertSelectorTextContains('body', 'Historique des modifications');
     }
+
+    public function testExportsJournalises(): void
+    {
+        $this->connecter('admin');
+        $this->client->request('GET', '/colis', ['export' => 'csv', 'statut' => 'arrive']);
+        $this->assertResponseIsSuccessful();
+        $j = $this->dernier();
+        $this->assertSame(Journal::EXPORT, $j->getAction());
+        $this->assertSame('Export Excel des colis', $j->getLibelle());
+        $this->assertSame([null, 'arrive'], $j->getChangements()['statut']);
+
+        $this->client->request('GET', '/ramassages/export.pdf');
+        $this->assertSame('Export PDF du planning des ramassages (tout)', $this->dernier()->getLibelle());
+    }
 }

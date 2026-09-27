@@ -27,10 +27,16 @@ security:
             logout:
                 path: app_logout
                 target: app_login
+                enable_csrf: true              # déconnexion uniquement depuis le lien de l'application
             remember_me:
                 secret: '%kernel.secret%'
-                lifetime: 604800
+                lifetime: 604800               # 7 jours
                 path: /
+                secure: auto                   # cookie envoyé uniquement en HTTPS (en production)
+                httponly: true
+                samesite: lax
+                # Le cookie « rester connecté » devient invalide si le mot de passe change ou si le compte est désactivé.
+                signature_properties: [password, actif]
 
     role_hierarchy:
         ROLE_ADMIN: [ROLE_RAMASSAGE, ROLE_REPRESENTANT, ROLE_USER]

@@ -79,7 +79,11 @@ final class ColisService
     }
 
     /** Remise du colis au destinataire à l'agence. */
-    public function remettre(Colis $colis, ?User $auteur, string $recuperePar, bool $forcerImpaye = false): void
+    /**
+     * Remise au destinataire : il présente son code de retrait (reçu par SMS / sur le reçu).
+     * Un administrateur peut remettre sans code (reçu perdu…) : c'est alors indiqué dans l'historique.
+     */
+    public function remettre(Colis $colis, ?User $auteur, string $recuperePar, bool $forcerImpaye = false, ?string $codePresente = null, bool $sansCode = false): void
     {
         if (StatutColis::Recupere === $colis->getStatut()) {
             throw new \DomainException('Ce colis a déjà été remis.');
@@ -90,11 +94,14 @@ final class ColisService
         if (!$colis->isSolde() && !$forcerImpaye) {
             throw new \DomainException('Le colis n\'est pas entièrement payé (reste '.number_format($colis->getMontantRestant() / 100, 2, ',', ' ').').');
         }
+        if (!$sansCode && !hash_equals((string) $colis->getCodeRetrait(), mb_strtoupper(preg_replace('/\s+/', '', (string) $codePresente)))) {
+            throw new \DomainException('Code de retrait incorrect : demandez au destinataire le code reçu par SMS ou inscrit sur son reçu.');
+        }
 
         $colis->setStatut(StatutColis::Recupere);
         $colis->setDateRecuperation(new \DateTimeImmutable());
         $colis->setRecupererPar(trim($recuperePar) ?: $colis->getDestinataireNom());
-        $colis->addHistorique(new HistoriqueStatut(StatutColis::Recupere, $auteur, 'Remis à '.$colis->getRecupererPar()));
+        $colis->addHistorique(new HistoriqueStatut(StatutColis::Recupere, $auteur, 'Remis à '.$colis->getRecupererPar().($sansCode ? ' — SANS code de retrait (administrateur)' : '')));
         $this->em->flush();
 
         $this->notifications->statutChange($colis);

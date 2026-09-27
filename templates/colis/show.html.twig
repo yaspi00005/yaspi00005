@@ -24,7 +24,7 @@
         <span class="badge light badge-dark">{{ colis.typeExpedition.label }}</span>
     </div>
     <div class="d-flex flex-wrap gap-2">
-        <a href="{{ path('colis_recu', {id: colis.id}) }}" target="_blank" class="btn btn-outline-primary btn-rounded btn-sm"><i class="fas fa-file-pdf me-1"></i> Reçu PDF</a>
+        {% if is_granted('ROLE_RAMASSAGE') %}<a href="{{ path('colis_recu', {id: colis.id}) }}" target="_blank" class="btn btn-outline-primary btn-rounded btn-sm"><i class="fas fa-file-pdf me-1"></i> Reçu PDF</a>{% endif %}
         {% if is_granted('COLIS_MODIFIER', colis) %}
             <a href="{{ path('colis_edit', {id: colis.id}) }}" class="btn btn-primary btn-rounded btn-sm"><i class="fas fa-pen me-1"></i> Modifier</a>
             {% if colis.supprimable %}
@@ -65,7 +65,8 @@
                     <div class="card-body">
                         <div class="fs-18 font-w600 text-black">{{ colis.destinataireNom }}</div>
                         <div class="text-muted"><i class="fas fa-phone-alt me-1"></i> <a href="tel:{{ colis.destinataireTelephone }}">{{ colis.destinataireTelephone|tel }}</a></div>
-                        <div class="text-muted mt-1"><i class="fas fa-key me-1"></i> Code de retrait : <span class="code-retrait text-black">{{ colis.codeRetrait }}</span></div>
+                        <div class="text-muted mt-1"><i class="fas fa-key me-1"></i> Code de retrait :
+                            {% if is_granted('ROLE_RAMASSAGE') %}<span class="code-retrait text-black">{{ colis.codeRetrait }}</span>{% else %}<span class="code-retrait">••••••</span> <small>(présenté par le destinataire)</small>{% endif %}</div>
                         {% if colis.dateRecuperation %}
                             <div class="text-success mt-1"><i class="fas fa-check me-1"></i> Remis le {{ colis.dateRecuperation|date('d/m/Y H:i') }} à {{ colis.recupererPar }}</div>
                         {% endif %}
@@ -143,6 +144,7 @@
     </div>
 
     <div class="col-xl-4">
+        {% if is_granted('ROLE_RAMASSAGE') %}
         <div class="card carte-envoi-recu">
             <div class="card-header"><h4 class="card-title"><i class="fas fa-paper-plane text-primary me-2"></i>Envoyer le reçu</h4></div>
             <div class="card-body pt-0">
@@ -168,6 +170,7 @@
                 <p class="fs-12 text-muted mt-2 mb-0">WhatsApp s'ouvre avec le message et le lien du reçu déjà écrits : il reste à appuyer sur « Envoyer ». Le destinataire reçoit le suivi, pas le reçu (qui porte le code de retrait).</p>
             </div>
         </div>
+        {% endif %}
         <div class="card">
             <div class="card-header"><h4 class="card-title">Montants</h4></div>
             <div class="card-body">
@@ -227,8 +230,13 @@
                 {% if colis.statut.value == 'arrive' %}
                     <form method="post" action="{{ path('colis_remettre', {id: colis.id}) }}" data-confirm="Confirmer la remise du colis ?">
                         <input type="hidden" name="_token" value="{{ csrf_token('remettre-colis-' ~ colis.id) }}">
+                        <label class="form-label" for="code-retrait">Code de retrait présenté par le destinataire</label>
+                        <input type="text" id="code-retrait" name="code" class="form-control mb-2 code-retrait text-uppercase" value="{{ app.request.query.get('code') }}" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="12" placeholder="Code reçu par SMS ou inscrit sur le reçu">
                         <label class="form-label" for="recuperePar">Remis à</label>
                         <input type="text" id="recuperePar" name="recuperePar" class="form-control mb-2" value="{{ colis.destinataireNom }}">
+                        {% if is_granted('ROLE_ADMIN') %}
+                            <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="sansCode" value="1" id="sansCode"><label class="form-check-label" for="sansCode">Remettre sans code (admin, reçu perdu…) — noté dans l'historique</label></div>
+                        {% endif %}
                         {% if not colis.solde %}
                             <div class="alert alert-warning py-2">Le colis n'est pas soldé : encaissez le reste avant la remise.</div>
                             {% if is_granted('ROLE_ADMIN') %}

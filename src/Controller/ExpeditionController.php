@@ -71,13 +71,17 @@ class ExpeditionController extends AbstractController
         $this->verifierAcces($expedition);
 
         if ('csv' === $request->query->get('export')) {
+            // Les codes de retrait ne sortent que pour les administrateurs : au guichet, le représentant
+            // retrouve le colis avec le code présenté par le destinataire, il n'a pas à les connaître d'avance.
+            $avecCodes = $this->isGranted(User::ROLE_ADMIN);
+
             return Csv::reponse('manifeste-'.$expedition->getNumero().'.csv',
-                ['N° suivi', 'Client', 'Tél. client', 'Destinataire', 'Tél. destinataire', 'Articles', 'Poids (kg)', 'Tarif net', 'Payé', 'Reste', 'Statut', 'Code retrait'],
+                ['N° suivi', 'Client', 'Tél. client', 'Destinataire', 'Tél. destinataire', 'Articles', 'Poids (kg)', 'Tarif net', 'Payé', 'Reste', 'Statut', ...($avecCodes ? ['Code retrait'] : [])],
                 $expedition->getColis()->map(fn (Colis $c) => [
                     $c->getNumeroSuivi(), $c->getClient()->getNomComplet(), $c->getClient()->getTelephone(),
                     $c->getDestinataireNom(), $c->getDestinataireTelephone(), $c->getNombreArticles(), $c->getPoidsTotal(),
                     Csv::montant($c->getMontantNet()), Csv::montant($c->getMontantPaye()), Csv::montant($c->getMontantRestant()),
-                    $c->getStatut()->label(), $c->getCodeRetrait(),
+                    $c->getStatut()->label(), ...($avecCodes ? [$c->getCodeRetrait()] : []),
                 ])->toArray(),
             );
         }

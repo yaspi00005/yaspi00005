@@ -43,9 +43,9 @@ final class Journaliseur
         TypeMarchandise::class => 'Type de marchandise',
     ];
 
-    /** Champs jamais journalisés : secrets, horodatages techniques, valeurs recalculées. */
+    /** Champs jamais journalisés : secrets (mot de passe, jeton de suivi, code de retrait), horodatages techniques, valeurs recalculées. */
     private const IGNORES = [
-        'password', 'token', 'createdAt', 'updatedAt', 'derniereConnexion', 'positionMajLe',
+        'password', 'token', 'codeRetrait', 'createdAt', 'updatedAt', 'derniereConnexion', 'positionMajLe',
         'rappelVeilleEnvoyeLe', 'rappelProcheEnvoyeLe', 'montantPaye', 'statutPaiement', 'soldeBonus',
     ];
 

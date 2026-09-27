@@ -116,7 +116,7 @@ class AppFixtures extends Fixture
         // Quelques colis remis et un colis non affecté.
         foreach ($manager->getRepository(Colis::class)->findBy(['expedition' => $expeditions[0][0]], ['id' => 'ASC']) as $i => $colis) {
             if ($colis->isSolde() && $i < 4) {
-                $this->colisService->remettre($colis, $mali, $colis->getDestinataireNom());
+                $this->colisService->remettre($colis, $mali, $colis->getDestinataireNom(), codePresente: $colis->getCodeRetrait());
             } elseif (!$colis->isSolde() && $i < 5) {
                 $this->paiementService->encaisser($colis, $colis->getMontantRestant(), ModePaiement::OrangeMoney, $mali, 0, 'OM-'.(100000 + $i));
             }

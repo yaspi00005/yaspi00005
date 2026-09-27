@@ -10,7 +10,9 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use App\Form\UserType;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 #[AsCommand(name: 'app:creer-admin', description: 'Crée (ou réinitialise) un compte administrateur')]
 final class CreerAdminCommand extends Command
@@ -18,6 +20,7 @@ final class CreerAdminCommand extends Command
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly UserPasswordHasherInterface $hasher,
+        private readonly ValidatorInterface $validator,
     ) {
         parent::__construct();
     }
@@ -39,9 +42,10 @@ final class CreerAdminCommand extends Command
                 ->setPrenom($io->ask('Prénom', 'Admin'))
                 ->setNom($io->ask('Nom', 'SOTRAMA'));
         }
-        $password = $io->askHidden('Mot de passe (8 caractères min.)', function (?string $v) {
-            if (mb_strlen((string) $v) < 8) {
-                throw new \RuntimeException('Au moins 8 caractères.');
+        $password = $io->askHidden('Mot de passe (10 caractères min., robuste)', function (?string $v) {
+            $erreurs = $this->validator->validate((string) $v, UserType::reglesMotDePasse());
+            if (\count($erreurs)) {
+                throw new \RuntimeException($erreurs[0]->getMessage());
             }
 
             return $v;

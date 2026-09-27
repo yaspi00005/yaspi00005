@@ -49,7 +49,7 @@
     {{ m.stat('fas fa-euro-sign', 'success', totaux.paye|money, 'Encaissé (total)', path('paiement_index')) }}
     {{ m.stat('fas fa-hourglass-half', 'danger', resteAEncaisser|money, 'Reste à encaisser', path('colis_index', {paiement: 'non_paye'})) }}
     {{ m.stat('fas fa-calendar-check', 'primary', totauxMois.paye|money, 'Encaissé ce mois-ci', path('paiement_index')) }}
-    {{ m.stat('fas fa-users', 'info', totalClients, 'Clients', is_granted('ROLE_RAMASSAGE') ? path('client_index') : '#') }}
+    {% if totalClients is not null %}{{ m.stat('fas fa-users', 'info', totalClients, 'Clients', path('client_index')) }}{% endif %}
 
     <div class="col-xl-8">
         <div class="card">

@@ -54,7 +54,7 @@ final class EnvoiRecuTest extends WebTestCase
     {
         $colis = $this->colis();
         $signature = static::getContainer()->get(RecuPartage::class)->signature($colis);
-        $this->client->request('GET', '/deconnexion');
+        $this->client->getCookieJar()->clear(); // déconnexion
 
         $this->client->request('GET', "/suivi/{$colis->getToken()}/recu-$signature.pdf");
         $this->assertResponseIsSuccessful();

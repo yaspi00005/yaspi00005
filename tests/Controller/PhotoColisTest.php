@@ -57,7 +57,7 @@ final class PhotoColisTest extends WebTestCase
         $this->assertResponseIsSuccessful();
 
         // Photo réservée aux utilisateurs connectés.
-        $client->request('GET', '/deconnexion');
+        $client->getCookieJar()->clear(); // déconnexion
         $client->request('GET', "/colis/$id/photo");
         $this->assertResponseRedirects();
         $this->assertStringContainsString('/connexion', (string) $client->getResponse()->headers->get('Location'));

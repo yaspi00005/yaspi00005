@@ -38,7 +38,8 @@ class DashboardController extends AbstractController
             'totaux' => $totaux,
             'totauxMois' => $totauxMois,
             'resteAEncaisser' => max(0, $totaux['frais'] - $totaux['remise'] - $totaux['paye']),
-            'totalClients' => $clientRepository->count([]),
+            // Les représentants ne voient que les colis de leur pays : pas le nombre total de clients.
+            'totalClients' => $this->isGranted(User::ROLE_RAMASSAGE) ? $clientRepository->count([]) : null,
             'expeditions' => $expeditionRepository->filtreQb($user)->setMaxResults(5)->getQuery()->getResult(),
             'derniersColis' => $colisRepository->derniers($user, 8),
             'enAttenteRetrait' => \count($colisRepository->enAttenteRetrait($user, 7)),

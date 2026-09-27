@@ -21,7 +21,7 @@ class UserType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
-        $passwordConstraints = [new Assert\Length(min: 8, minMessage: 'Au moins 8 caractères.')];
+        $passwordConstraints = self::reglesMotDePasse();
         if ($options['creation']) {
             $passwordConstraints[] = new Assert\NotBlank(message: 'Choisissez un mot de passe.');
         }
@@ -57,5 +57,21 @@ class UserType extends AbstractType
     {
         $resolver->setDefaults(['data_class' => User::class, 'creation' => false]);
         $resolver->setAllowedTypes('creation', 'bool');
+    }
+
+    /**
+     * Règles des mots de passe : 10 caractères minimum, robustesse moyenne (pas « azerty1234 »),
+     * absent des listes de mots de passe divulgués (haveibeenpwned, sans envoyer le mot de passe :
+     * seuls les 5 premiers caractères de son empreinte sont transmis ; ignoré si le service est injoignable).
+     *
+     * @return list<\Symfony\Component\Validator\Constraint>
+     */
+    public static function reglesMotDePasse(): array
+    {
+        return [
+            new Assert\Length(min: 10, max: 4096, minMessage: 'Au moins 10 caractères.'),
+            new Assert\PasswordStrength(minScore: Assert\PasswordStrength::STRENGTH_MEDIUM, message: 'Mot de passe trop simple : mélangez majuscules, minuscules, chiffres et signes, ou utilisez une phrase.'),
+            new Assert\NotCompromisedPassword(message: 'Ce mot de passe figure dans des fuites de données connues : choisissez-en un autre.', skipOnError: true),
+        ];
     }
 }

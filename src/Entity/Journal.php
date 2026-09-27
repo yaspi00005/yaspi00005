@@ -20,6 +20,7 @@ class Journal
     public const CONNEXION = 'connexion';
     public const ECHEC_CONNEXION = 'echec_connexion';
     public const DECONNEXION = 'deconnexion';
+    public const EXPORT = 'export';
 
     public const ACTIONS = [
         self::CREATION => ['Ajout', 'success', 'fa-plus'],
@@ -28,6 +29,7 @@ class Journal
         self::CONNEXION => ['Connexion', 'primary', 'fa-sign-in-alt'],
         self::ECHEC_CONNEXION => ['Connexion refusée', 'warning', 'fa-user-lock'],
         self::DECONNEXION => ['Déconnexion', 'light', 'fa-sign-out-alt'],
+        self::EXPORT => ['Export', 'dark', 'fa-file-export'],
     ];
 
     #[ORM\Id]

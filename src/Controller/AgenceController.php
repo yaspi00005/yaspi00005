@@ -30,7 +30,10 @@ class AgenceController extends AbstractController
             }
 
             if ($colis && $this->isGranted(ColisVoter::VOIR, $colis)) {
-                return $this->redirectToRoute('colis_show', ['id' => $colis->getId()]);
+                // Trouvé grâce au code présenté par le destinataire : il est reporté dans le formulaire de remise.
+                $codePresente = hash_equals((string) $colis->getCodeRetrait(), mb_strtoupper($code)) ? $colis->getCodeRetrait() : null;
+
+                return $this->redirectToRoute('colis_show', array_filter(['id' => $colis->getId(), 'code' => $codePresente]));
             }
             $this->addFlash('danger', 'Aucun colis trouvé pour « '.$code.' ».');
         }

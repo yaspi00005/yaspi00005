@@ -22,6 +22,9 @@ final class IdChiffreur
 
     public function __construct(#[Autowire('%kernel.secret%')] string $secret)
     {
+        if (\strlen($secret) < 16) {
+            throw new \RuntimeException('APP_SECRET absent ou trop court (32 caractères conseillés) : définissez-le dans .env.local, par exemple avec « php -r \'echo bin2hex(random_bytes(16));\' ».');
+        }
         $this->cleChiffrement = hash_hkdf('sha256', $secret, 16, 'sotrama-id-chiffrement');
         $this->cleSignature = hash_hkdf('sha256', $secret, 32, 'sotrama-id-signature');
     }

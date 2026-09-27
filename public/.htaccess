@@ -1,12 +1,21 @@
 # Apache : toutes les requêtes qui ne visent pas un fichier existant passent par index.php (Symfony).
 DirectoryIndex index.php
 
+# Pas de liste des fichiers d'un dossier.
+Options -Indexes
+
 <IfModule mod_negotiation.c>
     Options -MultiViews
 </IfModule>
 
 <IfModule mod_rewrite.c>
     RewriteEngine On
+
+    # HTTPS obligatoire en ligne (sauf postes de développement : localhost, 127.0.0.1, *.localhost).
+    RewriteCond %{HTTPS} !=on
+    RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+    RewriteCond %{HTTP_HOST} !^(localhost|127\.0\.0\.1|[^.]+\.localhost)(:\d+)?$ [NC]
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
 
     # Détermine la base de réécriture (fonctionne aussi dans un sous-dossier).
     RewriteCond %{REQUEST_URI}::$0 ^(/.+)/(.*)::\2$

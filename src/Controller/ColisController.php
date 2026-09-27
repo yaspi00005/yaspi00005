@@ -29,6 +29,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
@@ -207,6 +208,7 @@ class ColisController extends AbstractController
     }
 
     #[Route('/{id}/recu.pdf', name: 'colis_recu', requirements: ['id' => self::ID], methods: ['GET'])]
+    #[IsGranted(User::ROLE_RAMASSAGE)]
     public function recu(Colis $colis, DocumentService $documents): Response
     {
         $this->denyAccessUnlessGranted(ColisVoter::VOIR, $colis);
@@ -218,6 +220,7 @@ class ColisController extends AbstractController
     }
 
     #[Route('/{id}/recu/email', name: 'colis_recu_email', requirements: ['id' => self::ID], methods: ['POST'])]
+    #[IsGranted(User::ROLE_RAMASSAGE)]
     public function recuEmail(Request $request, Colis $colis, RecuPartage $partage): Response
     {
         $this->denyAccessUnlessGranted(ColisVoter::VOIR, $colis);
@@ -293,16 +296,29 @@ class ColisController extends AbstractController
     }
 
     #[Route('/{id}/remettre', name: 'colis_remettre', requirements: ['id' => self::ID], methods: ['POST'])]
-    public function remettre(Request $request, Colis $colis): Response
+    public function remettre(Request $request, Colis $colis, RateLimiterFactory $codeRetraitLimiter): Response
     {
         $this->denyAccessUnlessGranted(ColisVoter::LIVRER, $colis);
         $this->verifierCsrf($request, 'remettre-colis-'.$colis->getId());
 
+        $admin = $this->isGranted(User::ROLE_ADMIN);
+        $sansCode = $admin && $request->getPayload()->getBoolean('sansCode');
+        // 5 codes faux par colis et par personne, puis blocage 15 minutes (pas d'essais au hasard).
+        $essais = $codeRetraitLimiter->create($colis->getId().'-'.$this->getUser()?->getUserIdentifier());
+        if (!$sansCode && 0 === $essais->consume(0)->getRemainingTokens()) {
+            $this->addFlash('danger', 'Trop de codes erronés pour ce colis : réessayez dans 15 minutes.');
+
+            return $this->redirectToRoute('colis_show', ['id' => $colis->getId()], Response::HTTP_SEE_OTHER);
+        }
         try {
-            $forcer = $this->isGranted(User::ROLE_ADMIN) && $request->getPayload()->getBoolean('forcer');
-            $this->colisService->remettre($colis, $this->getUser(), $request->getPayload()->getString('recuperePar'), $forcer);
+            $this->colisService->remettre($colis, $this->getUser(), $request->getPayload()->getString('recuperePar'),
+                $admin && $request->getPayload()->getBoolean('forcer'), $request->getPayload()->getString('code'), $sansCode);
+            $essais->reset();
             $this->addFlash('success', 'Colis remis à '.$colis->getRecupererPar().'.');
         } catch (\DomainException $e) {
+            if (str_starts_with($e->getMessage(), 'Code de retrait')) {
+                $essais->consume();
+            }
             $this->addFlash('danger', $e->getMessage());
         }
 

@@ -4,3 +4,16 @@ framework:
             policy: sliding_window
             limit: 20
             interval: '10 minutes'
+        # Codes de retrait erronés à la remise d'un colis
+        code_retrait:
+            policy: fixed_window
+            limit: 5
+            interval: '15 minutes'
+
+when@test:
+    framework:
+        rate_limiter:
+            suivi:
+                policy: sliding_window
+                limit: 1000          # les tests font beaucoup de recherches depuis la même adresse
+                interval: '10 minutes'

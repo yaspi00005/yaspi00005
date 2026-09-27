@@ -152,6 +152,28 @@ Tâche cron mensuelle (le 1er du mois à 00 h 30) :
 
 Aperçu sans rien supprimer : `php bin/console app:purger-photos --apercu`.
 
+## Sécurité
+
+- **Comptes** : mots de passe de 10 caractères minimum, robustesse contrôlée et refus des mots de passe divulgués
+  (haveibeenpwned, par empreinte partielle) ; 5 essais de connexion par 15 min ; session fermée dès qu'un compte
+  est désactivé, change de rôle ou de mot de passe ; message « compte désactivé » seulement après le bon mot de
+  passe ; déconnexion protégée (jeton) ; sessions de 4 h d'inactivité, cookies `Secure`, `HttpOnly`, `SameSite`.
+- **Droits** : chaque page vérifie le rôle ; les représentants ne voient que les colis de leur pays, ni le code de
+  retrait ni le reçu ; la **remise exige le code de retrait** présenté par le destinataire (5 erreurs → blocage
+  15 min ; un administrateur peut remettre sans code, noté dans l'historique).
+- **Formulaires** : jeton CSRF sur toutes les actions ; identifiants chiffrés dans les URL.
+- **En-têtes HTTP** : Content-Security-Policy (scripts du site uniquement), anti-clickjacking, `nosniff`,
+  Permissions-Policy (caméra et position pour le site seulement), HSTS ; HTTPS imposé par `.htaccess`.
+- **Données** : photos hors du dossier public ; exports Excel protégés contre l'injection de formules ;
+  notifications du navigateur limitées aux services officiels (pas de SSRF) ; aucune bibliothèque chargée depuis
+  un site tiers ; journal d'activité (ajouts, modifications, suppressions, connexions, exports).
+
+Mise en production — à vérifier :
+
+- `.env.local` : `APP_ENV=prod`, `APP_SECRET` de 32 caractères (l'application refuse de démarrer sans), droits `600` ;
+- le domaine pointe sur `public/` ; certificat HTTPS actif ;
+- `composer audit` sans alerte ; `php bin/console app:generer-cles-push --ecrire` une fois.
+
 ## Application Android
 
 L'application Android (dossier `android/`) est une *Trusted Web Activity* : elle ouvre le site SOTRAMA

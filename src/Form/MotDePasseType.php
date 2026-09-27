@@ -23,7 +23,7 @@ class MotDePasseType extends AbstractType
                 'first_options' => ['label' => 'Nouveau mot de passe', 'attr' => ['autocomplete' => 'new-password']],
                 'second_options' => ['label' => 'Confirmation', 'attr' => ['autocomplete' => 'new-password']],
                 'invalid_message' => 'Les mots de passe ne correspondent pas.',
-                'constraints' => [new Assert\NotBlank(), new Assert\Length(min: 8, minMessage: 'Au moins 8 caractères.')],
+                'constraints' => [new Assert\NotBlank(), ...UserType::reglesMotDePasse()],
             ]);
     }
 }

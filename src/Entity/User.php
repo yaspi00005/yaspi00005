@@ -7,6 +7,7 @@ use App\Repository\UserRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Security\Core\User\EquatableInterface;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -14,7 +15,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: 'utilisateur')]
 #[UniqueEntity(fields: ['username'], message: 'Cet identifiant est déjà utilisé.')]
-class User implements UserInterface, PasswordAuthenticatedUserInterface
+class User implements UserInterface, PasswordAuthenticatedUserInterface, EquatableInterface
 {
     public const ROLE_ADMIN = 'ROLE_ADMIN';
     public const ROLE_RAMASSAGE = 'ROLE_RAMASSAGE';
@@ -157,6 +158,28 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $data["\0".self::class."\0password"] = hash('crc32c', (string) $this->password);
 
         return $data;
+    }
+
+    /**
+     * Comparé à chaque requête avec la version en base : une session ouverte est fermée dès que le compte
+     * est désactivé, que son rôle ou son pays change, ou que son mot de passe est modifié.
+     * (Le mot de passe de la session est une empreinte, voir __serialize.)
+     */
+    public function isEqualTo(UserInterface $user): bool
+    {
+        if (!$user instanceof self || $user->getUserIdentifier() !== $this->getUserIdentifier() || !$user->isActif()) {
+            return false;
+        }
+        $motDePasse = (string) $user->getPassword();
+        if ($this->password !== $motDePasse && $this->password !== hash('crc32c', $motDePasse)) {
+            return false;
+        }
+        $roles = $user->getRoles();
+        sort($roles);
+        $mesRoles = $this->getRoles();
+        sort($mesRoles);
+
+        return $roles === $mesRoles && $user->getPays() === $this->pays;
     }
 
     #[\Deprecated]

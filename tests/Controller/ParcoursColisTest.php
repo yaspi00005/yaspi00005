@@ -133,14 +133,19 @@ final class ParcoursColisTest extends WebTestCase
         $this->client->submit($crawler->selectButton('Enregistrer le paiement')->form(['encaissement[mode]' => 'orange_money', 'encaissement[reference]' => 'OM-1']));
         $crawler = $this->client->followRedirect();
         $this->assertSelectorTextContains('.alert-success', 'soldé');
-        $this->client->submit($crawler->selectButton('Remettre au destinataire')->form(['recuperePar' => 'Awa Test']));
+        // Code de retrait faux : remise refusée.
+        $this->client->submit($crawler->selectButton('Remettre au destinataire')->form(['recuperePar' => 'Awa Test', 'code' => 'FAUX12']));
+        $crawler = $this->client->followRedirect();
+        $this->assertSelectorTextContains('.alert-danger', 'Code de retrait incorrect');
+        $this->assertSelectorTextNotContains('body', $colis->getCodeRetrait(), 'Le représentant ne voit pas le code.');
+        $this->client->submit($crawler->selectButton('Remettre au destinataire')->form(['recuperePar' => 'Awa Test', 'code' => strtolower($colis->getCodeRetrait())]));
         $this->client->followRedirect();
         $colis = static::getContainer()->get(ColisRepository::class)->find($colis->getId());
         $this->assertSame(StatutColis::Recupere, $colis->getStatut());
         $this->assertSame('Awa Test', $colis->getRecupererPar());
 
         // Suivi public : numéro + téléphone
-        $this->client->request('GET', '/deconnexion');
+        $this->client->getCookieJar()->clear(); // déconnexion
         $crawler = $this->client->request('GET', '/suivi');
         $this->client->submit($crawler->selectButton('Voir mon colis')->form(['numero' => $colis->getNumeroSuivi(), 'telephone' => '00223 76 11 22 33']));
         $this->assertResponseRedirects('/suivi/'.$colis->getToken());
