@@ -65,6 +65,7 @@
                         <th class="num">Reste</th>
                         <th>Statut</th>
                         <th>Paiement</th>
+                        {% if not agentSeul %}<th>Ajouté par</th>{% endif %}
                     </tr>
                 </thead>
                 <tbody>
@@ -79,9 +80,10 @@
                         <td class="num {{ c.montantRestant > 0 ? 'text-danger font-w600' }}">{{ c.montantRestant|money }}</td>
                         <td>{% include 'partials/_badge.html.twig' with {statut: c.statut} %}</td>
                         <td>{% include 'partials/_badge.html.twig' with {statut: c.statutPaiement} %}</td>
+                        {% if not agentSeul %}<td>{{ c.agent ? c.agent.nomComplet : '—' }}</td>{% endif %}
                     </tr>
                 {% else %}
-                    <tr><td colspan="9"><div class="empty-state"><i class="fas fa-search"></i>Aucun colis ne correspond à ces critères.</div></td></tr>
+                    <tr><td colspan="10"><div class="empty-state"><i class="fas fa-search"></i>Aucun colis ne correspond à ces critères.</div></td></tr>
                 {% endfor %}
                 </tbody>
             </table>

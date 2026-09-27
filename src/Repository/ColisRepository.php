@@ -28,9 +28,10 @@ class ColisRepository extends ServiceEntityRepository
     public function filtreQb(?User $user, array $filtres = []): QueryBuilder
     {
         $qb = $this->createQueryBuilder('c')
-            ->addSelect('cl', 'e')
+            ->addSelect('cl', 'e', 'ag')
             ->join('c.client', 'cl')
             ->leftJoin('c.expedition', 'e')
+            ->leftJoin('c.agent', 'ag')
             ->orderBy('c.dateReception', 'DESC')->addOrderBy('c.id', 'DESC');
 
         $this->restreindrePourUtilisateur($qb, $user);

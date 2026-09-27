@@ -16,6 +16,7 @@ use App\Repository\ExpeditionRepository;
 use App\Repository\TypeMarchandiseRepository;
 use App\Security\ColisVoter;
 use App\Security\IdChiffreur;
+use App\Security\Perimetre;
 use App\Service\BonusFidelite;
 use App\Service\ColisService;
 use App\Service\DocumentService;
@@ -66,12 +67,12 @@ class ColisController extends AbstractController
 
         if ('csv' === $request->query->get('export')) {
             return Csv::reponse('colis-'.date('Y-m-d').'.csv',
-                ['N° suivi', 'Date', 'Client', 'Téléphone client', 'Destinataire', 'Tél. destinataire', 'Expédition', 'Articles', 'Poids (kg)', 'Tarif', 'Remise', 'Payé', 'Reste', 'Statut', 'Paiement'],
+                ['N° suivi', 'Date', 'Ajouté par', 'Client', 'Téléphone client', 'Destinataire', 'Tél. destinataire', 'Expédition', 'Articles', 'Poids (kg)', 'Tarif', 'Remise', 'Payé', 'Reste', 'Statut', 'Paiement'],
                 (function () use ($qb) {
                     foreach ($qb->getQuery()->toIterable() as $c) {
                         /* @var Colis $c */
                         yield [
-                            $c->getNumeroSuivi(), $c->getDateReception()->format('d/m/Y H:i'),
+                            $c->getNumeroSuivi(), $c->getDateReception()->format('d/m/Y H:i'), $c->getAgent()?->getNomComplet(),
                             $c->getClient()->getNomComplet(), $c->getClient()->getTelephone(),
                             $c->getDestinataireNom(), $c->getDestinataireTelephone(),
                             $c->getExpedition()?->getNumero(), $c->getNombreArticles(), $c->getPoidsTotal(),
@@ -86,6 +87,8 @@ class ColisController extends AbstractController
         return $this->render('colis/index.html.twig', [
             'colis' => Pagination::depuis($qb, $request->query->get('page', 1)),
             'filtres' => $filtres,
+            // Un agent de ramassage ne voit que ses propres colis : la colonne « Ajouté par » serait toujours lui.
+            'agentSeul' => Perimetre::estRamassage($this->getUser()),
             'recuperesMasques' => $masquerRecuperes
                 ? $colisRepository->filtreQb($this->getUser(), ['statut' => StatutColis::Recupere->value])->select('COUNT(c.id)')->resetDQLPart('orderBy')->getQuery()->getSingleScalarResult()
                 : 0,

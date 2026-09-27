@@ -22,6 +22,8 @@ final class ListeColisTest extends WebTestCase
         $this->assertResponseIsSuccessful();
         $this->assertSelectorTextNotContains('table', $numero);
         $this->assertSelectorTextContains('body', 'déjà récupéré');
+        $this->assertSelectorTextContains('thead', 'Ajouté par');
+        $this->assertSelectorTextContains('tbody', 'Moussa TRAORÉ');
 
         $client->request('GET', '/colis', ['q' => $numero]);
         $this->assertSelectorTextContains('table', $numero);
