@@ -136,6 +136,7 @@ code { background: var(--vert-clair); color: var(--vert-fonce); padding: .05em .
 .destination-mali::after { background: var(--jaune); opacity: .35; }
 .destination-senegal::after { background: var(--vert); }
 .destination-image { display: block; width: calc(100% + 64px); max-width: none; height: 170px; object-fit: cover; margin: -32px -32px 24px; }
+.destination-photo { height: auto; aspect-ratio: 16 / 9; } /* photo déposée : affichée en entier */
 .destination-entete { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.2rem; }
 .destination-entete h3 { font-size: 1.8rem; margin: 0; }
 .destination-entete p { margin: 0; color: var(--gris); font-weight: 500; }

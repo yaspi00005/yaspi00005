@@ -111,7 +111,7 @@
         </div>
         <div class="grille-destinations">
             <article class="destination destination-mali">
-                <img class="destination-image" src="{{ asset(bamako) }}" alt="Bamako" loading="lazy" width="600" height="220">
+                <img class="destination-image{{ bamako ends with '.svg' ? '' : ' destination-photo' }}" src="{{ asset(bamako) }}" alt="Bamako" loading="lazy" width="600" height="220">
                 <div class="destination-entete">
                     <span class="drapeau drapeau-mali" aria-hidden="true"><i></i><i></i><i></i></span>
                     <div><h3>Bamako</h3><p>Mali · BKO</p></div>
@@ -124,7 +124,7 @@
                 <a href="{{ wa }}?text={{ 'Bonjour SOTRAMA, je souhaite envoyer un colis à Bamako.'|url_encode }}" class="lien-fleche" target="_blank" rel="noopener">Envoyer à Bamako <i class="fas fa-arrow-right"></i></a>
             </article>
             <article class="destination destination-senegal">
-                <img class="destination-image" src="{{ asset(dakar) }}" alt="Dakar" loading="lazy" width="600" height="220">
+                <img class="destination-image{{ dakar ends with '.svg' ? '' : ' destination-photo' }}" src="{{ asset(dakar) }}" alt="Dakar" loading="lazy" width="600" height="220">
                 <span class="etiquette-nouveau">Nouveau</span>
                 <div class="destination-entete">
                     <span class="drapeau drapeau-senegal" aria-hidden="true"><i></i><i></i><i></i></span>
