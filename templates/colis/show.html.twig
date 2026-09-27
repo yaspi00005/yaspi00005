@@ -75,11 +75,18 @@
             </div>
         </div>
 
-        {% if colis.photo %}
+        {# Photos des articles en grand : celles reprises de l'ancienne application sont toutes sur les articles. #}
+        {% set articlesAvecPhoto = colis.articles|filter(a => a.photo) %}
+        {% if colis.photo or articlesAvecPhoto|length %}
         <div class="card">
-            <div class="card-header"><h4 class="card-title"><i class="fas fa-camera text-primary me-2"></i>Photo du colis</h4></div>
-            <div class="card-body pt-0">
-                <a href="{{ path('colis_photo', {id: colis.id}) }}" target="_blank"><img src="{{ path('colis_photo', {id: colis.id}) }}" alt="Photo du colis {{ colis.numeroSuivi }}" class="photo-colis"></a>
+            <div class="card-header"><h4 class="card-title"><i class="fas fa-camera text-primary me-2"></i>{{ colis.photo and not articlesAvecPhoto|length ? 'Photo du colis' : 'Photos' }}</h4></div>
+            <div class="card-body pt-0 d-flex flex-wrap gap-3">
+                {% if colis.photo %}
+                    <a href="{{ path('colis_photo', {id: colis.id}) }}" target="_blank"><img src="{{ path('colis_photo', {id: colis.id}) }}" alt="Photo du colis {{ colis.numeroSuivi }}" class="photo-colis"></a>
+                {% endif %}
+                {% for a in articlesAvecPhoto %}
+                    <a href="{{ path('article_photo', {id: a.id}) }}" target="_blank" title="{{ a.typeMarchandise }}"><img src="{{ path('article_photo', {id: a.id}) }}" alt="Photo de l'article {{ a.typeMarchandise }}" class="photo-colis" loading="lazy"></a>
+                {% endfor %}
             </div>
         </div>
         {% endif %}
