@@ -51,6 +51,10 @@ final class ImportAncienneBaseCommand extends Command
     private array $map = ['user' => [], 'client' => [], 'expedition' => [], 'colis' => []];
     /** @var list<string> */
     private array $avertissements = [];
+    private bool $simulation = false;
+    /** @var array<string, string>|null nom de fichier (minuscules) → chemin, pour les anciennes photos */
+    private ?array $indexPhotos = null;
+    private int $photosTrouvees = 0;
 
     public function __construct(
         private readonly EntityManagerInterface $em,
@@ -72,7 +76,7 @@ final class ImportAncienneBaseCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $this->io = new SymfonyStyle($input, $output);
-        $dryRun = (bool) $input->getOption('dry-run');
+        $dryRun = $this->simulation = (bool) $input->getOption('dry-run');
 
         if ($this->em->getRepository(Colis::class)->count([]) || $this->em->getRepository(Client::class)->count([])) {
             $this->io->error('La nouvelle base contient déjà des clients ou des colis. Importez dans une base vide.');
@@ -110,7 +114,10 @@ final class ImportAncienneBaseCommand extends Command
             return Command::FAILURE;
         }
 
-        $this->io->table(['Élément', 'Importés'], array_map(fn ($k) => [$k, \count($this->map[$k])], array_keys($this->map)));
+        $this->io->table(['Élément', 'Importés'], [
+            ...array_map(fn ($k) => [$k, \count($this->map[$k])], array_keys($this->map)),
+            ...($input->getOption('photos') ? [['photos', $this->photosTrouvees]] : []),
+        ]);
         foreach (array_slice($this->avertissements, 0, 50) as $a) {
             $this->io->writeln(' <comment>!</comment> '.$a);
         }
@@ -506,25 +513,109 @@ final class ImportAncienneBaseCommand extends Command
         }
     }
 
+    /**
+     * Copie une photo de l'ancienne application. Le fichier est cherché par son nom dans tout le dossier
+     * (sous-dossiers compris, majuscules ignorées, autre extension acceptée : .JPG, .jpeg, .png…).
+     * Les grandes photos sont réduites à 1600 px (JPEG) et remises à l'endroit (orientation EXIF).
+     * En simulation, rien n'est copié : on vérifie seulement que la photo existe.
+     */
     private function copierPhoto(?string $nom, ?string $dossier): ?string
     {
-        if (!$nom || !$dossier) {
+        $nom = trim((string) $nom);
+        if ('' === $nom || !$dossier) {
             return null;
         }
-        $source = rtrim($dossier, '/').'/'.basename($nom);
-        if (!is_file($source)) {
+        $source = $this->trouverPhoto($nom, $dossier);
+        if (!$source) {
             $this->avertissements[] = "Photo introuvable : $nom";
 
             return null;
         }
-        $relatif = 'import/'.basename($nom);
+        ++$this->photosTrouvees;
+        $extension = strtolower(pathinfo($source, \PATHINFO_EXTENSION));
+        if (\in_array($extension, ['heic', 'heif'], true)) {
+            $this->avertissements[] = "Photo $nom au format iPhone (HEIC), non affichable par Chrome : convertissez-la en JPEG si besoin.";
+        }
+        if ($this->simulation) {
+            return null;
+        }
+
+        $relatif = 'import/'.bin2hex(random_bytes(10));
         $cible = $this->uploadsDir.'/photos/'.$relatif;
         if (!is_dir(\dirname($cible))) {
             mkdir(\dirname($cible), 0775, true);
         }
-        copy($source, $cible);
+        if ($this->reduirePhoto($source, $cible.'.jpg')) {
+            return $relatif.'.jpg';
+        }
+        // Extension d'après le contenu réel : .jfif, .jpe, .JPEG… sont des JPEG.
+        $extension = match (@getimagesize($source)[2] ?? null) {
+            \IMAGETYPE_JPEG => 'jpg',
+            \IMAGETYPE_PNG => 'png',
+            \IMAGETYPE_WEBP => 'webp',
+            \IMAGETYPE_GIF => 'gif',
+            default => $extension ?: 'jpg',
+        };
+        copy($source, $cible.'.'.$extension);
 
-        return $relatif;
+        return $relatif.'.'.$extension;
+    }
+
+    private function trouverPhoto(string $nom, string $dossier): ?string
+    {
+        if (null === $this->indexPhotos) {
+            $this->indexPhotos = [];
+            if (is_dir($dossier)) {
+                $fichiers = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($dossier, \FilesystemIterator::SKIP_DOTS));
+                foreach ($fichiers as $f) {
+                    if ($f->isFile()) {
+                        $this->indexPhotos[mb_strtolower($f->getFilename())] ??= $f->getPathname();
+                        $this->indexPhotos['~'.mb_strtolower($f->getBasename('.'.$f->getExtension()))] ??= $f->getPathname();
+                    }
+                }
+            }
+            $this->io->writeln(\sprintf(' Dossier des photos : %d fichiers trouvés.', \count(array_filter(array_keys($this->indexPhotos), fn ($k) => '~' !== $k[0]))));
+        }
+        $base = mb_strtolower(basename(str_replace('\\', '/', $nom)));
+
+        return $this->indexPhotos[$base] ?? $this->indexPhotos['~'.pathinfo($base, \PATHINFO_FILENAME)] ?? null;
+    }
+
+    /** Réduit une photo JPEG/PNG/WebP trop grande ; false si GD ne sait pas la lire (copie telle quelle). */
+    private function reduirePhoto(string $source, string $cible): bool
+    {
+        $infos = @getimagesize($source);
+        if (!$infos || !\in_array($infos[2], [\IMAGETYPE_JPEG, \IMAGETYPE_PNG, \IMAGETYPE_WEBP], true)) {
+            return false;
+        }
+        [$largeur, $hauteur] = $infos;
+        $orientation = \IMAGETYPE_JPEG === $infos[2] && \function_exists('exif_read_data') ? (int) (@exif_read_data($source)['Orientation'] ?? 1) : 1;
+        if (max($largeur, $hauteur) <= 1600 && filesize($source) < 1_500_000 && 1 === $orientation) {
+            return false;
+        }
+        $image = match ($infos[2]) {
+            \IMAGETYPE_JPEG => @imagecreatefromjpeg($source),
+            \IMAGETYPE_PNG => @imagecreatefrompng($source),
+            default => @imagecreatefromwebp($source),
+        };
+        if (!$image) {
+            return false;
+        }
+        $image = match ($orientation) {
+            3 => imagerotate($image, 180, 0),
+            6 => imagerotate($image, -90, 0),
+            8 => imagerotate($image, 90, 0),
+            default => $image,
+        };
+        $echelle = min(1, 1600 / max(imagesx($image), imagesy($image)));
+        if ($echelle < 1) {
+            $image = imagescale($image, (int) round(imagesx($image) * $echelle), (int) round(imagesy($image) * $echelle), \IMG_BICUBIC);
+        }
+        $fond = imagecreatetruecolor(imagesx($image), imagesy($image));
+        imagefill($fond, 0, 0, imagecolorallocate($fond, 255, 255, 255));
+        imagecopy($fond, $image, 0, 0, 0, 0, imagesx($image), imagesy($image));
+
+        return imagejpeg($fond, $cible, 82);
     }
 
     /** Renseigne une propriété sans setter public (dates de création historiques). */
