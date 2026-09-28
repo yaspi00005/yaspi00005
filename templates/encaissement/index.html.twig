@@ -18,9 +18,9 @@
 
 {% block body %}
 <div class="row">
-    {{ m.stat('fas fa-sun', 'warning', aujourdhui.montant|money, "Encaissé aujourd'hui", aujourdhui.nb ~ ' opération(s)') }}
-    {{ m.stat('fas fa-calendar-week', 'info', semaine.montant|money, 'Cette semaine', semaine.nb ~ ' opération(s)') }}
-    {{ m.stat('fas fa-calendar-check', 'success', mois.montant|money, 'Ce mois-ci', mois.nb ~ ' opération(s)') }}
+    {{ m.stat('fas fa-sun', 'warning', aujourdhui.montant|money_local, "Encaissé aujourd'hui", aujourdhui.nb ~ ' opération(s)') }}
+    {{ m.stat('fas fa-calendar-week', 'info', semaine.montant|money_local, 'Cette semaine', semaine.nb ~ ' opération(s)') }}
+    {{ m.stat('fas fa-calendar-check', 'success', mois.montant|money_local, 'Ce mois-ci', mois.nb ~ ' opération(s)') }}
     {{ m.stat('fas fa-hand-holding', 'primary', remisesMois, 'Colis remis ce mois-ci', null) }}
 </div>
 
@@ -44,7 +44,7 @@
 <div class="row">
     <div class="col-xl-9">
         <div class="card">
-            <div class="card-header"><h4 class="card-title">{{ paiements.total }} encaissement(s) · {{ total|money }}</h4></div>
+            <div class="card-header"><h4 class="card-title">{{ paiements.total }} encaissement(s) · {{ total|money }} <small class="text-muted">(≈ {{ total|fcfa }})</small></h4></div>
             <div class="card-body pt-0">
                 <div class="table-responsive">
                     <table class="table table-hover">
@@ -56,8 +56,8 @@
                                 <td>{% if is_granted('COLIS_VOIR', p.colis) %}<a href="{{ path('colis_show', {id: p.colis.id}) }}" class="text-primary">{{ p.colis.numeroSuivi }}</a>{% else %}{{ p.colis.numeroSuivi }}{% endif %}</td>
                                 <td>{{ p.colis.destinataireNom }}</td>
                                 <td>{{ p.mode.label }}{% if p.reference %}<br><small class="text-muted">{{ p.reference }}</small>{% endif %}</td>
-                                <td class="num font-w600">{{ p.montant|money }}</td>
-                                <td class="num">{{ p.remise ? p.remise|money : '—' }}</td>
+                                <td class="num font-w600">{{ p.montant|money_local }}</td>
+                                <td class="num">{{ p.remise ? p.remise|money_local : '—' }}</td>
                             </tr>
                         {% else %}
                             <tr><td colspan="6"><div class="empty-state"><i class="fas fa-wallet"></i>Aucun encaissement sur cette période.</div></td></tr>
@@ -76,7 +76,7 @@
                 {% for mode, montant in parMode|filter(v => v > 0) %}
                     <div class="d-flex justify-content-between py-2 border-bottom">
                         <span>{{ enum('App\\Enum\\ModePaiement').from(mode).label }}</span>
-                        <strong>{{ montant|money }}</strong>
+                        <strong class="text-end">{{ montant|money_local }}</strong>
                     </div>
                 {% else %}<span class="text-muted">—</span>{% endfor %}
             </div>

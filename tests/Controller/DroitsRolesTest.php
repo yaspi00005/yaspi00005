@@ -108,6 +108,10 @@ final class DroitsRolesTest extends WebTestCase
 
         $this->client->request('GET', '/colis/'.$this->hid($arrive));
         $this->assertResponseIsSuccessful();
+        // Montants en euros avec leur équivalent en francs CFA (1 € = 655,957 FCFA).
+        $this->assertSelectorTextContains('.montant-fcfa', 'FCFA');
+        $fcfa = number_format(round($arrive->getFrais() / 100 * 655.957), 0, ',', "\u{202F}");
+        $this->assertStringContainsString($fcfa."\u{00A0}FCFA", (string) $this->client->getResponse()->getContent());
         if (!$arrive->isSolde()) {
             $this->assertSelectorExists('form[action$="/encaisser"]');
         }
@@ -145,5 +149,6 @@ final class DroitsRolesTest extends WebTestCase
         $this->client->request('GET', '/colis/'.$this->hid($enRoute));
         $this->assertResponseIsSuccessful();
         $this->assertSelectorExists('form[action$="/encaisser"]');
+        $this->assertSelectorNotExists('.montant-fcfa');
     }
 }

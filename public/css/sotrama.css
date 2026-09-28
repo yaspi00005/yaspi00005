@@ -93,3 +93,6 @@ ol.etapes li { margin-bottom: .35rem; }
 .journal-details table th { width: 30%; font-size: .8rem; }
 .journal-details table td { font-size: .8rem; word-break: break-word; }
 .table-journal td { vertical-align: top; }
+
+/* Équivalent en francs CFA sous un montant en euros (pages du représentant). */
+.montant-fcfa { display: block; font-size: .75em; font-weight: 500; color: #7e7e7e; white-space: nowrap; }

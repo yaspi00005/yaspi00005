@@ -3,18 +3,26 @@
 namespace App\Twig;
 
 use App\Entity\Client;
+use App\Entity\User;
 use App\Security\IdChiffreur;
+use App\Security\Perimetre;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Twig\Extension\AbstractExtension;
+use Twig\Markup;
 use Twig\TwigFilter;
 use Twig\TwigFunction;
 
 final class AppExtension extends AbstractExtension
 {
+    /** Parité fixe du franc CFA (UEMOA, Mali et Sénégal). */
+    public const EURO_EN_FCFA = 655.957;
+
     public function __construct(
         #[Autowire('%app.devise%')] private readonly string $devise,
         private readonly IdChiffreur $chiffreur,
         #[Autowire('%kernel.project_dir%/public/images/logo-sotrama.png')] private readonly string $cheminLogo,
+        private readonly Security $security,
     ) {
     }
 
@@ -34,6 +42,9 @@ final class AppExtension extends AbstractExtension
     {
         return [
             new TwigFilter('money', $this->money(...)),
+            new TwigFilter('fcfa', $this->fcfa(...)),
+            // Montant en euros suivi de son équivalent en francs CFA pour les représentants (Mali, Sénégal).
+            new TwigFilter('money_local', $this->moneyLocal(...)),
             new TwigFilter('poids', fn ($kg) => number_format((float) $kg, 2, ',', ' ').' kg'),
             new TwigFilter('jour_fr', fn (\DateTimeInterface $d) => \App\Util\DateFr::jour($d)),
             new TwigFilter('jour_heure_fr', fn (\DateTimeInterface $d) => \App\Util\DateFr::jourHeure($d)),
@@ -86,6 +97,23 @@ final class AppExtension extends AbstractExtension
     }
 
     /** Formate un montant en centimes : 123450 → « 1 234,50 € ». */
+    /** Centimes d'euro → « 8 199 FCFA » (arrondi au franc). */
+    public function fcfa(?int $centimes): string
+    {
+        return number_format(round(($centimes ?? 0) / 100 * self::EURO_EN_FCFA), 0, ',', "\u{202F}")."\u{00A0}FCFA";
+    }
+
+    public function moneyLocal(?int $centimes): Markup
+    {
+        $html = htmlspecialchars($this->money($centimes), \ENT_QUOTES);
+        $user = $this->security->getUser();
+        if ($user instanceof User && Perimetre::estRepresentant($user)) {
+            $html .= '<small class="montant-fcfa">≈&nbsp;'.htmlspecialchars($this->fcfa($centimes), \ENT_QUOTES).'</small>';
+        }
+
+        return new Markup($html, 'UTF-8');
+    }
+
     public function money(?int $centimes, bool $devise = true): string
     {
         $v = number_format(($centimes ?? 0) / 100, 2, ',', "\u{202F}");

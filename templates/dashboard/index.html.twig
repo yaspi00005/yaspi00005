@@ -49,8 +49,8 @@
         {# Représentant : colis arrivés dans son pays, à remettre et à encaisser. #}
         {{ m.stat('fas fa-map-marker-alt', 'secondary', parStatut['arrive']|default(0), 'À retirer en agence', path('colis_index', {statut: 'arrive'})) }}
         {{ m.stat('fas fa-hand-holding', 'success', parStatut['recupere']|default(0), 'Remis aux destinataires', path('colis_index', {statut: 'recupere'})) }}
-        {{ m.stat('fas fa-wallet', 'success', mesEncaissementsMois.montant|money, 'Mes encaissements ce mois-ci', path('encaissement_index')) }}
-        {{ m.stat('fas fa-hourglass-half', 'danger', resteAEncaisser|money, 'Reste à encaisser', path('colis_index', {paiement: 'non_paye'})) }}
+        {{ m.stat('fas fa-wallet', 'success', mesEncaissementsMois.montant|money_local, 'Mes encaissements ce mois-ci', path('encaissement_index')) }}
+        {{ m.stat('fas fa-hourglass-half', 'danger', resteAEncaisser|money_local, 'Reste à encaisser', path('colis_index', {paiement: 'non_paye'})) }}
     {% else %}
         {{ m.stat('fas fa-box-open', 'primary', totalColis, estRamassage ? 'Mes colis' : 'Colis au total', path('colis_index', {tous: 1})) }}
         {{ m.stat('fas fa-truck-loading', 'warning', parStatut['en_preparation']|default(0), 'En préparation', path('colis_index', {statut: 'en_preparation'})) }}
