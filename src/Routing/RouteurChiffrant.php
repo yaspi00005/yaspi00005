@@ -20,7 +20,7 @@ use Symfony\Component\Routing\RouterInterface;
 final class RouteurChiffrant implements RouterInterface, RequestMatcherInterface, WarmableInterface
 {
     /** Paramètres de route ou de requête contenant un identifiant. */
-    public const PARAMETRES = ['id', 'colis', 'client', 'expedition', 'caissier'];
+    public const PARAMETRES = ['id', 'colis', 'client', 'expedition', 'caissier', 'depense'];
 
     public function __construct(
         #[AutowireDecorated] private readonly RouterInterface&RequestMatcherInterface&WarmableInterface $routeur,

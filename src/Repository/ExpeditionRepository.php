@@ -66,4 +66,53 @@ class ExpeditionRepository extends ServiceEntityRepository
             ->andWhere('e.numero LIKE :p')->setParameter('p', 'EXP'.$annee.'-%')
             ->getQuery()->getSingleScalarResult();
     }
+
+    /**
+     * Rentabilité des expéditions parties sur une période : chiffre d'affaires (tarifs − remises),
+     * encaissé, charges et marge, calculés en base (pas de chargement de tous les colis).
+     *
+     * @return list<array{expedition: Expedition, nbColis: int, ca: int, encaisse: int, depenses: int, marge: int, taux: ?float}>
+     */
+    public function rentabilite(?\DateTimeImmutable $du = null, ?\DateTimeImmutable $au = null): array
+    {
+        $qb = $this->createQueryBuilder('e')->orderBy('e.dateDepart', 'DESC')->addOrderBy('e.id', 'DESC');
+        if ($du) {
+            $qb->andWhere('e.dateDepart >= :du')->setParameter('du', $du);
+        }
+        if ($au) {
+            $qb->andWhere('e.dateDepart <= :au')->setParameter('au', $au);
+        }
+        /** @var Expedition[] $expeditions */
+        $expeditions = $qb->getQuery()->getResult();
+        if (!$expeditions) {
+            return [];
+        }
+        $em = $this->getEntityManager();
+        $colis = [];
+        foreach ($em->createQuery('SELECT IDENTITY(c.expedition) AS id, COUNT(c.id) AS nb, COALESCE(SUM(c.frais - c.remise), 0) AS ca, COALESCE(SUM(c.montantPaye), 0) AS paye
+                FROM App\Entity\Colis c WHERE c.expedition IN (:e) GROUP BY c.expedition')
+            ->setParameter('e', $expeditions)->getArrayResult() as $r) {
+            $colis[(int) $r['id']] = $r;
+        }
+        $depenses = [];
+        foreach ($em->createQuery('SELECT IDENTITY(d.expedition) AS id, SUM(d.montant) AS total FROM App\Entity\DepenseExpedition d WHERE d.expedition IN (:e) GROUP BY d.expedition')
+            ->setParameter('e', $expeditions)->getArrayResult() as $r) {
+            $depenses[(int) $r['id']] = (int) $r['total'];
+        }
+
+        return array_map(function (Expedition $e) use ($colis, $depenses) {
+            $ca = (int) ($colis[$e->getId()]['ca'] ?? 0);
+            $charges = $depenses[$e->getId()] ?? 0;
+
+            return [
+                'expedition' => $e,
+                'nbColis' => (int) ($colis[$e->getId()]['nb'] ?? 0),
+                'ca' => $ca,
+                'encaisse' => (int) ($colis[$e->getId()]['paye'] ?? 0),
+                'depenses' => $charges,
+                'marge' => $ca - $charges,
+                'taux' => $ca > 0 ? round(($ca - $charges) / $ca * 100, 1) : null,
+            ];
+        }, $expeditions);
+    }
 }

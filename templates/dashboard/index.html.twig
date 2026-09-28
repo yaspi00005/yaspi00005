@@ -90,6 +90,42 @@
     </div>
     {% endif %}
 
+    {% if rentabilite %}
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header border-0 pb-0">
+                <h4 class="card-title"><i class="fas fa-chart-line text-primary me-2"></i>Rentabilité des expéditions {{ 'now'|date('Y') }}</h4>
+                <a href="{{ path('expedition_rentabilite') }}" class="btn btn-primary light btn-sm btn-rounded">Détail</a>
+            </div>
+            <div class="card-body">
+                <div class="row text-center g-3 mb-3">
+                    <div class="col-4"><div class="stat-value">{{ rentabilite.ca|money }}</div><span class="text-muted fs-14">chiffre d'affaires</span></div>
+                    <div class="col-4"><div class="stat-value text-danger">{{ rentabilite.depenses|money }}</div><span class="text-muted fs-14">charges</span></div>
+                    <div class="col-4"><div class="stat-value {{ rentabilite.marge >= 0 ? 'text-success' : 'text-danger' }}">{{ rentabilite.marge >= 0 ? '+' }}{{ rentabilite.marge|money }}</div><span class="text-muted fs-14">marge{% if rentabilite.taux is not null %} · {{ rentabilite.taux|number_format(1, ',', ' ') }} %{% endif %}</span></div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead><tr><th>Expédition</th><th class="num">Chiffre d'affaires</th><th class="num">Charges</th><th class="num">Marge</th><th></th></tr></thead>
+                        <tbody>
+                        {% for l in rentabilite.lignes %}
+                            <tr>
+                                <td><a href="{{ path('expedition_show', {id: l.expedition.id}) }}#rentabilite" class="text-primary font-w600">{{ l.expedition.numero }}</a> <small class="text-muted">{{ l.expedition.destination.label }} · {{ l.expedition.dateDepart|date('d/m') }}</small></td>
+                                <td class="num">{{ l.ca|money }}</td>
+                                <td class="num">{{ l.depenses ? l.depenses|money : '—' }}</td>
+                                <td class="num font-w600 {{ l.marge >= 0 ? 'text-success' : 'text-danger' }}">{{ l.marge >= 0 ? '+' }}{{ l.marge|money }}</td>
+                                <td>{% if not l.depenses %}<span class="badge badge-light">Charges à saisir</span>{% elseif l.marge >= 0 %}<span class="badge badge-success">Gain</span>{% else %}<span class="badge badge-danger">Perte</span>{% endif %}</td>
+                            </tr>
+                        {% else %}
+                            <tr><td colspan="5"><div class="empty-state"><i class="fas fa-shipping-fast"></i>Aucune expédition cette année.</div></td></tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     {% if performanceAgents %}
     <div class="col-12">
         <div class="card">

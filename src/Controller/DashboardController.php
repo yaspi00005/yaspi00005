@@ -39,7 +39,21 @@ class DashboardController extends AbstractController
             default => [],
         };
 
+        // Administrateur : rentabilité des expéditions parties cette année.
+        $rentabilite = null;
+        if ($this->isGranted(User::ROLE_ADMIN)) {
+            $lignes = $expeditionRepository->rentabilite(new \DateTimeImmutable('first day of january this year'));
+            $rentabilite = ['ca' => 0, 'depenses' => 0, 'marge' => 0, 'lignes' => \array_slice($lignes, 0, 5)];
+            foreach ($lignes as $l) {
+                $rentabilite['ca'] += $l['ca'];
+                $rentabilite['depenses'] += $l['depenses'];
+                $rentabilite['marge'] += $l['marge'];
+            }
+            $rentabilite['taux'] = $rentabilite['ca'] > 0 ? round($rentabilite['marge'] / $rentabilite['ca'] * 100, 1) : null;
+        }
+
         return $this->render('dashboard/index.html.twig', [
+            'rentabilite' => $rentabilite,
             'parStatut' => $parStatut,
             'totalColis' => array_sum($parStatut),
             'totaux' => $totaux,

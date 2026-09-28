@@ -7,7 +7,10 @@
     <div class="card-header flex-wrap gap-2">
         <h4 class="card-title">{{ expeditions.total }} expéditions</h4>
         {% if is_granted('ROLE_ADMIN') %}
-            <a href="{{ path('expedition_new') }}" class="btn btn-primary btn-rounded btn-sm"><i class="fas fa-plus me-1"></i> Nouvelle expédition</a>
+            <div class="d-flex gap-2">
+                <a href="{{ path('expedition_rentabilite') }}" class="btn btn-outline-primary btn-rounded btn-sm"><i class="fas fa-chart-line me-1"></i> Rentabilité</a>
+                <a href="{{ path('expedition_new') }}" class="btn btn-primary btn-rounded btn-sm"><i class="fas fa-plus me-1"></i> Nouvelle expédition</a>
+            </div>
         {% endif %}
     </div>
     <div class="card-body">

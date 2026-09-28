@@ -41,6 +41,71 @@
     </div>
     {% endfor %}
 
+    {% if is_granted('ROLE_ADMIN') %}
+    {# Rentabilité : chiffre d'affaires (tarifs − remises) moins les charges de l'expédition. #}
+    {% set marge = expedition.marge %}
+    <div class="col-12" id="rentabilite">
+        <div class="card">
+            <div class="card-header flex-wrap gap-2">
+                <h4 class="card-title"><i class="fas fa-chart-line text-primary me-2"></i>Rentabilité</h4>
+                <a href="{{ path('expedition_rentabilite', {annee: expedition.dateDepart|date('Y')}) }}" class="btn btn-primary light btn-sm btn-rounded">Toutes les expéditions</a>
+            </div>
+            <div class="card-body">
+                <div class="row g-3 text-center mb-4">
+                    <div class="col-6 col-md-3"><div class="stat-value">{{ expedition.chiffreAffaires|money }}</div><span class="text-muted fs-14">Chiffre d'affaires</span><div class="fs-12 text-muted">dont {{ expedition.totalEncaisse|money }} encaissé</div></div>
+                    <div class="col-6 col-md-3"><div class="stat-value text-danger">{{ expedition.totalDepenses|money }}</div><span class="text-muted fs-14">Charges</span></div>
+                    <div class="col-6 col-md-3"><div class="stat-value {{ marge >= 0 ? 'text-success' : 'text-danger' }}">{{ marge >= 0 ? '+' }}{{ marge|money }}</div><span class="text-muted fs-14">Marge</span></div>
+                    <div class="col-6 col-md-3">
+                        {% if marge > 0 %}<span class="badge badge-success fs-14"><i class="fas fa-arrow-up me-1"></i>Gain{% if expedition.tauxMarge is not null %} · {{ expedition.tauxMarge|number_format(1, ',', ' ') }} %{% endif %}</span>
+                        {% elseif marge < 0 %}<span class="badge badge-danger fs-14"><i class="fas fa-arrow-down me-1"></i>Perte{% if expedition.tauxMarge is not null %} · {{ expedition.tauxMarge|number_format(1, ',', ' ') }} %{% endif %}</span>
+                        {% else %}<span class="badge badge-light fs-14">Équilibre</span>{% endif %}
+                        <div class="fs-12 text-muted mt-2">{{ expedition.depenses is empty ? 'Aucune charge saisie' : expedition.depenses|length ~ ' charge(s)' }}</div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-lg-7">
+                        <div class="table-responsive">
+                            <table class="table mb-0">
+                                <thead><tr><th>Date</th><th>Dépense</th><th class="num">Montant</th><th></th></tr></thead>
+                                <tbody>
+                                {% for d in expedition.depenses %}
+                                    <tr>
+                                        <td>{{ d.date|date('d/m/Y') }}</td>
+                                        <td><i class="fas {{ d.categorie.icone }} text-muted me-1"></i> {{ d.categorie.label }}{% if d.libelle %}<br><small class="text-muted">{{ d.libelle }}</small>{% endif %}</td>
+                                        <td class="num font-w600">{{ d.montant|money }}</td>
+                                        <td class="text-end">
+                                            <form method="post" action="{{ path('expedition_depense_delete', {id: expedition.id, depense: d.id}) }}" data-confirm="Supprimer cette dépense ?">
+                                                <input type="hidden" name="_token" value="{{ csrf_token('supprimer-depense-' ~ d.id) }}">
+                                                <button class="btn btn-danger light btn-xs" aria-label="Supprimer la dépense"><i class="fas fa-trash"></i></button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                {% else %}
+                                    <tr><td colspan="4"><div class="empty-state"><i class="fas fa-receipt"></i>Ajoutez les charges (fret, douane, transport…) pour obtenir la marge.</div></td></tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="col-lg-5">
+                        <h5 class="mb-3">Ajouter une dépense</h5>
+                        {{ form_start(formDepense) }}
+                            {{ form_row(formDepense.categorie) }}
+                            {{ form_row(formDepense.libelle) }}
+                            <div class="row">
+                                <div class="col-6">{{ form_row(formDepense.montant) }}</div>
+                                <div class="col-6">{{ form_row(formDepense.date) }}</div>
+                            </div>
+                            <button class="btn btn-primary w-100"><i class="fas fa-plus me-1"></i> Ajouter</button>
+                        {{ form_end(formDepense) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <div class="col-xl-9">
         <div class="card">
             <div class="card-header"><h4 class="card-title">Colis de l'expédition</h4></div>

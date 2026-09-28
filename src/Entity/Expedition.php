@@ -60,10 +60,16 @@ class Expedition
     #[ORM\OrderBy(['id' => 'ASC'])]
     private Collection $colis;
 
+    /** @var Collection<int, DepenseExpedition> */
+    #[ORM\OneToMany(targetEntity: DepenseExpedition::class, mappedBy: 'expedition', cascade: ['remove'])]
+    #[ORM\OrderBy(['date' => 'ASC', 'id' => 'ASC'])]
+    private Collection $depenses;
+
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
         $this->colis = new ArrayCollection();
+        $this->depenses = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -188,6 +194,54 @@ class Expedition
     public function getColis(): Collection
     {
         return $this->colis;
+    }
+
+    /** @return Collection<int, DepenseExpedition> */
+    public function getDepenses(): Collection
+    {
+        return $this->depenses;
+    }
+
+    public function addDepense(DepenseExpedition $depense): static
+    {
+        if (!$this->depenses->contains($depense)) {
+            $this->depenses->add($depense);
+            $depense->setExpedition($this);
+        }
+
+        return $this;
+    }
+
+    /** Chiffre d'affaires : tarifs des colis moins les remises (centimes). */
+    public function getChiffreAffaires(): int
+    {
+        return array_sum($this->colis->map(fn (Colis $c) => $c->getMontantNet())->toArray());
+    }
+
+    /** Déjà encaissé sur les colis de l'expédition (centimes). */
+    public function getTotalEncaisse(): int
+    {
+        return array_sum($this->colis->map(fn (Colis $c) => $c->getMontantPaye())->toArray());
+    }
+
+    /** Total des charges (centimes). */
+    public function getTotalDepenses(): int
+    {
+        return array_sum($this->depenses->map(fn (DepenseExpedition $d) => (int) $d->getMontant())->toArray());
+    }
+
+    /** Marge = chiffre d'affaires − charges (négative : perte). */
+    public function getMarge(): int
+    {
+        return $this->getChiffreAffaires() - $this->getTotalDepenses();
+    }
+
+    /** Marge en % du chiffre d'affaires (null sans chiffre d'affaires). */
+    public function getTauxMarge(): ?float
+    {
+        $ca = $this->getChiffreAffaires();
+
+        return $ca > 0 ? round($this->getMarge() / $ca * 100, 1) : null;
     }
 
     public function getLibelle(): string

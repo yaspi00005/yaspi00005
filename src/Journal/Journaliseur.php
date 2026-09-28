@@ -5,6 +5,7 @@ namespace App\Journal;
 use App\Entity\Article;
 use App\Entity\Client;
 use App\Entity\Colis;
+use App\Entity\DepenseExpedition;
 use App\Entity\Expedition;
 use App\Entity\Journal;
 use App\Entity\MouvementBonus;
@@ -37,6 +38,7 @@ final class Journaliseur
         Paiement::class => 'Paiement',
         Client::class => 'Client',
         Expedition::class => 'Expédition',
+        DepenseExpedition::class => 'Dépense',
         Ramassage::class => 'Ramassage',
         MouvementBonus::class => 'Bonus',
         User::class => 'Utilisateur',
@@ -66,7 +68,7 @@ final class Journaliseur
         'datePrevue' => 'Date prévue', 'roles' => 'Rôle', 'actif' => 'Actif', 'username' => 'Identifiant',
         'numero' => 'Numéro', 'modeTransport' => 'Transport', 'destination' => 'Destination',
         'dateDepart' => 'Départ', 'dateArriveePrevue' => 'Arrivée prévue', 'dateArrivee' => 'Arrivée',
-        'libelle' => 'Libellé', 'prixUnitaire' => 'Tarif au kg',
+        'libelle' => 'Libellé', 'prixUnitaire' => 'Tarif au kg', 'categorie' => 'Type de dépense', 'auteur' => 'Saisie par',
     ];
 
     private bool $actif = true;
@@ -221,6 +223,7 @@ final class Journaliseur
             $entite instanceof Paiement => 'Paiement de '.PaiementService::format($entite->getMontant()).' € ('.$entite->getMode()->label().') · colis '.$entite->getColis()?->getNumeroSuivi(),
             $entite instanceof Client => 'Client '.$entite->getNomComplet(),
             $entite instanceof Expedition => 'Expédition '.$entite->getNumero(),
+            $entite instanceof DepenseExpedition => 'Dépense de '.PaiementService::format((int) $entite->getMontant()).' € ('.$entite->getCategorie()?->label().') · expédition '.$entite->getExpedition()?->getNumero(),
             $entite instanceof Ramassage => 'Ramassage chez '.$entite->getClient()?->getNomComplet().($entite->getDatePrevue() ? ' le '.$entite->getDatePrevue()->format('d/m/Y H:i') : ''),
             $entite instanceof MouvementBonus => 'Bonus '.($entite->getMontant() >= 0 ? '+' : '').PaiementService::format($entite->getMontant()).' € · '.$entite->getClient()?->getNomComplet(),
             $entite instanceof User => 'Utilisateur '.$entite->getNomComplet().' ('.$entite->getUsername().')',

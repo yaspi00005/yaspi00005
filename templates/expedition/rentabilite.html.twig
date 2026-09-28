@@ -1,0 +1,66 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Rentabilité des expéditions{% endblock %}
+
+{% block body %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+    <div>
+        <h3 class="mb-0">Rentabilité des expéditions {{ annee }}</h3>
+        <span class="text-muted">Chiffre d'affaires (tarifs − remises) moins les charges saisies sur chaque expédition.</span>
+    </div>
+    <form method="get" class="d-flex gap-2">
+        <select name="annee" class="form-select form-control" aria-label="Année" onchange="this.form.submit()">
+            {% for a in annees %}<option value="{{ a }}" {{ a == annee ? 'selected' }}>{{ a }}</option>{% endfor %}
+        </select>
+        <a href="?{{ {annee: annee, export: 'csv'}|url_encode }}" class="btn btn-outline-primary" title="Export Excel" aria-label="Export Excel"><i class="fas fa-file-excel"></i></a>
+    </form>
+</div>
+
+<div class="row">
+    {% for s in [
+        {v: totaux.ca|money, l: "Chiffre d'affaires", i: 'fa-euro-sign', c: 'primary'},
+        {v: totaux.depenses|money, l: 'Charges', i: 'fa-receipt', c: 'danger'},
+        {v: (totaux.marge >= 0 ? '+' : '') ~ totaux.marge|money, l: 'Marge' ~ (tauxGlobal is not null ? ' · ' ~ tauxGlobal|number_format(1, ',', ' ') ~ ' %' : ''), i: totaux.marge >= 0 ? 'fa-arrow-up' : 'fa-arrow-down', c: totaux.marge >= 0 ? 'success' : 'danger'},
+        {v: totaux.encaisse|money, l: 'Déjà encaissé', i: 'fa-wallet', c: 'info'},
+    ] %}
+    <div class="col-xl-3 col-sm-6">
+        <div class="card stat-card"><div class="card-body d-flex align-items-center gap-3">
+            <span class="stat-icon bgl-{{ s.c }} text-{{ s.c }}"><i class="fas {{ s.i }}"></i></span>
+            <div><div class="stat-value">{{ s.v }}</div><span class="text-muted fs-14">{{ s.l }}</span></div>
+        </div></div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead><tr><th>Expédition</th><th>Départ</th><th>Statut</th><th class="num">Colis</th><th class="num">Chiffre d'affaires</th><th class="num">Charges</th><th class="num">Marge</th><th>Résultat</th></tr></thead>
+                <tbody>
+                {% for l in lignes %}
+                    {% set e = l.expedition %}
+                    <tr>
+                        <td><a href="{{ path('expedition_show', {id: e.id}) }}#rentabilite" class="text-primary font-w600">{{ e.numero }}</a><br><small class="text-muted"><i class="fas {{ e.modeTransport.icone }}"></i> {{ e.destination.label }}</small></td>
+                        <td>{{ e.dateDepart|date('d/m/Y') }}</td>
+                        <td>{% include 'partials/_badge.html.twig' with {statut: e.statut} %}</td>
+                        <td class="num">{{ l.nbColis }}</td>
+                        <td class="num">{{ l.ca|money }}</td>
+                        <td class="num">{{ l.depenses ? l.depenses|money : '—' }}</td>
+                        <td class="num font-w600 {{ l.marge >= 0 ? 'text-success' : 'text-danger' }}">{{ l.marge >= 0 ? '+' }}{{ l.marge|money }}{% if l.taux is not null %}<br><small>{{ l.taux|number_format(1, ',', ' ') }} %</small>{% endif %}</td>
+                        <td>
+                            {% if not l.depenses %}<span class="badge badge-light" title="Aucune charge saisie : marge non significative">Charges à saisir</span>
+                            {% elseif l.marge > 0 %}<span class="badge badge-success">Gain</span>
+                            {% elseif l.marge < 0 %}<span class="badge badge-danger">Perte</span>
+                            {% else %}<span class="badge badge-light">Équilibre</span>{% endif %}
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="8"><div class="empty-state"><i class="fas fa-shipping-fast"></i>Aucune expédition partie en {{ annee }}.</div></td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

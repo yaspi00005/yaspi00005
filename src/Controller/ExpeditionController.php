@@ -3,16 +3,19 @@
 namespace App\Controller;
 
 use App\Entity\Colis;
+use App\Entity\DepenseExpedition;
 use App\Entity\Expedition;
 use App\Entity\User;
 use App\Enum\Destination;
 use App\Enum\StatutExpedition;
+use App\Form\DepenseExpeditionType;
 use App\Form\ExpeditionType;
 use App\Repository\ColisRepository;
 use App\Repository\ExpeditionRepository;
 use App\Repository\PaiementRepository;
 use App\Security\IdChiffreur;
 use App\Service\ExpeditionService;
+use App\Service\PaiementService;
 use App\Util\Csv;
 use App\Util\Pagination;
 use Doctrine\ORM\EntityManagerInterface;
@@ -44,6 +47,41 @@ class ExpeditionController extends AbstractController
             'filtres' => $filtres,
             'statuts' => StatutExpedition::cases(),
             'destinations' => Destination::cases(),
+        ]);
+    }
+
+    /** Bénéfices : chiffre d'affaires, charges et marge de chaque expédition. */
+    #[Route('/rentabilite', name: 'expedition_rentabilite', methods: ['GET'])]
+    #[IsGranted(User::ROLE_ADMIN)]
+    public function rentabilite(Request $request, ExpeditionRepository $expeditions): Response
+    {
+        $annee = $request->query->getInt('annee', (int) date('Y'));
+        $lignes = $expeditions->rentabilite(new \DateTimeImmutable("$annee-01-01"), new \DateTimeImmutable("$annee-12-31"));
+        $totaux = ['ca' => 0, 'encaisse' => 0, 'depenses' => 0, 'marge' => 0, 'nbColis' => 0];
+        foreach ($lignes as $l) {
+            foreach ($totaux as $k => $v) {
+                $totaux[$k] += $l[$k];
+            }
+        }
+
+        if ('csv' === $request->query->get('export')) {
+            return Csv::reponse('rentabilite-expeditions-'.$annee.'.csv',
+                ['Expédition', 'Destination', 'Transport', 'Départ', 'Statut', 'Colis', "Chiffre d'affaires", 'Encaissé', 'Charges', 'Marge', 'Marge (%)'],
+                array_map(fn ($l) => [
+                    $l['expedition']->getNumero(), $l['expedition']->getDestination()->label(), $l['expedition']->getModeTransport()->label(),
+                    $l['expedition']->getDateDepart()->format('d/m/Y'), $l['expedition']->getStatut()->label(), $l['nbColis'],
+                    Csv::montant($l['ca']), Csv::montant($l['encaisse']), Csv::montant($l['depenses']), Csv::montant($l['marge']),
+                    null !== $l['taux'] ? str_replace('.', ',', (string) $l['taux']) : '',
+                ], $lignes),
+            );
+        }
+
+        return $this->render('expedition/rentabilite.html.twig', [
+            'lignes' => $lignes,
+            'totaux' => $totaux,
+            'tauxGlobal' => $totaux['ca'] > 0 ? round($totaux['marge'] / $totaux['ca'] * 100, 1) : null,
+            'annee' => $annee,
+            'annees' => range((int) date('Y'), 2024),
         ]);
     }
 
@@ -104,6 +142,9 @@ class ExpeditionController extends AbstractController
             'parCaissier' => $paiements->totauxParCaissier($filtrePaiements),
             'statuts' => StatutExpedition::cases(),
             'colisSansExpedition' => $colisSansExpedition,
+            'formDepense' => $this->isGranted(User::ROLE_ADMIN)
+                ? $this->createForm(DepenseExpeditionType::class, new DepenseExpedition(), ['action' => $this->generateUrl('expedition_depense_new', ['id' => $expedition->getId()])])->createView()
+                : null,
         ]);
     }
 
@@ -174,6 +215,41 @@ class ExpeditionController extends AbstractController
         }
 
         return $this->redirectToRoute('expedition_show', ['id' => $expedition->getId()], Response::HTTP_SEE_OTHER);
+    }
+
+    #[Route('/{id}/depenses', name: 'expedition_depense_new', requirements: ['id' => self::ID], methods: ['POST'])]
+    #[IsGranted(User::ROLE_ADMIN)]
+    public function ajouterDepense(Request $request, Expedition $expedition, EntityManagerInterface $em): Response
+    {
+        $depense = (new DepenseExpedition())->setAuteur($this->getUser());
+        $form = $this->createForm(DepenseExpeditionType::class, $depense);
+        $form->handleRequest($request);
+        if ($form->isSubmitted() && $form->isValid()) {
+            $expedition->addDepense($depense);
+            $em->persist($depense);
+            $em->flush();
+            $this->addFlash('success', 'Dépense de '.PaiementService::format($depense->getMontant()).' € ajoutée.');
+        } else {
+            foreach ($form->getErrors(true) as $erreur) {
+                $this->addFlash('danger', $erreur->getMessage());
+            }
+        }
+
+        return $this->redirect($this->generateUrl('expedition_show', ['id' => $expedition->getId()]).'#rentabilite', Response::HTTP_SEE_OTHER);
+    }
+
+    #[Route('/{id}/depenses/{depense}/supprimer', name: 'expedition_depense_delete', requirements: ['id' => self::ID, 'depense' => self::ID], methods: ['POST'])]
+    #[IsGranted(User::ROLE_ADMIN)]
+    public function supprimerDepense(Request $request, Expedition $expedition, DepenseExpedition $depense, EntityManagerInterface $em): Response
+    {
+        $this->verifierCsrf($request, 'supprimer-depense-'.$depense->getId());
+        if ($depense->getExpedition() === $expedition) {
+            $em->remove($depense);
+            $em->flush();
+            $this->addFlash('success', 'Dépense supprimée.');
+        }
+
+        return $this->redirect($this->generateUrl('expedition_show', ['id' => $expedition->getId()]).'#rentabilite', Response::HTTP_SEE_OTHER);
     }
 
     #[Route('/{id}/supprimer', name: 'expedition_delete', requirements: ['id' => self::ID], methods: ['POST'])]
