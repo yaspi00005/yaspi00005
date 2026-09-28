@@ -203,11 +203,10 @@ class ColisController extends AbstractController
         $this->denyAccessUnlessGranted(ColisVoter::MODIFIER, $colis);
         $this->verifierCsrf($request, 'delete-colis-'.$colis->getId());
 
-        $photos = array_filter([$colis->getPhoto(), ...$colis->getArticles()->map(fn ($a) => $a->getPhoto())->toArray()]);
         try {
-            $this->colisService->supprimer($colis);
-            array_walk($photos, fn ($p) => $this->photos->supprimer($p));
-            $this->addFlash('success', 'Colis supprimé.');
+            // Corbeille : photos conservées jusqu'à la suppression définitive (7 jours).
+            $this->colisService->supprimer($colis, $this->getUser());
+            $this->addFlash('success', \sprintf('Colis %s mis à la corbeille : vous pouvez le restaurer pendant %d jours.', $colis->getNumeroSuivi(), Colis::JOURS_CORBEILLE));
         } catch (\DomainException $e) {
             $this->addFlash('danger', $e->getMessage());
 

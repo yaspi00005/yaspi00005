@@ -15,6 +15,7 @@ final class ColisService
         private readonly Numerotation $numerotation,
         private readonly NotificationService $notifications,
         private readonly BonusFidelite $bonus,
+        private readonly Corbeille $corbeille,
     ) {
     }
 
@@ -107,13 +108,9 @@ final class ColisService
         $this->notifications->statutChange($colis);
     }
 
-    public function supprimer(Colis $colis): void
+    /** Met le colis à la corbeille (restaurable 7 jours, voir Corbeille). */
+    public function supprimer(Colis $colis, ?User $par = null): void
     {
-        if (!$colis->isSupprimable()) {
-            throw new \DomainException('Seuls les colis en préparation sans paiement peuvent être supprimés.');
-        }
-        $this->bonus->annulerGain($colis);
-        $this->em->remove($colis);
-        $this->em->flush();
+        $this->corbeille->jeter($colis, $par);
     }
 }

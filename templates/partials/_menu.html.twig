@@ -24,6 +24,7 @@
             {% if is_granted('ROLE_RAMASSAGE') %}
                 {{ m.item(route, ['client_'], path('client_index'), 'fas fa-users', 'Clients') }}
                 {{ m.item(route, ['ramassage_'], path('ramassage_index'), 'fas fa-calendar-alt', 'Ramassages') }}
+                {{ m.item(route, ['corbeille_'], path('corbeille_index'), 'fas fa-trash-restore', 'Corbeille') }}
             {% endif %}
             {% if is_granted('ROLE_ADMIN') %}
                 {{ m.item(route, ['paiement_'], path('paiement_index'), 'fas fa-wallet', 'Paiements') }}

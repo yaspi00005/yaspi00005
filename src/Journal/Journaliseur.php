@@ -68,7 +68,7 @@ final class Journaliseur
         'datePrevue' => 'Date prévue', 'roles' => 'Rôle', 'actif' => 'Actif', 'username' => 'Identifiant',
         'numero' => 'Numéro', 'modeTransport' => 'Transport', 'destination' => 'Destination',
         'dateDepart' => 'Départ', 'dateArriveePrevue' => 'Arrivée prévue', 'dateArrivee' => 'Arrivée',
-        'libelle' => 'Libellé', 'prixUnitaire' => 'Tarif au kg', 'categorie' => 'Type de dépense', 'auteur' => 'Saisie par',
+        'libelle' => 'Libellé', 'prixUnitaire' => 'Tarif au kg', 'categorie' => 'Type de dépense', 'auteur' => 'Saisie par', 'supprimeLe' => 'Mis à la corbeille le', 'supprimePar' => 'Mis à la corbeille par',
     ];
 
     private bool $actif = true;

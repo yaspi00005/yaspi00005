@@ -16,6 +16,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Index(columns: ['statut'])]
 #[ORM\Index(columns: ['statut_paiement'])]
 #[ORM\Index(columns: ['date_reception'])]
+#[ORM\Index(columns: ['supprime_le'])]
 #[ORM\HasLifecycleCallbacks]
 class Colis
 {
@@ -53,6 +54,14 @@ class Colis
     #[ORM\ManyToOne(inversedBy: 'colis')]
     #[ORM\JoinColumn(onDelete: 'SET NULL')]
     private ?Expedition $expedition = null;
+
+    /** Mis à la corbeille le (null : colis actif). Supprimé définitivement 7 jours plus tard. */
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $supprimeLe = null;
+
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(onDelete: 'SET NULL')]
+    private ?User $supprimePar = null;
 
     /** Agent qui a enregistré le colis. */
     #[ORM\ManyToOne]
@@ -476,5 +485,44 @@ class Colis
     public function __toString(): string
     {
         return (string) $this->numeroSuivi;
+    }
+
+    public const JOURS_CORBEILLE = 7;
+
+    public function getSupprimeLe(): ?\DateTimeImmutable
+    {
+        return $this->supprimeLe;
+    }
+
+    public function getSupprimePar(): ?User
+    {
+        return $this->supprimePar;
+    }
+
+    public function isDansCorbeille(): bool
+    {
+        return null !== $this->supprimeLe;
+    }
+
+    public function mettreALaCorbeille(?User $par): static
+    {
+        $this->supprimeLe = new \DateTimeImmutable();
+        $this->supprimePar = $par;
+
+        return $this;
+    }
+
+    public function restaurer(): static
+    {
+        $this->supprimeLe = null;
+        $this->supprimePar = null;
+
+        return $this;
+    }
+
+    /** Date de la suppression définitive (null hors corbeille). */
+    public function getSuppressionDefinitiveLe(): ?\DateTimeImmutable
+    {
+        return $this->supprimeLe?->modify('+'.self::JOURS_CORBEILLE.' days');
     }
 }

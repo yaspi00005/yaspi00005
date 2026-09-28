@@ -1,0 +1,48 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Corbeille{% endblock %}
+
+{% block body %}
+<div class="card">
+    <div class="card-header flex-wrap gap-2">
+        <h4 class="card-title"><i class="fas fa-trash-restore text-primary me-2"></i>Corbeille · {{ colis|length }} colis</h4>
+        <span class="text-muted fs-14">Les colis supprimés restent ici {{ jours }} jours : vous pouvez les restaurer. Ensuite, ils sont supprimés définitivement avec leurs photos.</span>
+    </div>
+    <div class="card-body pt-0">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead><tr><th>N° suivi</th><th>Client</th><th>Destinataire</th><th class="num">Montant</th><th>Supprimé</th><th>Suppression définitive</th><th></th></tr></thead>
+                <tbody>
+                {% for c in colis %}
+                    {% set restant = ((c.suppressionDefinitiveLe.timestamp - 'now'|date('U')) / 86400)|round(0, 'ceil') %}
+                    <tr>
+                        <td class="font-w600">{{ c.numeroSuivi }}<br><small class="text-muted">reçu le {{ c.dateReception|date('d/m/Y') }}</small></td>
+                        <td>{{ c.client.nomComplet }}</td>
+                        <td>{{ c.destinataireNom }}</td>
+                        <td class="num">{{ c.montantNet|money }}</td>
+                        <td>{{ c.supprimeLe|date('d/m/Y H:i') }}<br><small class="text-muted">par {{ c.supprimePar ? c.supprimePar.nomComplet : '—' }}</small></td>
+                        <td>{{ c.suppressionDefinitiveLe|date('d/m/Y') }}<br><small class="{{ restant <= 1 ? 'text-danger' : 'text-muted' }}">dans {{ max(restant, 0) }} jour{{ restant > 1 ? 's' }}</small></td>
+                        <td class="text-end">
+                            <div class="d-flex gap-1 justify-content-end">
+                                <form method="post" action="{{ path('corbeille_restaurer', {id: c.id}) }}">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('corbeille-restaurer-' ~ c.id) }}">
+                                    <button class="btn btn-primary btn-xs"><i class="fas fa-undo me-1"></i> Restaurer</button>
+                                </form>
+                                {% if is_granted('ROLE_ADMIN') %}
+                                <form method="post" action="{{ path('corbeille_supprimer', {id: c.id}) }}" data-confirm="Supprimer définitivement le colis {{ c.numeroSuivi }} ? Cette action est irréversible : le colis et ses photos seront effacés.">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('corbeille-supprimer-' ~ c.id) }}">
+                                    <button class="btn btn-danger light btn-xs" title="Supprimer définitivement" aria-label="Supprimer définitivement"><i class="fas fa-times"></i></button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="7"><div class="empty-state"><i class="fas fa-trash-alt"></i>La corbeille est vide.</div></td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

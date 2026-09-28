@@ -14,6 +14,7 @@ use App\Repository\ColisRepository;
 use App\Repository\ExpeditionRepository;
 use App\Repository\PaiementRepository;
 use App\Security\IdChiffreur;
+use App\Service\Corbeille;
 use App\Service\ExpeditionService;
 use App\Service\PaiementService;
 use App\Util\Csv;
@@ -254,7 +255,7 @@ class ExpeditionController extends AbstractController
 
     #[Route('/{id}/supprimer', name: 'expedition_delete', requirements: ['id' => self::ID], methods: ['POST'])]
     #[IsGranted(User::ROLE_ADMIN)]
-    public function delete(Request $request, Expedition $expedition, EntityManagerInterface $em): Response
+    public function delete(Request $request, Expedition $expedition, EntityManagerInterface $em, Corbeille $corbeille): Response
     {
         $this->verifierCsrf($request, 'delete-expedition-'.$expedition->getId());
         if (!$expedition->getColis()->isEmpty()) {
@@ -262,6 +263,12 @@ class ExpeditionController extends AbstractController
 
             return $this->redirectToRoute('expedition_show', ['id' => $expedition->getId()]);
         }
+        // Colis de la corbeille encore rattachés : détachés pour pouvoir supprimer l'expédition.
+        $corbeille->avecCorbeille(function () use ($em, $expedition) {
+            foreach ($em->getRepository(Colis::class)->findBy(['expedition' => $expedition]) as $colis) {
+                $colis->setExpedition(null);
+            }
+        });
         $em->remove($expedition);
         $em->flush();
         $this->addFlash('success', 'Expédition supprimée.');

@@ -3,12 +3,14 @@
 namespace App\Controller;
 
 use App\Entity\Client;
+use App\Entity\Colis;
 use App\Entity\User;
 use App\Form\BonusType;
 use App\Form\ClientType;
 use App\Repository\ClientRepository;
 use App\Repository\JournalRepository;
 use App\Service\CodePostal;
+use App\Service\Corbeille;
 use App\Service\Geocodage;
 use App\Service\PaiementService;
 use App\Util\Pagination;
@@ -144,13 +146,20 @@ class ClientController extends AbstractController
 
     #[Route('/{id}/supprimer', name: 'client_delete', requirements: ['id' => self::ID], methods: ['POST'])]
     #[IsGranted(User::ROLE_ADMIN)]
-    public function delete(Request $request, Client $client, EntityManagerInterface $em): Response
+    public function delete(Request $request, Client $client, EntityManagerInterface $em, Corbeille $corbeille): Response
     {
         if (!$this->isCsrfTokenValid('delete-client-'.$client->getId(), $request->getPayload()->getString('_token'))) {
             throw $this->createAccessDeniedException();
         }
         if (!$client->getColis()->isEmpty()) {
             $this->addFlash('danger', 'Impossible de supprimer un client qui a des colis.');
+
+            return $this->redirectToRoute('client_show', ['id' => $client->getId()]);
+        }
+        // Colis encore dans la corbeille (invisibles ailleurs) : ils seraient perdus avec le client.
+        $enCorbeille = $corbeille->avecCorbeille(fn () => $em->getRepository(Colis::class)->count(['client' => $client]));
+        if ($enCorbeille > 0) {
+            $this->addFlash('danger', \sprintf('Ce client a %d colis dans la corbeille : attendez leur suppression définitive ou restaurez-les.', $enCorbeille));
 
             return $this->redirectToRoute('client_show', ['id' => $client->getId()]);
         }

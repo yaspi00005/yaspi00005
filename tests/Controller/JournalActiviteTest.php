@@ -65,10 +65,16 @@ final class JournalActiviteTest extends WebTestCase
 
         $suppression = static::getContainer()->get(JournalRepository::class)->findOneBy(['action' => Journal::SUPPRESSION, 'entite' => 'Colis', 'entiteId' => $id]);
         $this->assertNotNull($suppression, 'La suppression du colis est journalisée.');
-        $this->assertSame('Colis '.$numero, $suppression->getLibelle());
+        $this->assertSame('Colis '.$numero.' mis à la corbeille (restaurable 7 jours)', $suppression->getLibelle());
         $this->assertSame($id, $suppression->getColisId());
         $this->assertArrayHasKey('Destinataire', $suppression->getChangements());
-        $this->assertNotNull(static::getContainer()->get(JournalRepository::class)->findOneBy(['action' => Journal::SUPPRESSION, 'entite' => 'Article', 'colisId' => $id]));
+
+        // Suppression définitive depuis la corbeille : le colis et ses articles sont journalisés.
+        $crawler = $this->client->request('GET', '/corbeille');
+        $this->client->submit($crawler->filter('form[action$="/'.$this->hid($id).'/supprimer"]')->form());
+        $journal = static::getContainer()->get(JournalRepository::class);
+        $this->assertNotNull($journal->findOneBy(['action' => Journal::SUPPRESSION, 'entite' => 'Colis', 'entiteId' => $id, 'libelle' => 'Colis '.$numero]));
+        $this->assertNotNull($journal->findOneBy(['action' => Journal::SUPPRESSION, 'entite' => 'Article', 'colisId' => $id]));
     }
 
     public function testConnexionsJournalisees(): void

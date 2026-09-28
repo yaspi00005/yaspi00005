@@ -15,6 +15,11 @@ doctrine:
                 alias: App
         controller_resolver:
             auto_mapping: false
+        filters:
+            # Colis mis à la corbeille : invisibles partout sauf sur la page Corbeille.
+            corbeille:
+                class: App\Doctrine\CorbeilleFilter
+                enabled: true
 
 when@prod:
     doctrine:
