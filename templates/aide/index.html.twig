@@ -99,7 +99,7 @@
             </div>
 
             {{ a.section('profil', 'fa-user-circle', 'Mon profil et mon mot de passe') }}
-            <p><strong>Première connexion</strong> : si votre compte a été créé avec le mot de passe provisoire <strong>{{ constant('App\\Entity\\User::MOT_DE_PASSE_PROVISOIRE') }}</strong>, l'application vous demande d'abord de <strong>choisir votre propre mot de passe</strong> et d'<strong>indiquer votre adresse e-mail</strong>. Tant que ce n'est pas fait, les autres pages restent fermées.</p>
+            <p><strong>Première connexion</strong> : si votre compte a été créé avec un <strong>mot de passe provisoire</strong> (celui que votre administrateur vous a communiqué), l'application vous demande d'abord de <strong>choisir votre propre mot de passe</strong> et d'<strong>indiquer votre adresse e-mail</strong>. Tant que ce n'est pas fait, les autres pages restent fermées.</p>
             <p>Menu en haut à droite (vos initiales) → <strong>Mon profil</strong>. Le mot de passe doit faire <strong>au moins 10 caractères</strong> et ne pas être trop simple ni déjà connu des pirates : l'application refuse sinon. Ne le communiquez à personne.</p>
             <p>Le bouton <i class="fas fa-bell text-primary"></i> active les <strong>notifications</strong> dans le navigateur (rappels des ramassages).</p>
         </div></div>
@@ -214,7 +214,7 @@
                 <li><strong>Représentant</strong> (avec son pays) : voit les colis arrivés dans son pays, encaisse et remet les colis, a sa page « Mes encaissements ».</li>
                 <li><strong>Administrateur</strong> : tout, y compris expéditions, paiements, bonus, utilisateurs et journal.</li>
             </ul>
-            <p><strong>Nouveau compte</strong> : laissez cochée la case « mot de passe provisoire » ; communiquez l'identifiant et le mot de passe <strong>{{ constant('App\\Entity\\User::MOT_DE_PASSE_PROVISOIRE') }}</strong> à la personne. À sa première connexion, elle devra le changer et donner son adresse e-mail. La même case, sur un compte existant, réinitialise un mot de passe oublié.</p>
+            <p><strong>Nouveau compte</strong> : laissez cochée la case « mot de passe provisoire » : un mot de passe unique est <strong>affiché une seule fois après l'enregistrement</strong>. Communiquez l'identifiant et ce mot de passe à la personne. À sa première connexion, elle devra le changer et donner son adresse e-mail. La même case, sur un compte existant, réinitialise un mot de passe oublié.</p>
             <p>Désactivez un compte plutôt que de le supprimer : l'historique reste attribué.</p>
             {{ a.capture('utilisateurs', 'Utilisateurs') }}
 

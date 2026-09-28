@@ -1,0 +1,96 @@
+# Émulateur Android : installe l'application SOTRAMA, l'ouvre et prend des captures d'écran,
+# une vidéo et le journal (logcat). Résultats dans « Artifacts » en bas de l'exécution.
+#
+# APK testé, dans cet ordre :
+#   1. l'adresse donnée au lancement (champ « apk_url »),
+#   2. le fichier android/emulateur/sotrama.apk du dépôt,
+#   3. sinon, l'APK compilé depuis android/ (adresse du site : variable SOTRAMA_URL).
+# Lancement : onglet Actions → « Émulateur Android » → Run workflow.
+name: Émulateur Android
+
+on:
+  workflow_dispatch:
+    inputs:
+      apk_url:
+        description: "Adresse de téléchargement d'un APK à tester (facultatif)"
+        required: false
+      api_level:
+        description: "Version d'Android de l'émulateur"
+        type: choice
+        options: ['34', '30', '26']
+        default: '34'
+  push:
+    paths:
+      - 'android/**'
+      - '.github/workflows/emulateur.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  emulateur:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      API_LEVEL: ${{ inputs.api_level || '34' }}
+      SOTRAMA_URL: ${{ vars.SOTRAMA_URL || 'https://sotrama.example.com' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: APK à tester
+        id: apk
+        env:
+          APK_URL: ${{ inputs.apk_url }}
+        run: |
+          if [ -n "$APK_URL" ]; then
+            curl -fsSL -o "$RUNNER_TEMP/sotrama.apk" "$APK_URL"
+            echo "source=téléchargé" >> "$GITHUB_OUTPUT"
+          elif [ -f android/emulateur/sotrama.apk ]; then
+            cp android/emulateur/sotrama.apk "$RUNNER_TEMP/sotrama.apk"
+            echo "source=dépôt" >> "$GITHUB_OUTPUT"
+          else
+            echo "source=compilation" >> "$GITHUB_OUTPUT"
+          fi
+
+      - if: steps.apk.outputs.source == 'compilation'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - if: steps.apk.outputs.source == 'compilation'
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+
+      - name: Compilation
+        if: steps.apk.outputs.source == 'compilation'
+        working-directory: android
+        run: |
+          gradle assembleRelease --no-daemon --stacktrace
+          cp app/build/outputs/apk/release/app-release.apk "$RUNNER_TEMP/sotrama.apk"
+
+      # Accélération matérielle (KVM) pour que l'émulateur démarre en quelques minutes.
+      - name: Activation de KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Test dans l'émulateur
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ env.API_LEVEL }}
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
+          script: bash android/emulateur/test.sh "$RUNNER_TEMP/sotrama.apk" resultats-emulateur
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: emulateur-android-${{ env.API_LEVEL }}-${{ github.run_number }}
+          path: resultats-emulateur/
+          retention-days: 14

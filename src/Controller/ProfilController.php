@@ -8,7 +8,6 @@ use App\Form\MotDePasseType;
 use App\Service\NotificationPush;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\Form\FormError;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -27,15 +26,11 @@ class ProfilController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $nouveau = (string) $form->get('nouveau')->getData();
-            if (hash_equals(User::MOT_DE_PASSE_PROVISOIRE, $nouveau)) {
-                $form->get('nouveau')->get('first')->addError(new FormError('Choisissez un mot de passe personnel, différent du mot de passe provisoire.'));
-            } else {
-                $user->setPassword($hasher->hashPassword($user, $nouveau))->setMotDePasseProvisoire(false);
-                $em->flush();
-                $this->addFlash('success', 'Mot de passe modifié.'.($user->isProfilAComplete() ? ' Indiquez maintenant votre adresse e-mail.' : ''));
+            $user->setPassword($hasher->hashPassword($user, $nouveau))->setMotDePasseProvisoire(false);
+            $em->flush();
+            $this->addFlash('success', 'Mot de passe modifié.'.($user->isProfilAComplete() ? ' Indiquez maintenant votre adresse e-mail.' : ''));
 
-                return $this->redirectToRoute($obligatoire && !$user->isProfilAComplete() ? 'app_accueil' : 'app_profil', [], Response::HTTP_SEE_OTHER);
-            }
+            return $this->redirectToRoute($obligatoire && !$user->isProfilAComplete() ? 'app_accueil' : 'app_profil', [], Response::HTTP_SEE_OTHER);
         }
 
         $formEmail = $this->createForm(EmailProfilType::class, ['email' => $user->getEmail()]);

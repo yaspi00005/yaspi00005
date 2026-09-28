@@ -9,7 +9,7 @@
         <span class="text-muted">Chiffre d'affaires (tarifs − remises) moins les charges saisies sur chaque expédition.</span>
     </div>
     <form method="get" class="d-flex gap-2">
-        <select name="annee" class="form-select form-control" aria-label="Année" onchange="this.form.submit()">
+        <select name="annee" class="form-select form-control" aria-label="Année" data-autosubmit>
             {% for a in annees %}<option value="{{ a }}" {{ a == annee ? 'selected' }}>{{ a }}</option>{% endfor %}
         </select>
         <a href="?{{ {annee: annee, export: 'csv'}|url_encode }}" class="btn btn-outline-primary" title="Export Excel" aria-label="Export Excel"><i class="fas fa-file-excel"></i></a>

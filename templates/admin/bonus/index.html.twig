@@ -114,14 +114,14 @@
 {% endblock %}
 
 {% block javascripts %}
-<script>
+<script nonce="{{ csp_nonce() }}">
 new Chart(document.getElementById('chart-bonus'), {
     type: 'bar',
     data: {
-        labels: {{ chart.labels|json_encode|raw }},
+        labels: {{ donnees_js(chart.labels) }},
         datasets: [
-            { label: 'Gagnés', data: {{ chart.gagne|json_encode|raw }}, backgroundColor: '#00A15D', barPercentage: .7 },
-            { label: 'Utilisés', data: {{ chart.utilise|json_encode|raw }}, backgroundColor: '#D653C1', barPercentage: .7 }
+            { label: 'Gagnés', data: {{ donnees_js(chart.gagne) }}, backgroundColor: '#00A15D', barPercentage: .7 },
+            { label: 'Utilisés', data: {{ donnees_js(chart.utilise) }}, backgroundColor: '#D653C1', barPercentage: .7 }
         ]
     },
     options: {

@@ -17,9 +17,6 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[UniqueEntity(fields: ['username'], message: 'Cet identifiant est déjà utilisé.')]
 class User implements UserInterface, PasswordAuthenticatedUserInterface, EquatableInterface
 {
-    /** Mot de passe donné aux nouveaux comptes : l'utilisateur doit le changer à sa première connexion. */
-    public const MOT_DE_PASSE_PROVISOIRE = 'Sotrama2025';
-
     public const ROLE_ADMIN = 'ROLE_ADMIN';
     public const ROLE_RAMASSAGE = 'ROLE_RAMASSAGE';
     public const ROLE_REPRESENTANT = 'ROLE_REPRESENTANT';
@@ -69,7 +66,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Equatab
     #[ORM\Column]
     private bool $actif = true;
 
-    /** Connecté avec le mot de passe provisoire (User::MOT_DE_PASSE_PROVISOIRE) : à changer avant tout. */
+    /** Compte muni d'un mot de passe provisoire (voir genererMotDePasseProvisoire) : à changer avant tout. */
     #[ORM\Column(options: ['default' => false])]
     private bool $motDePasseProvisoire = false;
 
@@ -314,5 +311,25 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Equatab
     public function isProfilAComplete(): bool
     {
         return $this->motDePasseProvisoire || null === $this->email || '' === trim($this->email);
+    }
+
+    /**
+     * Mot de passe provisoire, unique pour chaque compte : généré à la création, montré une seule fois
+     * à l'administrateur, puis obligatoirement changé à la première connexion. Format lisible et sans
+     * caractères ambigus (ex. « KMPQ-3XR7-9TAB-2VJK »), ~80 bits d'entropie.
+     */
+    public static function genererMotDePasseProvisoire(): string
+    {
+        $alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        $groupes = [];
+        for ($g = 0; $g < 4; ++$g) {
+            $bloc = '';
+            for ($i = 0; $i < 4; ++$i) {
+                $bloc .= $alphabet[random_int(0, \strlen($alphabet) - 1)];
+            }
+            $groupes[] = $bloc;
+        }
+
+        return implode('-', $groupes);
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\EventListener;
 
+use App\Security\CspNonce;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpKernel\Event\ResponseEvent;
@@ -17,10 +18,12 @@ use Symfony\Component\HttpKernel\KernelEvents;
  */
 final class EnTetesSecuriteListener
 {
+    /** %s = nonce CSP de la requête (voir CspNonce) : seuls les <script> intégrés le portant s'exécutent. */
     private const CSP = [
         "default-src 'self'",
-        // Scripts du thème et quelques scripts intégrés aux pages (graphiques, calendrier).
-        "script-src 'self' 'unsafe-inline'",
+        // Scripts du thème (fichiers du site) et scripts intégrés aux pages, autorisés par leur nonce.
+        "script-src 'self' 'nonce-%s'",
+        // Les styles intégrés du thème restent autorisés (unsafe-inline) ; le risque XSS porte sur les scripts.
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
         "font-src 'self' data: https://fonts.gstatic.com",
         // blob: aperçu des photos avant envoi ; data: QR codes.
@@ -35,8 +38,10 @@ final class EnTetesSecuriteListener
         "form-action 'self'",
     ];
 
-    public function __construct(#[Autowire('%kernel.environment%')] private readonly string $environnement)
-    {
+    public function __construct(
+        #[Autowire('%kernel.environment%')] private readonly string $environnement,
+        private readonly CspNonce $cspNonce,
+    ) {
     }
 
     #[AsEventListener(event: KernelEvents::RESPONSE, priority: -10)]
@@ -53,7 +58,8 @@ final class EnTetesSecuriteListener
         $en->set('Cross-Origin-Opener-Policy', 'same-origin');
         if (!$en->has('Content-Security-Policy') && 'dev' !== $this->environnement) {
             // En développement, la barre de débogage de Symfony a besoin de plus de libertés.
-            $en->set('Content-Security-Policy', implode('; ', self::CSP));
+            $csp = \sprintf(implode('; ', self::CSP), $this->cspNonce->valeur());
+            $en->set('Content-Security-Policy', $csp);
         }
         if ('prod' === $this->environnement && $event->getRequest()->isSecure()) {
             $en->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');

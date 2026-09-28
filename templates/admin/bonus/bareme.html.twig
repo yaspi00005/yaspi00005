@@ -60,7 +60,7 @@
 
 {% block javascripts %}
     {{ parent() }}
-    <script>
+    <script nonce="{{ csp_nonce() }}">
     (function () {
         var corps = document.getElementById('paliers');
         var nombre = function (v) { var n = parseFloat(String(v).replace(/\s/g, '').replace(',', '.')); return isNaN(n) ? null : n; };
