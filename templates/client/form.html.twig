@@ -9,6 +9,28 @@
             <div class="card-header"><h4 class="card-title">{{ block('title') }}</h4></div>
             <div class="card-body">
                 {{ form_start(form, {attr: {'data-villes-url': path('client_villes'), 'data-geocoder-url': path('client_geocoder')}}) }}
+                {% if semblables|default([]) %}
+                <div class="alert alert-warning">
+                    <h5 class="alert-heading"><i class="fas fa-user-friends me-1"></i> Ce client existe peut-être déjà</h5>
+                    <p class="mb-2">Même numéro de téléphone ou mêmes nom et prénom :</p>
+                    <ul class="list-unstyled mb-3">
+                        {% for s in semblables %}
+                            <li class="d-flex flex-wrap align-items-center justify-content-between gap-2 py-1 border-bottom">
+                                <span><strong>{{ s.nomComplet }}</strong> · {{ s.telephone|tel }}{% if s.ville %} · {{ s.ville }}{% endif %}</span>
+                                {% if app.request.query.get('retour') == 'colis' %}
+                                    <a href="{{ path('colis_new', {client: s.id}) }}" class="btn btn-primary btn-xs">Utiliser ce client</a>
+                                {% else %}
+                                    <a href="{{ path('client_show', {id: s.id}) }}" class="btn btn-primary btn-xs">Voir ce client</a>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                    <div class="d-flex flex-wrap gap-2">
+                        <button type="submit" name="confirmer_doublon" value="1" class="btn btn-warning btn-sm"><i class="fas fa-plus me-1"></i> Créer quand même un nouveau client</button>
+                        <a href="{{ path('client_index') }}" class="btn btn-light btn-sm">Annuler</a>
+                    </div>
+                </div>
+                {% endif %}
                 <div class="row">
                     <div class="col-md-6">{{ form_row(form.prenom) }}</div>
                     <div class="col-md-6">{{ form_row(form.nom) }}</div>

@@ -53,16 +53,4 @@ class ClientRepository extends ServiceEntityRepository
             ->setMaxResults($n)
             ->getQuery()->getResult();
     }
-
-    public function findDoublon(Client $client): ?Client
-    {
-        $qb = $this->createQueryBuilder('c')
-            ->andWhere('c.telephone = :tel')->setParameter('tel', $client->getTelephone())
-            ->setMaxResults(1);
-        if ($client->getId()) {
-            $qb->andWhere('c.id != :id')->setParameter('id', $client->getId());
-        }
-
-        return $qb->getQuery()->getOneOrNullResult();
-    }
 }

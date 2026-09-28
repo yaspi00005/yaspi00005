@@ -20,6 +20,7 @@ use App\Security\Perimetre;
 use App\Service\BonusFidelite;
 use App\Service\ColisService;
 use App\Service\DocumentService;
+use App\Service\Doublons;
 use App\Service\PaiementService;
 use App\Service\PhotoUploader;
 use App\Service\RecuPartage;
@@ -28,6 +29,7 @@ use App\Util\Pagination;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\RateLimiter\RateLimiterFactory;
@@ -98,9 +100,24 @@ class ColisController extends AbstractController
         ]);
     }
 
+    /** Vérification avant l'envoi du formulaire : colis semblables (même expéditeur, même destinataire, 3 derniers jours). */
+    #[Route('/doublons.json', name: 'colis_doublons', methods: ['GET'])]
+    #[IsGranted(User::ROLE_RAMASSAGE)]
+    public function doublons(Request $request, ClientRepository $clients, Doublons $doublons): JsonResponse
+    {
+        $client = ($id = $request->query->getInt('client')) ? $clients->find($id) : null;
+
+        return $this->json(array_map(fn (Colis $c) => [
+            'numero' => $c->getNumeroSuivi(),
+            'date' => $c->getDateReception()->format('d/m/Y à H:i'),
+            'destinataire' => $c->getDestinataireNom(),
+            'agent' => $c->getAgent()?->getNomComplet(),
+        ], $doublons->colisSemblables($client, $request->query->getString('tel'))));
+    }
+
     #[Route('/nouveau', name: 'colis_new', methods: ['GET', 'POST'])]
     #[IsGranted(User::ROLE_RAMASSAGE)]
-    public function new(Request $request, ClientRepository $clients, ColisRepository $colisRepository, TypeMarchandiseRepository $types): Response
+    public function new(Request $request, ClientRepository $clients, ColisRepository $colisRepository, TypeMarchandiseRepository $types, Doublons $doublons): Response
     {
         $colis = new Colis();
         if (($clientId = $this->chiffreur->decodeOptionnel($request->query->get('client'))) && $client = $clients->find($clientId)) {
@@ -121,6 +138,12 @@ class ColisController extends AbstractController
             }
 
             if ($form->isValid()) {
+                // Colis semblable enregistré ces derniers jours (double saisie ?) : confirmation demandée.
+                // Le formulaire le vérifie aussi avant l'envoi (doublons.json) pour ne pas perdre les photos.
+                if (!$request->request->getBoolean('confirmer_doublon')
+                    && $semblables = $doublons->colisSemblables($colis->getClient(), $colis->getDestinataireTelephone())) {
+                    return $this->renderForm($form, $colis, $types, $nonce, $semblables);
+                }
                 try {
                     $this->enregistrerPhotos($form);
                 } catch (\InvalidArgumentException $e) {
@@ -353,13 +376,15 @@ class ColisController extends AbstractController
         return $this->redirectToRoute('colis_show', ['id' => $colis->getId()], Response::HTTP_SEE_OTHER);
     }
 
-    private function renderForm(FormInterface $form, Colis $colis, TypeMarchandiseRepository $types, ?string $nonce): Response
+    /** @param list<Colis> $semblables */
+    private function renderForm(FormInterface $form, Colis $colis, TypeMarchandiseRepository $types, ?string $nonce, array $semblables = []): Response
     {
         return $this->render('colis/form.html.twig', [
             'form' => $form,
             'colis' => $colis,
             'types' => $types->findActifs(),
             'nonce' => $nonce,
+            'semblables' => $semblables,
         ], new Response(null, $form->isSubmitted() ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_OK));
     }
 

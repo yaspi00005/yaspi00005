@@ -3,8 +3,24 @@
 {% block title %}{{ colis.id ? 'Modifier le colis ' ~ colis.numeroSuivi : 'Nouveau colis' }}{% endblock %}
 
 {% block body %}
-{{ form_start(form, {attr: {novalidate: 'novalidate'}}) }}
+{{ form_start(form, {attr: {novalidate: 'novalidate', 'data-doublons-url': colis.id ? null : path('colis_doublons')}}) }}
 {% if nonce %}<input type="hidden" name="_nonce" value="{{ nonce }}">{% endif %}
+<input type="hidden" name="confirmer_doublon" value="" class="js-confirmer-doublon">
+{% if semblables|default([]) %}
+<div class="alert alert-warning">
+    <h5 class="alert-heading"><i class="fas fa-copy me-1"></i> Ce colis a peut-être déjà été enregistré</h5>
+    <p class="mb-2">Même expéditeur et même destinataire ces {{ constant('App\\Service\\Doublons::JOURS_COLIS') }} derniers jours :</p>
+    <ul class="mb-3">
+        {% for s in semblables %}
+            <li>{% if is_granted('COLIS_VOIR', s) %}<a href="{{ path('colis_show', {id: s.id}) }}" target="_blank">{{ s.numeroSuivi }}</a>{% else %}<strong>{{ s.numeroSuivi }}</strong>{% endif %}
+                du {{ s.dateReception|date('d/m/Y à H:i') }} pour {{ s.destinataireNom }}{% if s.agent %} (saisi par {{ s.agent.nomComplet }}){% endif %}</li>
+        {% endfor %}
+    </ul>
+    <p class="fs-13 mb-2">Si c'est bien un nouveau colis, confirmez. Pensez à resélectionner les photos si vous en aviez ajouté.</p>
+    <button type="submit" name="confirmer_doublon" value="1" class="btn btn-warning btn-sm"><i class="fas fa-check me-1"></i> Oui, enregistrer ce nouveau colis</button>
+    <a href="{{ path('colis_index') }}" class="btn btn-light btn-sm">Annuler</a>
+</div>
+{% endif %}
 
 {{ form_errors(form) }}
 

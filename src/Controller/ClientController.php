@@ -11,6 +11,7 @@ use App\Repository\ClientRepository;
 use App\Repository\JournalRepository;
 use App\Service\CodePostal;
 use App\Service\Corbeille;
+use App\Service\Doublons;
 use App\Service\Geocodage;
 use App\Service\PaiementService;
 use App\Util\Pagination;
@@ -65,15 +66,16 @@ class ClientController extends AbstractController
     }
 
     #[Route('/nouveau', name: 'client_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $em, ClientRepository $clients): Response
+    public function new(Request $request, EntityManagerInterface $em, Doublons $doublons): Response
     {
         $client = new Client();
         $form = $this->createForm(ClientType::class, $client);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            if ($doublon = $clients->findDoublon($client)) {
-                $this->addFlash('warning', 'Attention : un client avec ce numéro existe déjà ('.$doublon->getNomComplet().').');
+            // Client semblable déjà enregistré : l'utilisateur choisit de l'utiliser ou de créer quand même.
+            if (!$request->request->getBoolean('confirmer_doublon') && $semblables = $doublons->clientsSemblables($client)) {
+                return $this->render('client/form.html.twig', ['form' => $form, 'client' => $client, 'semblables' => $semblables], new Response(null, Response::HTTP_UNPROCESSABLE_ENTITY));
             }
             $em->persist($client);
             $em->flush();

@@ -47,6 +47,7 @@ final class ParcoursColisTest extends WebTestCase
             ['typeMarchandise' => 'Vêtements', 'poidsVolume' => '10', 'prix' => '80', 'observations' => ''],
             ['typeMarchandise' => 'Chaussures', 'poidsVolume' => '2,5', 'prix' => '22,50', 'observations' => 'Fragile'],
         ];
+        $valeurs['confirmer_doublon'] = '1'; // les tests créent plusieurs fois le même colis
         $this->client->request('POST', '/colis/nouveau', $valeurs);
         $this->assertResponseRedirects();
         $this->client->followRedirect();

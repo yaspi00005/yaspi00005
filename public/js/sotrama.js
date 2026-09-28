@@ -14,6 +14,32 @@
         }
     });
 
+    // Nouveau colis : avant l'envoi, vérifie qu'un colis semblable n'a pas déjà été saisi
+    // (même expéditeur et même destinataire ces derniers jours) et demande confirmation.
+    document.querySelectorAll('form[data-doublons-url]').forEach(function (form) {
+        form.addEventListener('submit', function (e) {
+            const confirme = form.querySelector('.js-confirmer-doublon');
+            const client = form.querySelector('[name="colis[client]"]');
+            const tel = form.querySelector('[name="colis[destinataireTelephone]"]');
+            if (!confirme || confirme.value === '1' || !client || !client.value || !tel || !tel.value || (e.submitter && e.submitter.name === 'confirmer_doublon')) {
+                return;
+            }
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            const url = form.dataset.doublonsUrl + '?' + new URLSearchParams({ client: client.value, tel: tel.value });
+            fetch(url, { credentials: 'same-origin' }).then(r => r.ok ? r.json() : []).catch(() => []).then(function (liste) {
+                if (liste.length) {
+                    const detail = liste.map(c => '• ' + c.numero + ' du ' + c.date + ' pour ' + c.destinataire + (c.agent ? ' (saisi par ' + c.agent + ')' : '')).join('\n');
+                    if (!window.confirm('Ce colis a peut-être déjà été enregistré :\n' + detail + '\n\nEnregistrer quand même ce nouveau colis ?')) {
+                        return;
+                    }
+                }
+                confirme.value = '1';
+                form.requestSubmit ? form.requestSubmit() : form.submit();
+            });
+        }, true);
+    });
+
     // Empêche le double envoi des formulaires.
     $(document).on('submit', 'form:not([data-multi-submit])', function () {
         const form = this;
