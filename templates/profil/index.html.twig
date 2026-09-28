@@ -3,6 +3,15 @@
 {% block title %}Mon profil{% endblock %}
 
 {% block body %}
+{% if app.user.profilAComplete %}
+<div class="alert alert-warning">
+    <h5 class="alert-heading"><i class="fas fa-user-shield me-1"></i> Avant de continuer, complétez votre profil</h5>
+    <ul class="mb-0">
+        {% if app.user.motDePasseProvisoire %}<li><strong>Changez le mot de passe provisoire</strong> qui vous a été donné : choisissez un mot de passe personnel (10 caractères minimum), que vous seul connaissez.</li>{% endif %}
+        {% if not app.user.email %}<li><strong>Indiquez votre adresse e-mail</strong> : elle sert aux rappels des ramassages et aux rapports.</li>{% endif %}
+    </ul>
+</div>
+{% endif %}
 <div class="row">
     <div class="col-xl-4">
         <div class="card">
@@ -20,7 +29,7 @@
             <div class="card-body">
                 <p class="mb-2">Les rappels des ramassages sont envoyés <strong>la veille</strong> puis <strong>environ 1 h avant</strong>, à l'agent assigné (ou à tous les agents de ramassage si personne n'est assigné) :</p>
                 <ul class="mb-3">
-                    <li>par <strong>e-mail</strong> : {{ app.user.email ?: '— aucune adresse enregistrée, demandez à un administrateur de l\'ajouter' }}</li>
+                    <li>par <strong>e-mail</strong> : {{ app.user.email ?: '— aucune adresse enregistrée (voir ci-dessous)' }}</li>
                     <li>par <strong>notification du navigateur</strong> : {{ nbNavigateurs }} navigateur(s) abonné(s).</li>
                 </ul>
                 {% if push_cle_publique %}
@@ -42,7 +51,16 @@
                 {% endif %}
             </div>
         </div>
-        <div class="card">
+        <div class="card {{ not app.user.email ? 'border-warning' }}" id="email">
+            <div class="card-header"><h4 class="card-title"><i class="fas fa-envelope text-primary me-2"></i>Mon adresse e-mail</h4></div>
+            <div class="card-body">
+                {{ form_start(formEmail) }}
+                {{ form_rest(formEmail) }}
+                <button class="btn btn-primary">Valider mon adresse e-mail</button>
+                {{ form_end(formEmail) }}
+            </div>
+        </div>
+        <div class="card {{ app.user.motDePasseProvisoire ? 'border-warning' }}" id="mot-de-passe">
             <div class="card-header"><h4 class="card-title">Changer mon mot de passe</h4></div>
             <div class="card-body">
                 {{ form_start(form) }}

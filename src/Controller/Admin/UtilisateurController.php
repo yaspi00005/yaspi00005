@@ -61,9 +61,14 @@ class UtilisateurController extends AbstractController
             }
             if (User::ROLE_REPRESENTANT === $user->getRolePrincipal() && !$user->getPays()) {
                 $form->get('pays')->addError(new \Symfony\Component\Form\FormError('Choisissez le pays du représentant.'));
+            } elseif (!$user->getId() && !$form->get('provisoire')->getData() && !$form->get('plainPassword')->getData()) {
+                $form->get('plainPassword')->get('first')->addError(new \Symfony\Component\Form\FormError('Choisissez un mot de passe, ou cochez le mot de passe provisoire.'));
             } else {
-                if ($plain = $form->get('plainPassword')->getData()) {
-                    $user->setPassword($this->hasher->hashPassword($user, $plain));
+                if ($form->get('provisoire')->getData()) {
+                    // L'utilisateur devra le changer à sa première connexion (ProfilObligatoireListener).
+                    $user->setPassword($this->hasher->hashPassword($user, User::MOT_DE_PASSE_PROVISOIRE))->setMotDePasseProvisoire(true);
+                } elseif ($plain = $form->get('plainPassword')->getData()) {
+                    $user->setPassword($this->hasher->hashPassword($user, $plain))->setMotDePasseProvisoire(false);
                 }
                 $this->em->persist($user);
                 $this->em->flush();

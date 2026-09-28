@@ -17,6 +17,9 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[UniqueEntity(fields: ['username'], message: 'Cet identifiant est déjà utilisé.')]
 class User implements UserInterface, PasswordAuthenticatedUserInterface, EquatableInterface
 {
+    /** Mot de passe donné aux nouveaux comptes : l'utilisateur doit le changer à sa première connexion. */
+    public const MOT_DE_PASSE_PROVISOIRE = 'Sotrama2025';
+
     public const ROLE_ADMIN = 'ROLE_ADMIN';
     public const ROLE_RAMASSAGE = 'ROLE_RAMASSAGE';
     public const ROLE_REPRESENTANT = 'ROLE_REPRESENTANT';
@@ -65,6 +68,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Equatab
 
     #[ORM\Column]
     private bool $actif = true;
+
+    /** Connecté avec le mot de passe provisoire (User::MOT_DE_PASSE_PROVISOIRE) : à changer avant tout. */
+    #[ORM\Column(options: ['default' => false])]
+    private bool $motDePasseProvisoire = false;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
@@ -289,5 +296,23 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, Equatab
     public function __toString(): string
     {
         return $this->getNomComplet();
+    }
+
+    public function isMotDePasseProvisoire(): bool
+    {
+        return $this->motDePasseProvisoire;
+    }
+
+    public function setMotDePasseProvisoire(bool $provisoire): static
+    {
+        $this->motDePasseProvisoire = $provisoire;
+
+        return $this;
+    }
+
+    /** Ce qu'il reste à faire avant d'utiliser l'application : changer le mot de passe provisoire, donner un e-mail. */
+    public function isProfilAComplete(): bool
+    {
+        return $this->motDePasseProvisoire || null === $this->email || '' === trim($this->email);
     }
 }
