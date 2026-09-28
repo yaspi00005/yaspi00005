@@ -44,6 +44,8 @@ adb pull /sdcard/sotrama.mp4 "$OUT/sotrama.mp4" >/dev/null && echo "Vidéo : $OU
 echo "== État"
 adb shell dumpsys activity activities | grep -E "mResumedActivity|topResumedActivity" | head -2 | tee "$OUT/activite.txt"
 adb shell uiautomator dump /sdcard/ecran.xml >/dev/null 2>&1 && adb pull /sdcard/ecran.xml "$OUT/ecran.xml" >/dev/null
+echo "Textes visibles à l'écran :"
+grep -oE '(text|content-desc)="[^"]+"' "$OUT/ecran.xml" 2>/dev/null | sed -E 's/^[a-z-]+="(.*)"$/  - \1/' | head -40
 adb logcat -d > "$OUT/logcat.txt"
 grep -E "Digital Asset|TWA|TrustedWebActivity|LauncherActivity" "$OUT/logcat.txt" | tail -20
 
