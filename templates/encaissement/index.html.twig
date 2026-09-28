@@ -1,0 +1,86 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes encaissements{% endblock %}
+
+{% macro stat(icone, couleur, valeur, libelle, detail) %}
+    <div class="col-xl-3 col-6">
+        <div class="card stat-card"><div class="card-body d-flex flex-column flex-sm-row align-items-sm-center gap-2 gap-sm-3">
+            <span class="stat-icon bgl-{{ couleur }} text-{{ couleur }}"><i class="{{ icone }}"></i></span>
+            <div>
+                <div class="stat-value">{{ valeur }}</div>
+                <span class="text-muted fs-14">{{ libelle }}</span>
+                {% if detail %}<div class="fs-12 text-muted">{{ detail }}</div>{% endif %}
+            </div>
+        </div></div>
+    </div>
+{% endmacro %}
+{% import _self as m %}
+
+{% block body %}
+<div class="row">
+    {{ m.stat('fas fa-sun', 'warning', aujourdhui.montant|money, "Encaissé aujourd'hui", aujourdhui.nb ~ ' opération(s)') }}
+    {{ m.stat('fas fa-calendar-week', 'info', semaine.montant|money, 'Cette semaine', semaine.nb ~ ' opération(s)') }}
+    {{ m.stat('fas fa-calendar-check', 'success', mois.montant|money, 'Ce mois-ci', mois.nb ~ ' opération(s)') }}
+    {{ m.stat('fas fa-hand-holding', 'primary', remisesMois, 'Colis remis ce mois-ci', null) }}
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="get" class="row g-2 filtres">
+            <div class="col-6 col-md-3"><label class="form-label fs-12 mb-1" for="du">Du</label><input type="date" id="du" name="du" value="{{ filtres.du }}" class="form-control"></div>
+            <div class="col-6 col-md-3"><label class="form-label fs-12 mb-1" for="au">Au</label><input type="date" id="au" name="au" value="{{ filtres.au }}" class="form-control"></div>
+            <div class="col-6 col-md-3"><label class="form-label fs-12 mb-1" for="mode">Mode</label>
+                <select name="mode" id="mode" class="form-select form-control"><option value="">Tous</option>
+                    {% for mo in modes %}<option value="{{ mo.value }}" {{ filtres.mode == mo.value ? 'selected' }}>{{ mo.label }}</option>{% endfor %}
+                </select></div>
+            <div class="col-6 col-md-3 d-flex align-items-end gap-1">
+                <button class="btn btn-primary w-100"><i class="fas fa-filter me-1"></i> Filtrer</button>
+                <a href="?{{ app.request.query.all|merge({export: 'csv', page: null})|url_encode }}" class="btn btn-outline-primary" title="Export Excel" aria-label="Export Excel"><i class="fas fa-file-excel"></i></a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-xl-9">
+        <div class="card">
+            <div class="card-header"><h4 class="card-title">{{ paiements.total }} encaissement(s) · {{ total|money }}</h4></div>
+            <div class="card-body pt-0">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead><tr><th>Date</th><th>Colis</th><th>Destinataire</th><th>Mode</th><th class="num">Montant</th><th class="num">Remise</th></tr></thead>
+                        <tbody>
+                        {% for p in paiements %}
+                            <tr>
+                                <td>{{ p.date|date('d/m/Y H:i') }}</td>
+                                <td>{% if is_granted('COLIS_VOIR', p.colis) %}<a href="{{ path('colis_show', {id: p.colis.id}) }}" class="text-primary">{{ p.colis.numeroSuivi }}</a>{% else %}{{ p.colis.numeroSuivi }}{% endif %}</td>
+                                <td>{{ p.colis.destinataireNom }}</td>
+                                <td>{{ p.mode.label }}{% if p.reference %}<br><small class="text-muted">{{ p.reference }}</small>{% endif %}</td>
+                                <td class="num font-w600">{{ p.montant|money }}</td>
+                                <td class="num">{{ p.remise ? p.remise|money : '—' }}</td>
+                            </tr>
+                        {% else %}
+                            <tr><td colspan="6"><div class="empty-state"><i class="fas fa-wallet"></i>Aucun encaissement sur cette période.</div></td></tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% include 'partials/_pagination.html.twig' with {pagination: paiements} %}
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3">
+        <div class="card">
+            <div class="card-header"><h4 class="card-title">Par mode de paiement</h4></div>
+            <div class="card-body">
+                {% for mode, montant in parMode|filter(v => v > 0) %}
+                    <div class="d-flex justify-content-between py-2 border-bottom">
+                        <span>{{ enum('App\\Enum\\ModePaiement').from(mode).label }}</span>
+                        <strong>{{ montant|money }}</strong>
+                    </div>
+                {% else %}<span class="text-muted">—</span>{% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

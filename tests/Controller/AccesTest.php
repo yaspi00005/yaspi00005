@@ -75,11 +75,11 @@ final class AccesTest extends WebTestCase
         $expeditions = static::getContainer()->get(ExpeditionRepository::class);
 
         $hid = static::getContainer()->get(IdChiffreur::class);
+        // Le représentant n'a pas accès aux expéditions, même celles de son pays.
         $client->request('GET', '/expeditions/'.$hid->encode($expeditions->findOneBy(['destination' => Destination::Senegal])->getId()));
         $this->assertResponseStatusCodeSame(403);
-
         $client->request('GET', '/expeditions/'.$hid->encode($expeditions->findOneBy(['destination' => Destination::Mali])->getId()));
-        $this->assertResponseIsSuccessful();
+        $this->assertResponseStatusCodeSame(403);
 
         $client->request('GET', '/colis');
         $this->assertStringNotContainsString('Sénégal</small>', (string) $client->getResponse()->getContent());

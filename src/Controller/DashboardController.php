@@ -32,7 +32,12 @@ class DashboardController extends AbstractController
         $totaux = $colisRepository->totaux($user);
         $totauxMois = $colisRepository->totaux($user, new \DateTimeImmutable('first day of this month 00:00'));
         $colisParMois = $colisRepository->colisParMois(12, $user);
-        $encaissements = $this->isGranted(User::ROLE_REPRESENTANT) ? $paiementRepository->encaissementsParJour(30, $user) : [];
+        // Représentant : ses propres encaissements ; administrateur : tous.
+        $encaissements = match (true) {
+            $this->isGranted(User::ROLE_ADMIN) => $paiementRepository->encaissementsParJour(30),
+            Perimetre::estRepresentant($user) => $paiementRepository->encaissementsParJour(30, null, $user),
+            default => [],
+        };
 
         return $this->render('dashboard/index.html.twig', [
             'parStatut' => $parStatut,
@@ -46,8 +51,9 @@ class DashboardController extends AbstractController
             'performance' => $this->isGranted(User::ROLE_RAMASSAGE) ? $colisRepository->performance($user) : null,
             'performanceAgents' => $this->isGranted(User::ROLE_ADMIN) ? $colisRepository->performanceAgents(new \DateTimeImmutable('first day of this month 00:00')) : [],
             'estRepresentant' => Perimetre::estRepresentant($user),
+            'mesEncaissementsMois' => $paiementRepository->totalCaissier($user, new \DateTimeImmutable('first day of this month 00:00')),
             'estRamassage' => Perimetre::estRamassage($user),
-            'expeditions' => $this->isGranted(User::ROLE_REPRESENTANT) ? $expeditionRepository->filtreQb($user)->setMaxResults(5)->getQuery()->getResult() : [],
+            'expeditions' => $this->isGranted(User::ROLE_ADMIN) ? $expeditionRepository->filtreQb($user)->setMaxResults(5)->getQuery()->getResult() : [],
             'derniersColis' => $colisRepository->derniers($user, 8),
             'enAttenteRetrait' => \count($colisRepository->enAttenteRetrait($user, 7)),
             'ramassages' => $this->isGranted(User::ROLE_RAMASSAGE) ? $ramassageRepository->aVenir(5) : [],

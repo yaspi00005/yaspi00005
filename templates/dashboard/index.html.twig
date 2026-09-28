@@ -49,7 +49,7 @@
         {# Représentant : colis arrivés dans son pays, à remettre et à encaisser. #}
         {{ m.stat('fas fa-map-marker-alt', 'secondary', parStatut['arrive']|default(0), 'À retirer en agence', path('colis_index', {statut: 'arrive'})) }}
         {{ m.stat('fas fa-hand-holding', 'success', parStatut['recupere']|default(0), 'Remis aux destinataires', path('colis_index', {statut: 'recupere'})) }}
-        {{ m.stat('fas fa-euro-sign', 'success', totaux.paye|money, 'Encaissé (total)', path('paiement_index')) }}
+        {{ m.stat('fas fa-wallet', 'success', mesEncaissementsMois.montant|money, 'Mes encaissements ce mois-ci', path('encaissement_index')) }}
         {{ m.stat('fas fa-hourglass-half', 'danger', resteAEncaisser|money, 'Reste à encaisser', path('colis_index', {paiement: 'non_paye'})) }}
     {% else %}
         {{ m.stat('fas fa-box-open', 'primary', totalColis, estRamassage ? 'Mes colis' : 'Colis au total', path('colis_index', {tous: 1})) }}
@@ -162,7 +162,7 @@
         </div>
     </div>
     <div class="col-xl-4">
-        {% if is_granted('ROLE_REPRESENTANT') %}
+        {% if is_granted('ROLE_ADMIN') %}
         <div class="card">
             <div class="card-header border-0">
                 <h4 class="card-title">Expéditions récentes</h4>
@@ -208,7 +208,7 @@
     <div class="col-12">
         <div class="card">
             <div class="card-header border-0 pb-0">
-                <h4 class="card-title">Encaissements des 30 derniers jours ({{ app_devise }})</h4>
+                <h4 class="card-title">{{ estRepresentant ? 'Mes encaissements' : 'Encaissements' }} des 30 derniers jours ({{ app_devise }})</h4>
             </div>
             <div class="card-body">
                 <canvas id="chart-encaissements" height="80" aria-label="Encaissements des 30 derniers jours" role="img"></canvas>

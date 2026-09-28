@@ -66,7 +66,7 @@ final class DroitsRolesTest extends WebTestCase
         $this->assertResponseIsSuccessful();
         $this->assertSelectorNotExists('form[action$="/encaisser"]');
 
-        foreach (['/expeditions', '/paiements'] as $page) {
+        foreach (['/expeditions', '/paiements', '/encaissements'] as $page) {
             $this->client->request('GET', $page);
             $this->assertResponseStatusCodeSame(403, $page);
         }
@@ -100,15 +100,24 @@ final class DroitsRolesTest extends WebTestCase
             $this->assertSelectorExists('form[action$="/encaisser"]');
         }
 
-        $this->client->request('GET', '/paiements', ['du' => '2000-01-01']);
+        // Ni expéditions ni paiements globaux : sa propre vue « Mes encaissements ».
+        foreach (['/expeditions', '/paiements'] as $page) {
+            $this->client->request('GET', $page);
+            $this->assertResponseStatusCodeSame(403, $page);
+        }
+        $this->client->request('GET', '/encaissements', ['du' => '2000-01-01']);
         $this->assertResponseIsSuccessful();
-        $this->assertSelectorTextNotContains('body', $enRoute->getNumeroSuivi());
+        $this->assertSelectorTextContains('body', "Encaissé aujourd'hui");
+        $this->assertSelectorTextContains('table', 'Orange Money', 'Les encaissements du représentant sont listés.');
+        $this->assertSelectorTextNotContains('table', $enRoute->getNumeroSuivi());
 
         $this->client->request('GET', '/colis/nouveau');
         $this->assertResponseStatusCodeSame(403);
         $this->client->request('GET', '/');
         $this->assertResponseIsSuccessful();
         $this->assertSelectorTextContains('body', 'Remis aux destinataires');
+        $this->assertSelectorTextContains('body', 'Mes encaissements ce mois-ci');
+        $this->assertSelectorTextNotContains('body', 'Expéditions récentes');
     }
 
     public function testAdministrateurVoitToutEtSesPerformances(): void

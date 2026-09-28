@@ -87,10 +87,10 @@ class PaiementRepository extends ServiceEntityRepository
     }
 
     /** @return array<string, int> encaissements par jour sur N jours */
-    public function encaissementsParJour(int $jours, ?User $user = null): array
+    public function encaissementsParJour(int $jours, ?User $user = null, ?User $caissier = null): array
     {
         $debut = new \DateTimeImmutable('-'.($jours - 1).' days 00:00');
-        $qb = $this->filtreQb($user, ['du' => $debut->format('Y-m-d')]);
+        $qb = $this->filtreQb($user, ['du' => $debut->format('Y-m-d'), 'caissier' => $caissier?->getId()]);
         $res = [];
         for ($i = 0; $i < $jours; ++$i) {
             $res[$debut->modify("+$i days")->format('Y-m-d')] = 0;
@@ -112,5 +112,17 @@ class PaiementRepository extends ServiceEntityRepository
             ->join('p.colis', 'c')
             ->andWhere('c.expedition = :e')->setParameter('e', $expedition)
             ->getQuery()->getSingleScalarResult();
+    }
+
+    /** @return array{montant: int, nb: int} encaissé par un caissier depuis une date */
+    public function totalCaissier(User $caissier, \DateTimeImmutable $depuis): array
+    {
+        $r = $this->createQueryBuilder('p')
+            ->select('COALESCE(SUM(p.montant), 0) AS montant, COUNT(p.id) AS nb')
+            ->andWhere('p.caissier = :caissier AND p.date >= :depuis')
+            ->setParameter('caissier', $caissier)->setParameter('depuis', $depuis)
+            ->getQuery()->getSingleResult();
+
+        return ['montant' => (int) $r['montant'], 'nb' => (int) $r['nb']];
     }
 }

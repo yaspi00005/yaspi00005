@@ -28,12 +28,14 @@
                     {% for s in statutsPaiement %}<option value="{{ s.value }}" {{ filtres.paiement == s.value ? 'selected' }}>{{ s.label }}</option>{% endfor %}
                 </select>
             </div>
+            {% if is_granted('ROLE_RAMASSAGE') %}
             <div class="col-md-2">
                 <select name="expedition" class="form-select form-control">
                     <option value="">Toutes expéditions</option>
                     {% for e in expeditions %}<option value="{{ hid(e.id) }}" {{ filtres.expedition == e.id ? 'selected' }}>{{ e.numero }} · {{ e.destination.label }}</option>{% endfor %}
                 </select>
             </div>
+            {% endif %}
             <div class="col-6 col-md-1"><input type="date" name="du" value="{{ filtres.du }}" class="form-control" title="Reçu depuis le" aria-label="Reçu depuis le"></div>
             <div class="col-6 col-md-1"><input type="date" name="au" value="{{ filtres.au }}" class="form-control" title="Reçu jusqu'au" aria-label="Reçu jusqu'au"></div>
             <div class="col-md-1 d-flex gap-1">
@@ -59,7 +61,7 @@
                         <th>N° suivi</th>
                         <th>Client</th>
                         <th>Destinataire</th>
-                        <th>Expédition</th>
+                        {% if is_granted('ROLE_RAMASSAGE') %}<th>Expédition</th>{% endif %}
                         <th class="num">Poids</th>
                         <th class="num">Montant</th>
                         <th class="num">Reste</th>
@@ -74,7 +76,7 @@
                         <td><a href="{{ path('colis_show', {id: c.id}) }}" class="text-primary font-w600">{{ c.numeroSuivi }}</a><br><small class="text-muted">{{ c.dateReception|date('d/m/Y H:i') }}</small></td>
                         <td>{{ c.client.nomComplet }}<br><small class="text-muted">{{ c.client.telephone|tel }}</small></td>
                         <td>{{ c.destinataireNom }}<br><small class="text-muted">{{ c.destinataireTelephone|tel }}</small></td>
-                        <td>{% if c.expedition %}{% if is_granted('ROLE_REPRESENTANT') %}<a href="{{ path('expedition_show', {id: c.expedition.id}) }}">{{ c.expedition.numero }}</a>{% else %}{{ c.expedition.numero }}{% endif %}<br><small class="text-muted">{{ c.expedition.destination.label }}</small>{% else %}<span class="text-muted">—</span>{% endif %}</td>
+                        {% if is_granted('ROLE_RAMASSAGE') %}<td>{% if c.expedition %}{% if is_granted('ROLE_ADMIN') %}<a href="{{ path('expedition_show', {id: c.expedition.id}) }}">{{ c.expedition.numero }}</a>{% else %}{{ c.expedition.numero }}{% endif %}<br><small class="text-muted">{{ c.expedition.destination.label }}</small>{% else %}<span class="text-muted">—</span>{% endif %}</td>{% endif %}
                         <td class="num">{{ c.poidsTotal|poids }}</td>
                         <td class="num">{{ c.montantNet|money }}</td>
                         <td class="num {{ c.montantRestant > 0 ? 'text-danger font-w600' }}">{{ c.montantRestant|money }}</td>
