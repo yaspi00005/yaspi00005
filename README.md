@@ -152,6 +152,18 @@ Tâche cron mensuelle (le 1er du mois à 00 h 30) :
 
 Aperçu sans rien supprimer : `php bin/console app:purger-photos --apercu`.
 
+**Corbeille** : un colis supprimé reste **7 jours** dans la corbeille (restaurable par l'administrateur, ou par
+l'agent pour ses propres colis), invisible partout ailleurs, puis `app:vider-corbeille` le supprime définitivement
+avec ses photos. Tâche cron chaque nuit (la corbeille est aussi vidée à son ouverture) :
+
+```
+15 0 * * * cd /home/<compte>/public_html/app-sotrama && php bin/console app:vider-corbeille --env=prod >> var/log/corbeille.log 2>&1
+```
+
+**Aide** : la page « Besoin d'aide ? » (`/aide`) illustre chaque écran. Ses captures (`public/images/aide/`) sont
+prises sur les **données de démonstration** (jamais sur la vraie base) : base de démo chargée avec
+`doctrine:fixtures:load`, serveur lancé, puis `node scripts/captures-aide.mjs http://127.0.0.1:8003`.
+
 ## Sécurité
 
 - **Comptes** : mots de passe de 10 caractères minimum, robustesse contrôlée et refus des mots de passe divulgués

@@ -29,6 +29,7 @@ final class AppExtension extends AbstractExtension
     public function getFunctions(): array
     {
         return [
+            new TwigFunction('aide_section', fn (?string $route) => \App\Controller\AideController::section($route, ($u = $this->security->getUser()) instanceof User && Perimetre::estRepresentant($u))),
             new TwigFunction('hid', fn (?int $id) => null === $id ? '' : $this->chiffreur->encode($id)),
             // Logo de l'entreprise : public/images/logo-sotrama.png (facultatif, sinon icône par défaut).
             new TwigFunction('logo_existe', fn () => is_file($this->cheminLogo)),

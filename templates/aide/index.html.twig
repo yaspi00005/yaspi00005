@@ -1,0 +1,262 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Besoin d'aide ?{% endblock %}
+
+{# Captures d'écran : public/images/aide/*.jpg, régénérées par scripts/captures-aide.mjs (données de démonstration). #}
+{% macro capture(nom, legende) %}
+    <figure class="capture-aide">
+        <a href="{{ asset('images/aide/' ~ nom ~ '.jpg') }}" target="_blank" title="Agrandir"><img src="{{ asset('images/aide/' ~ nom ~ '.jpg') }}" alt="{{ legende }}" loading="lazy"></a>
+        <figcaption>{{ legende }}</figcaption>
+    </figure>
+{% endmacro %}
+{% macro section(ancre, icone, titre) %}
+    <h3 class="aide-titre" id="{{ ancre }}"><i class="fas {{ icone }} text-primary me-2"></i>{{ titre }}</h3>
+{% endmacro %}
+{% import _self as a %}
+
+{% set admin = is_granted('ROLE_ADMIN') %}
+{% set agent = is_granted('ROLE_RAMASSAGE') %}
+{% set rep = is_granted('ROLE_REPRESENTANT') %}
+
+{% block body %}
+<div class="row">
+    <div class="col-xl-3 d-none d-xl-block">
+        <div class="card aide-sommaire">
+            <div class="card-header"><h4 class="card-title">Sommaire</h4></div>
+            <div class="card-body pt-2">
+                <p class="fs-12 text-uppercase text-muted mb-1">Pour tous</p>
+                <a href="#tableau-de-bord">Tableau de bord</a>
+                <a href="#recherche">Rechercher un colis</a>
+                <a href="#application-mobile">Application mobile</a>
+                <a href="#profil">Mon profil et mot de passe</a>
+                {% if agent %}
+                <p class="fs-12 text-uppercase text-muted mb-1 mt-3">Enregistrer les colis</p>
+                <a href="#clients">Ajouter un client</a>
+                <a href="#ajouter-colis">Ajouter un colis</a>
+                <a href="#fiche-colis">Fiche colis, reçu, WhatsApp</a>
+                <a href="#liste-colis">Liste des colis</a>
+                <a href="#ramassages">Ramassages</a>
+                <a href="#corbeille">Corbeille</a>
+                <a href="#performances">Mes performances</a>
+                {% endif %}
+                {% if rep %}
+                <p class="fs-12 text-uppercase text-muted mb-1 mt-3">En agence (Mali, Sénégal)</p>
+                <a href="#guichet">Guichet agence</a>
+                <a href="#encaisser">Encaisser</a>
+                <a href="#remettre">Remettre un colis</a>
+                <a href="#encaissements">Mes encaissements</a>
+                {% endif %}
+                {% if admin %}
+                <p class="fs-12 text-uppercase text-muted mb-1 mt-3">Administration</p>
+                <a href="#expeditions">Expéditions</a>
+                <a href="#rentabilite">Charges et marge</a>
+                <a href="#paiements">Paiements</a>
+                <a href="#bonus">Bonus fidélité</a>
+                <a href="#utilisateurs">Utilisateurs et rôles</a>
+                <a href="#journal">Journal d'activité</a>
+                <a href="#automatique">Tâches automatiques</a>
+                {% endif %}
+                <p class="fs-12 text-uppercase text-muted mb-1 mt-3">Questions</p>
+                <a href="#faq">Questions fréquentes</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-9 aide">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <h2 class="text-white mb-2"><i class="fas fa-life-ring me-2"></i>Besoin d'aide ?</h2>
+                <p class="mb-0 opacity-75">Ce guide montre, écran par écran, comment utiliser l'application {{ app_nom }}. Il ne présente que ce qui concerne votre rôle{% if admin %} (administrateur : tout){% elseif rep %} (représentant en agence){% elseif agent %} (agent de ramassage){% endif %}. Sur chaque page, le bouton <span class="badge bg-white text-primary"><i class="fas fa-question"></i></span> en haut ouvre directement la bonne section.</p>
+            </div>
+        </div>
+
+        {# ============================ POUR TOUS ============================ #}
+        <div class="card"><div class="card-body">
+            {{ a.section('tableau-de-bord', 'fa-home', 'Le tableau de bord') }}
+            <p>C'est la première page après la connexion. Elle résume votre activité :</p>
+            <ul>
+                {% if admin %}<li><strong>Administrateur</strong> : tous les colis, l'argent encaissé et à encaisser, les clients, <strong>vos performances</strong> (colis que vous avez enregistrés), le <strong>classement des agents</strong> du mois et la <strong>rentabilité des expéditions</strong>.</li>{% endif %}
+                {% if agent and not admin %}<li><strong>Vos colis</strong> (vous ne voyez que ceux que vous avez enregistrés), par étape, et <strong>vos performances</strong> du mois.</li>{% endif %}
+                {% if rep and not admin %}<li>Les colis <strong>arrivés dans votre pays</strong> : à remettre, déjà remis, <strong>vos encaissements</strong> du mois et le reste à encaisser (en euros et en francs CFA).</li>{% endif %}
+                <li>Cliquez sur un chiffre pour ouvrir la liste correspondante.</li>
+            </ul>
+            {% if admin %}{{ a.capture('tableau-de-bord-admin', 'Tableau de bord de l\'administrateur') }}
+            {% elseif rep %}{{ a.capture('tableau-de-bord-representant', 'Tableau de bord du représentant') }}
+            {% else %}{{ a.capture('tableau-de-bord-agent', 'Tableau de bord de l\'agent de ramassage') }}{% endif %}
+
+            {{ a.section('recherche', 'fa-search', 'Rechercher un colis') }}
+            <p>La barre de recherche en haut de chaque page accepte un <strong>numéro de suivi</strong> (ex. ST2609-0042), un <strong>nom</strong> ou un <strong>téléphone</strong> (expéditeur ou destinataire).</p>
+            <ul>
+                <li>Par défaut, la liste des colis <strong>n'affiche plus les colis déjà récupérés</strong> par le destinataire, pour rester légère. Une recherche les retrouve toujours.</li>
+                {% if rep %}<li><strong>Représentant</strong> : la liste ne montre que les colis arrivés dans votre pays. Pour renseigner un client sur un colis encore en route, tapez son <strong>numéro de suivi complet</strong> : la fiche s'affiche en consultation.</li>{% endif %}
+            </ul>
+
+            {{ a.section('application-mobile', 'fa-mobile-alt', 'L\'application mobile') }}
+            <p>Sur un téléphone Android, installez l'application depuis le menu <strong>Application mobile</strong> : c'est la même application, avec l'appareil photo et la position GPS.</p>
+            <div class="row">
+                <div class="col-md-7">{{ a.capture('application-mobile', 'Page de téléchargement de l\'application') }}</div>
+                {% if agent %}<div class="col-md-5">{{ a.capture('mobile-colis-nouveau', 'Nouveau colis sur téléphone') }}</div>{% endif %}
+            </div>
+
+            {{ a.section('profil', 'fa-user-circle', 'Mon profil et mon mot de passe') }}
+            <p>Menu en haut à droite (vos initiales) → <strong>Mon profil</strong>. Le mot de passe doit faire <strong>au moins 10 caractères</strong> et ne pas être trop simple ni déjà connu des pirates : l'application refuse sinon. Ne le communiquez à personne.</p>
+            <p>Le bouton <i class="fas fa-bell text-primary"></i> active les <strong>notifications</strong> dans le navigateur (rappels des ramassages).</p>
+        </div></div>
+
+        {# ============================ AGENTS ============================ #}
+        {% if agent %}
+        <div class="card"><div class="card-body">
+            {{ a.section('clients', 'fa-user-plus', 'Ajouter un client') }}
+            <ol>
+                <li>Menu <strong>Clients</strong> → <strong>Nouveau client</strong> (ou « Nouveau client » depuis le formulaire d'un colis).</li>
+                <li>Saisissez prénom, nom, <strong>téléphone</strong> (obligatoire), adresse. Le code postal propose les villes.</li>
+                <li>Chez le client, <strong>Ma position actuelle</strong> enregistre sa position GPS pour les prochains ramassages.</li>
+            </ol>
+            {{ a.capture('client-nouveau', 'Fiche nouveau client') }}
+            <div class="alert alert-warning"><strong>Doublons :</strong> si un client a déjà le même téléphone (même écrit autrement : 06…, +33 6…) ou les mêmes nom et prénom, l'application s'arrête et vous le montre. Choisissez <strong>Utiliser ce client</strong> ou, si c'est vraiment une autre personne, <strong>Créer quand même</strong>.</div>
+            {{ a.capture('client-doublon', 'Alerte « ce client existe peut-être déjà »') }}
+
+            {{ a.section('ajouter-colis', 'fa-box-open', 'Ajouter un colis') }}
+            <ol>
+                <li>Bouton <strong>Nouveau colis</strong> (en haut, ou « Enregistrer » dans le menu).</li>
+                <li><strong>Expéditeur</strong> : cherchez le client par son nom ou son téléphone.</li>
+                <li><strong>Destinataire</strong> : nom et téléphone (il recevra un SMS à l'arrivée).</li>
+                <li><strong>Articles</strong> : marchandise, poids, prix. <strong>Prendre une photo</strong> ouvre l'appareil photo du téléphone. Ajoutez autant d'articles que nécessaire : le total se calcule seul.</li>
+                <li><strong>Enregistrer le colis</strong> : le numéro de suivi et le <strong>code de retrait</strong> sont créés.</li>
+            </ol>
+            {{ a.capture('colis-nouveau', 'Formulaire nouveau colis') }}
+            <div class="alert alert-warning"><strong>Double saisie :</strong> si le même expéditeur a déjà envoyé un colis au même destinataire ces 3 derniers jours, l'application demande confirmation avant d'enregistrer.</div>
+
+            {{ a.section('fiche-colis', 'fa-file-invoice', 'La fiche colis : reçu, WhatsApp, e-mail') }}
+            <p>Après l'enregistrement, la fiche du colis s'ouvre :</p>
+            <ul>
+                <li><strong>Reçu PDF</strong> : à imprimer ou à partager. Il contient le code de retrait et le QR code de suivi.</li>
+                <li><strong>Envoyer le reçu</strong> : WhatsApp à l'expéditeur (message prêt, il suffit d'appuyer sur Envoyer), message de suivi au destinataire, ou e-mail si le client en a un.</li>
+                <li><strong>Modifier</strong> ou <strong>Supprimer</strong> : possible tant que le colis est en préparation et non payé.</li>
+            </ul>
+            {{ a.capture('colis-fiche', 'Fiche d\'un colis') }}
+            {{ a.capture('colis-envoi-recu', 'Envoi du reçu par WhatsApp ou e-mail') }}
+
+            {{ a.section('liste-colis', 'fa-list', 'La liste des colis') }}
+            <p>Filtres par statut, paiement, dates{% if admin %}, expédition{% endif %} ; <strong>Export Excel</strong> en haut. Les colis déjà récupérés sont masqués (lien « affichez tous les colis » pour les voir). {% if admin %}La colonne <strong>Ajouté par</strong> indique l'agent qui a enregistré chaque colis.{% endif %}</p>
+            {{ a.capture('colis-liste', 'Liste des colis') }}
+
+            {{ a.section('ramassages', 'fa-calendar-alt', 'Les ramassages') }}
+            <p>Le planning des passages chez les clients (Île-de-France, gratuit). Faites glisser un rendez-vous pour le déplacer ; le client peut le confirmer par SMS. <strong>Exporter en PDF</strong> imprime la tournée.</p>
+            {{ a.capture('ramassages', 'Planning des ramassages') }}
+
+            {{ a.section('corbeille', 'fa-trash-restore', 'La corbeille') }}
+            <p>Un colis supprimé n'est pas effacé tout de suite : il va dans la <strong>Corbeille</strong> pendant <strong>7 jours</strong>. Pendant ce temps il ne compte nulle part (listes, totaux, statistiques). Bouton <strong>Restaurer</strong> pour le récupérer {% if not admin %}(vos colis uniquement){% endif %}. Au bout de 7 jours, il est supprimé définitivement avec ses photos.{% if admin %} L'administrateur peut aussi le supprimer définitivement tout de suite (<i class="fas fa-times text-danger"></i>).{% endif %}</p>
+            {{ a.capture('corbeille', 'La corbeille') }}
+
+            {{ a.section('performances', 'fa-medal', 'Mes performances') }}
+            <p>Sur le tableau de bord : vos colis et le chiffre d'affaires du mois, la comparaison avec le mois dernier et votre total.</p>
+            {{ a.capture('mes-performances', 'Mes performances') }}
+        </div></div>
+        {% endif %}
+
+        {# ============================ REPRÉSENTANTS ============================ #}
+        {% if rep %}
+        <div class="card"><div class="card-body">
+            {{ a.section('guichet', 'fa-qrcode', 'Le guichet agence') }}
+            <p>Le destinataire se présente : scannez le <strong>QR code</strong> de son reçu, ou tapez son <strong>code de retrait</strong> ou le <strong>numéro de suivi</strong>. Le colis s'affiche avec ce qu'il reste à payer.</p>
+            {{ a.capture('guichet', 'Guichet agence') }}
+
+            {{ a.section('encaisser', 'fa-cash-register', 'Encaisser') }}
+            <ol>
+                <li>Sur la fiche du colis (arrivé), bloc <strong>Encaisser</strong> : le montant restant est prérempli.</li>
+                <li>Choisissez le <strong>mode</strong> (espèces, Orange Money, Wave…) et la référence de la transaction.</li>
+                <li>Les montants sont en euros avec leur <strong>équivalent en francs CFA</strong> (1 € = 655,957 FCFA) ; le montant saisi est converti en direct.</li>
+            </ol>
+            {{ a.capture('representant-colis', 'Fiche colis vue par le représentant (euros et FCFA)') }}
+            {{ a.capture('encaissement', 'Encaissement avec conversion en FCFA') }}
+
+            {{ a.section('remettre', 'fa-hand-holding', 'Remettre un colis') }}
+            <p>Quand le colis est <strong>entièrement payé</strong> : saisissez le nom de la personne qui le récupère et le <strong>code de retrait</strong> qu'elle présente (reçu par SMS ou inscrit sur son reçu). Vous ne voyez pas ce code à l'écran : c'est une sécurité. Après 5 codes faux, il faut attendre 15 minutes.</p>
+
+            {{ a.section('encaissements', 'fa-wallet', 'Mes encaissements') }}
+            <p>Tout ce que vous avez encaissé : aujourd'hui, cette semaine, ce mois, par mode de paiement, avec les colis remis. Bouton <i class="fas fa-file-pdf text-primary"></i> : <strong>relevé PDF</strong> (en euros et FCFA, avec signatures) à remettre en fin de mois ; <i class="fas fa-file-excel text-primary"></i> : export Excel.</p>
+            {{ a.capture('mes-encaissements', 'Mes encaissements') }}
+        </div></div>
+        {% endif %}
+
+        {# ============================ ADMINISTRATION ============================ #}
+        {% if admin %}
+        <div class="card"><div class="card-body">
+            {{ a.section('expeditions', 'fa-shipping-fast', 'Les expéditions') }}
+            <ol>
+                <li><strong>Nouvelle expédition</strong> : destination (Mali, Sénégal), transport (conteneur, avion/GP), date de départ.</li>
+                <li>Sur sa fiche, <strong>ajoutez les colis</strong> en préparation.</li>
+                <li>Changez le <strong>statut</strong> (expédiée, en transit, arrivée…) : tous ses colis suivent, et les destinataires sont prévenus par SMS si la case est cochée.</li>
+                <li><strong>Manifeste</strong> : liste Excel des colis de l'expédition.</li>
+            </ol>
+            {{ a.capture('expeditions', 'Liste des expéditions') }}
+            {{ a.capture('expedition-fiche', 'Fiche d\'une expédition') }}
+
+            {{ a.section('rentabilite', 'fa-chart-line', 'Charges et marge des expéditions') }}
+            <p>Sur la fiche d'une expédition, bloc <strong>Rentabilité</strong> : ajoutez chaque <strong>dépense</strong> (fret, douane, transport, manutention…). La <strong>marge</strong> = chiffre d'affaires des colis (tarifs − remises) − charges, avec le badge <span class="badge badge-success">Gain</span> ou <span class="badge badge-danger">Perte</span>.</p>
+            {{ a.capture('expedition-rentabilite', 'Rentabilité d\'une expédition') }}
+            <p>Bouton <strong>Rentabilité</strong> (liste des expéditions) : toutes les expéditions de l'année, les totaux et l'export Excel. Le tableau de bord en montre le résumé.</p>
+            {{ a.capture('rentabilite', 'Rentabilité de toutes les expéditions') }}
+
+            {{ a.section('paiements', 'fa-euro-sign', 'Les paiements') }}
+            <p>Tous les encaissements, filtrables par dates, mode, caissier et expédition, avec les totaux. Un paiement saisi par erreur s'annule depuis la fiche du colis.</p>
+            {{ a.capture('paiements', 'Paiements') }}
+
+            {{ a.section('bonus', 'fa-gift', 'Le bonus fidélité') }}
+            <p><strong>Administration → Barème des bonus</strong> : pour chaque palier, le total des articles à atteindre et le bonus gagné par le client. Ajoutez, modifiez ou retirez des paliers ; le <strong>simulateur</strong> montre le bonus d'un colis. Le nouveau barème s'applique aux colis enregistrés ou modifiés ensuite. <strong>Suivi des bonus</strong> : gains, utilisations et soldes des clients.</p>
+            {{ a.capture('bareme-bonus', 'Barème du bonus fidélité') }}
+
+            {{ a.section('utilisateurs', 'fa-users-cog', 'Utilisateurs et rôles') }}
+            <ul>
+                <li><strong>Agent de ramassage</strong> : ajoute les clients et les colis, ne voit que ses colis, n'encaisse pas.</li>
+                <li><strong>Représentant</strong> (avec son pays) : voit les colis arrivés dans son pays, encaisse et remet les colis, a sa page « Mes encaissements ».</li>
+                <li><strong>Administrateur</strong> : tout, y compris expéditions, paiements, bonus, utilisateurs et journal.</li>
+            </ul>
+            <p>Désactivez un compte plutôt que de le supprimer : l'historique reste attribué.</p>
+            {{ a.capture('utilisateurs', 'Utilisateurs') }}
+
+            {{ a.section('journal', 'fa-history', 'Le journal d\'activité') }}
+            <p>Qui a fait quoi et quand : ajouts, modifications (avant → après), suppressions, connexions et échecs de connexion, exports. Filtres par personne, type et dates.</p>
+            {{ a.capture('journal', 'Journal d\'activité') }}
+
+            {{ a.section('automatique', 'fa-robot', 'Ce que l\'application fait toute seule') }}
+            <ul>
+                <li><strong>Chaque nuit</strong> : rapport d'activité par e-mail aux administrateurs (avec PDF), seulement s'il y a eu de l'activité ; rapports hebdomadaire et mensuel aussi.</li>
+                <li><strong>Chaque nuit</strong> : les colis de plus de 7 jours dans la corbeille sont supprimés définitivement.</li>
+                <li><strong>Chaque mois</strong> : les photos des colis remis depuis plus de 5 mois sont supprimées (le colis reste).</li>
+                <li>SMS au destinataire à l'arrivée du colis, rappels des ramassages.</li>
+            </ul>
+        </div></div>
+        {% endif %}
+
+        {# ============================ FAQ ============================ #}
+        <div class="card"><div class="card-body">
+            {{ a.section('faq', 'fa-question-circle', 'Questions fréquentes') }}
+            <div class="accordion" id="faq-liste">
+                {% set questions = [
+                    ['J\'ai oublié mon mot de passe.', 'Demandez à un administrateur de le réinitialiser dans Administration → Utilisateurs, puis changez-le dans Mon profil.', true],
+                    ['Le destinataire a perdu son code de retrait.', 'Le code est sur le reçu de l\'expéditeur et dans le SMS d\'arrivée. L\'expéditeur peut le lui renvoyer par WhatsApp depuis la fiche du colis. Un administrateur voit aussi le code.', true],
+                    ['Je ne trouve pas un colis dans la liste.', 'Les colis déjà récupérés sont masqués par défaut : tapez son numéro de suivi, le nom ou le téléphone dans la recherche. S\'il a été supprimé, il est peut-être dans la Corbeille (7 jours).', true],
+                    ['J\'ai supprimé un colis par erreur.', 'Menu Corbeille → Restaurer, dans les 7 jours.', agent],
+                    ['Je ne peux pas modifier un colis.', 'Un colis se modifie tant qu\'il est en préparation et qu\'aucun paiement n\'est enregistré. Ensuite, demandez à un administrateur.', agent],
+                    ['Les montants en francs CFA sont-ils exacts ?', 'Oui : la parité est fixe, 1 € = 655,957 FCFA. Les montants sont arrondis au franc.', rep],
+                    ['L\'e-mail du reçu ne part pas.', 'L\'envoi d\'e-mails dépend de l\'hébergement. Utilisez WhatsApp en attendant et prévenez l\'administrateur.', agent],
+                    ['L\'application mobile ne s\'installe pas.', 'Sur Android, autorisez l\'installation depuis le navigateur (« sources inconnues ») puis relancez le fichier téléchargé depuis la page Application mobile.', true],
+                ] %}
+                {% for q in questions|filter(q => q[2]) %}
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="q{{ loop.index }}">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#r{{ loop.index }}" aria-expanded="false" aria-controls="r{{ loop.index }}">{{ q[0] }}</button>
+                    </h2>
+                    <div id="r{{ loop.index }}" class="accordion-collapse collapse" aria-labelledby="q{{ loop.index }}" data-bs-parent="#faq-liste">
+                        <div class="accordion-body">{{ q[1] }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <p class="mt-3 mb-0 text-muted">Une autre question ? Contactez {{ societe.email|default('l\'administrateur') }}{% if societe.telephone|default(null) %} ou le {{ societe.telephone }}{% endif %}.</p>
+        </div></div>
+    </div>
+</div>
+{% endblock %}

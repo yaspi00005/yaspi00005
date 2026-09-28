@@ -96,3 +96,14 @@ ol.etapes li { margin-bottom: .35rem; }
 
 /* Équivalent en francs CFA sous un montant en euros (pages du représentant). */
 .montant-fcfa { display: block; font-size: .75em; font-weight: 500; color: #7e7e7e; white-space: nowrap; }
+
+/* Page « Besoin d'aide ? » */
+.aide .card-body > p, .aide li { font-size: 15px; line-height: 1.6; }
+.aide-titre { font-size: 1.35rem; margin: 2rem 0 .8rem; scroll-margin-top: 110px; }
+.aide .card-body > .aide-titre:first-child { margin-top: 0; }
+.capture-aide { margin: 1rem 0 1.5rem; }
+.capture-aide img { display: block; max-width: 100%; height: auto; border-radius: .75rem; border: 1px solid #e6e6e6; box-shadow: 0 6px 20px rgba(0, 0, 0, .07); }
+.capture-aide figcaption { font-size: 12px; color: #7e7e7e; margin-top: .4rem; text-align: center; }
+.aide-sommaire { position: sticky; top: 110px; }
+.aide-sommaire a { display: block; padding: .2rem 0; color: #3e4954; }
+.aide-sommaire a:hover { color: var(--primary, #00A15D); }

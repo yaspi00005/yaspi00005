@@ -49,6 +49,7 @@
             {% endif %}
         </ul>
         <ul class="metismenu">
+            {{ m.item(route, ['app_aide'], path('app_aide'), 'fas fa-life-ring', "Besoin d'aide ?") }}
             {{ m.item(route, ['app_application'], path('app_application'), 'fab fa-android', 'Application mobile') }}
         </ul>
         {% if is_granted('ROLE_RAMASSAGE') %}
