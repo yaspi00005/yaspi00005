@@ -6,6 +6,7 @@ use App\Entity\Article;
 use App\Entity\Client;
 use App\Entity\Colis;
 use App\Entity\Expedition;
+use App\Entity\PalierBonus;
 use App\Entity\Ramassage;
 use App\Entity\TypeMarchandise;
 use App\Entity\User;
@@ -14,6 +15,7 @@ use App\Enum\ModePaiement;
 use App\Enum\ModeTransport;
 use App\Enum\StatutExpedition;
 use App\Enum\StatutRamassage;
+use App\Service\BonusFidelite;
 use App\Service\ColisService;
 use App\Service\ExpeditionService;
 use App\Service\PaiementService;
@@ -38,6 +40,11 @@ class AppFixtures extends Fixture
     public function load(ObjectManager $manager): void
     {
         mt_srand(42);
+
+        foreach (BonusFidelite::BAREME_INITIAL as [$seuil, $bonus]) {
+            $manager->persist(new PalierBonus($seuil * 100, $bonus * 100));
+        }
+        $manager->flush();
 
         $admin = $this->user($manager, 'admin', 'Awa', 'Diallo', User::ROLE_ADMIN);
         $agent = $this->user($manager, 'ramassage', 'Moussa', 'Traoré', User::ROLE_RAMASSAGE);

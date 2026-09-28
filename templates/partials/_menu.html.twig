@@ -39,7 +39,8 @@
                     </a>
                     <ul aria-expanded="false">
                         <li><a href="{{ path('admin_user_index') }}" class="{{ route starts with 'admin_user' ? 'mm-active' }}">Utilisateurs</a></li>
-                        <li><a href="{{ path('admin_bonus_index') }}" class="{{ route starts with 'admin_bonus' ? 'mm-active' }}">Suivi des bonus</a></li>
+                        <li><a href="{{ path('admin_bonus_index') }}" class="{{ route == 'admin_bonus_index' ? 'mm-active' }}">Suivi des bonus</a></li>
+                        <li><a href="{{ path('admin_bonus_bareme') }}" class="{{ route == 'admin_bonus_bareme' ? 'mm-active' }}">Barème des bonus</a></li>
                         <li><a href="{{ path('admin_type_index') }}" class="{{ route starts with 'admin_type' ? 'mm-active' }}">Types de marchandises</a></li>
                         <li><a href="{{ path('admin_notification_index') }}" class="{{ route starts with 'admin_notification' ? 'mm-active' }}">SMS &amp; e-mails envoyés</a></li>
                         <li><a href="{{ path('admin_journal_index') }}" class="{{ route starts with 'admin_journal' ? 'mm-active' }}">Journal d'activité</a></li>

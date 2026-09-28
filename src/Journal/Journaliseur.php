@@ -10,6 +10,7 @@ use App\Entity\Expedition;
 use App\Entity\Journal;
 use App\Entity\MouvementBonus;
 use App\Entity\Paiement;
+use App\Entity\PalierBonus;
 use App\Entity\Ramassage;
 use App\Entity\TypeMarchandise;
 use App\Entity\User;
@@ -43,6 +44,7 @@ final class Journaliseur
         MouvementBonus::class => 'Bonus',
         User::class => 'Utilisateur',
         TypeMarchandise::class => 'Type de marchandise',
+        PalierBonus::class => 'Barème du bonus',
     ];
 
     /** Champs jamais journalisés : secrets (mot de passe, jeton de suivi, code de retrait), horodatages techniques, valeurs recalculées. */
@@ -52,7 +54,7 @@ final class Journaliseur
     ];
 
     /** Montants en centimes. */
-    private const MONTANTS = ['frais', 'remise', 'montant', 'prix', 'prixUnitaire'];
+    private const MONTANTS = ['frais', 'remise', 'montant', 'prix', 'prixUnitaire', 'seuil'];
 
     private const LIBELLES_CHAMPS = [
         'numeroSuivi' => 'N° de suivi', 'codeRetrait' => 'Code de retrait', 'destinataireNom' => 'Destinataire',
@@ -68,7 +70,7 @@ final class Journaliseur
         'datePrevue' => 'Date prévue', 'roles' => 'Rôle', 'actif' => 'Actif', 'username' => 'Identifiant',
         'numero' => 'Numéro', 'modeTransport' => 'Transport', 'destination' => 'Destination',
         'dateDepart' => 'Départ', 'dateArriveePrevue' => 'Arrivée prévue', 'dateArrivee' => 'Arrivée',
-        'libelle' => 'Libellé', 'prixUnitaire' => 'Tarif au kg', 'categorie' => 'Type de dépense', 'auteur' => 'Saisie par', 'supprimeLe' => 'Mis à la corbeille le', 'supprimePar' => 'Mis à la corbeille par',
+        'libelle' => 'Libellé', 'prixUnitaire' => 'Tarif au kg', 'categorie' => 'Type de dépense', 'auteur' => 'Saisie par', 'supprimeLe' => 'Mis à la corbeille le', 'seuil' => 'Seuil', 'supprimePar' => 'Mis à la corbeille par',
     ];
 
     private bool $actif = true;

@@ -1,0 +1,87 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Barème du bonus fidélité{% endblock %}
+
+{% block body %}
+<div class="row justify-content-center">
+    <div class="col-xl-8">
+        <div class="card">
+            <div class="card-header flex-wrap gap-2">
+                <h4 class="card-title"><i class="fas fa-gift text-primary me-2"></i>Barème du bonus fidélité</h4>
+                <a href="{{ path('admin_bonus_index') }}" class="btn btn-light btn-sm btn-rounded">Suivi des bonus</a>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">Quand le total des articles d'un colis atteint un seuil, le client gagne le bonus correspondant (le plus haut seuil atteint s'applique). Le barème vaut pour les colis enregistrés ou modifiés à partir de maintenant ; les bonus déjà gagnés ne changent pas. Sans aucun palier, plus aucun bonus n'est attribué.</p>
+
+                {% for e in erreurs %}<div class="alert alert-danger py-2">{{ e }}</div>{% endfor %}
+
+                <form method="post" id="bareme" data-multi-submit>
+                    <input type="hidden" name="_token" value="{{ csrf_token('bareme-bonus') }}">
+                    <div class="table-responsive">
+                        <table class="table mb-2">
+                            <thead><tr><th>Total des articles à partir de ({{ app_devise }})</th><th>Bonus gagné ({{ app_devise }})</th><th></th></tr></thead>
+                            <tbody id="paliers">
+                            {% for l in lignes %}
+                                <tr>
+                                    <td><input type="text" inputmode="decimal" name="seuil[]" value="{{ l.seuil }}" class="form-control" aria-label="Seuil"></td>
+                                    <td><input type="text" inputmode="decimal" name="montant[]" value="{{ l.montant }}" class="form-control" aria-label="Bonus"></td>
+                                    <td class="text-end"><button type="button" class="btn btn-danger light btn-sm js-retirer" aria-label="Retirer ce palier"><i class="fas fa-times"></i></button></td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <template id="modele-palier">
+                        <tr>
+                            <td><input type="text" inputmode="decimal" name="seuil[]" class="form-control" placeholder="ex. 1600" aria-label="Seuil"></td>
+                            <td><input type="text" inputmode="decimal" name="montant[]" class="form-control" placeholder="ex. 160" aria-label="Bonus"></td>
+                            <td class="text-end"><button type="button" class="btn btn-danger light btn-sm js-retirer" aria-label="Retirer ce palier"><i class="fas fa-times"></i></button></td>
+                        </tr>
+                    </template>
+                    <div class="d-flex flex-wrap justify-content-between gap-2">
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="ajouter-palier"><i class="fas fa-plus me-1"></i> Ajouter un palier</button>
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-check me-1"></i> Enregistrer le barème</button>
+                    </div>
+                </form>
+
+                <hr>
+                <h5>Simulateur</h5>
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <span>Un colis de</span>
+                    <input type="text" inputmode="decimal" id="simulation" class="form-control" style="max-width:140px" placeholder="850" aria-label="Total du colis">
+                    <span>{{ app_devise }} rapporte</span>
+                    <strong class="text-primary fs-18" id="resultat-simulation">—</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+    (function () {
+        var corps = document.getElementById('paliers');
+        var nombre = function (v) { var n = parseFloat(String(v).replace(/\s/g, '').replace(',', '.')); return isNaN(n) ? null : n; };
+        document.getElementById('ajouter-palier').addEventListener('click', function () {
+            corps.appendChild(document.getElementById('modele-palier').content.cloneNode(true));
+            corps.lastElementChild.querySelector('input').focus();
+        });
+        corps.addEventListener('click', function (e) {
+            var b = e.target.closest('.js-retirer');
+            if (b) { b.closest('tr').remove(); simuler(); }
+        });
+        var simuler = function () {
+            var total = nombre(document.getElementById('simulation').value), bonus = 0;
+            corps.querySelectorAll('tr').forEach(function (tr) {
+                var s = nombre(tr.querySelector('[name="seuil[]"]').value), m = nombre(tr.querySelector('[name="montant[]"]').value);
+                if (total !== null && s !== null && m !== null && total >= s && m > bonus) { bonus = m; }
+            });
+            document.getElementById('resultat-simulation').textContent = total === null ? '—' : bonus.toLocaleString('fr-FR') + ' {{ app_devise }} de bonus';
+        };
+        document.getElementById('simulation').addEventListener('input', simuler);
+        corps.addEventListener('input', simuler);
+    })();
+    </script>
+{% endblock %}

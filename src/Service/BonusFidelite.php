@@ -4,7 +4,9 @@ namespace App\Service;
 
 use App\Entity\Colis;
 use App\Entity\MouvementBonus;
+use App\Entity\PalierBonus;
 use App\Repository\MouvementBonusRepository;
+use App\Repository\PalierBonusRepository;
 use Doctrine\ORM\EntityManagerInterface;
 
 /**
@@ -15,8 +17,11 @@ use Doctrine\ORM\EntityManagerInterface;
  */
 final class BonusFidelite
 {
-    /** Barème en euros : [total minimum, bonus]. Le premier seuil atteint (en partant du haut) s'applique. */
-    public const BAREME = [
+    /**
+     * Barème d'origine en euros : [total minimum, bonus]. Il sert à remplir le barème en base
+     * (PalierBonus), que l'administrateur modifie ensuite dans Administration → Barème des bonus.
+     */
+    public const BAREME_INITIAL = [
         [1500, 150],
         [1400, 120],
         [1300, 110],
@@ -36,19 +41,30 @@ final class BonusFidelite
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly MouvementBonusRepository $mouvements,
+        private readonly PalierBonusRepository $paliers,
     ) {
     }
 
-    /** Bonus (centimes) pour un total d'articles (centimes). */
+    /** @var list<array{int, int}>|null barème en centimes, lu une fois par requête */
+    private ?array $bareme = null;
+
+    /** Bonus (centimes) pour un total d'articles (centimes) : le plus haut seuil atteint s'applique. */
     public function bonusPour(int $totalCentimes): int
     {
-        foreach (self::BAREME as [$seuil, $bonus]) {
-            if ($totalCentimes >= $seuil * 100) {
-                return $bonus * 100;
+        $this->bareme ??= array_map(fn (PalierBonus $p) => [$p->getSeuil(), $p->getMontant()], $this->paliers->bareme());
+        foreach ($this->bareme as [$seuil, $bonus]) {
+            if ($totalCentimes >= $seuil) {
+                return $bonus;
             }
         }
 
         return 0;
+    }
+
+    /** À appeler après une modification du barème. */
+    public function oublierBareme(): void
+    {
+        $this->bareme = null;
     }
 
     public function gainDuColis(Colis $colis): ?MouvementBonus
