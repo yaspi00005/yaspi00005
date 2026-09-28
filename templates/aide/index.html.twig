@@ -99,6 +99,7 @@
             </div>
 
             {{ a.section('profil', 'fa-user-circle', 'Mon profil et mon mot de passe') }}
+            <p><strong>Première connexion</strong> : si votre compte a été créé avec le mot de passe provisoire <strong>{{ constant('App\\Entity\\User::MOT_DE_PASSE_PROVISOIRE') }}</strong>, l'application vous demande d'abord de <strong>choisir votre propre mot de passe</strong> et d'<strong>indiquer votre adresse e-mail</strong>. Tant que ce n'est pas fait, les autres pages restent fermées.</p>
             <p>Menu en haut à droite (vos initiales) → <strong>Mon profil</strong>. Le mot de passe doit faire <strong>au moins 10 caractères</strong> et ne pas être trop simple ni déjà connu des pirates : l'application refuse sinon. Ne le communiquez à personne.</p>
             <p>Le bouton <i class="fas fa-bell text-primary"></i> active les <strong>notifications</strong> dans le navigateur (rappels des ramassages).</p>
         </div></div>
@@ -213,6 +214,7 @@
                 <li><strong>Représentant</strong> (avec son pays) : voit les colis arrivés dans son pays, encaisse et remet les colis, a sa page « Mes encaissements ».</li>
                 <li><strong>Administrateur</strong> : tout, y compris expéditions, paiements, bonus, utilisateurs et journal.</li>
             </ul>
+            <p><strong>Nouveau compte</strong> : laissez cochée la case « mot de passe provisoire » ; communiquez l'identifiant et le mot de passe <strong>{{ constant('App\\Entity\\User::MOT_DE_PASSE_PROVISOIRE') }}</strong> à la personne. À sa première connexion, elle devra le changer et donner son adresse e-mail. La même case, sur un compte existant, réinitialise un mot de passe oublié.</p>
             <p>Désactivez un compte plutôt que de le supprimer : l'historique reste attribué.</p>
             {{ a.capture('utilisateurs', 'Utilisateurs') }}
 
@@ -235,7 +237,7 @@
             {{ a.section('faq', 'fa-question-circle', 'Questions fréquentes') }}
             <div class="accordion" id="faq-liste">
                 {% set questions = [
-                    ['J\'ai oublié mon mot de passe.', 'Demandez à un administrateur de le réinitialiser dans Administration → Utilisateurs, puis changez-le dans Mon profil.', true],
+                    ['J\'ai oublié mon mot de passe.', 'Demandez à un administrateur de le réinitialiser (mot de passe provisoire) dans Administration → Utilisateurs. À la connexion suivante, l\'application vous demandera d\'en choisir un nouveau.', true],
                     ['Le destinataire a perdu son code de retrait.', 'Le code est sur le reçu de l\'expéditeur et dans le SMS d\'arrivée. L\'expéditeur peut le lui renvoyer par WhatsApp depuis la fiche du colis. Un administrateur voit aussi le code.', true],
                     ['Je ne trouve pas un colis dans la liste.', 'Les colis déjà récupérés sont masqués par défaut : tapez son numéro de suivi, le nom ou le téléphone dans la recherche. S\'il a été supprimé, il est peut-être dans la Corbeille (7 jours).', true],
                     ['J\'ai supprimé un colis par erreur.', 'Menu Corbeille → Restaurer, dans les 7 jours.', agent],

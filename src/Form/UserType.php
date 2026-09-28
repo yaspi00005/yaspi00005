@@ -21,10 +21,8 @@ class UserType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
+        // Mot de passe vide accepté si « mot de passe provisoire » est coché (contrôlé par le contrôleur).
         $passwordConstraints = self::reglesMotDePasse();
-        if ($options['creation']) {
-            $passwordConstraints[] = new Assert\NotBlank(message: 'Choisissez un mot de passe.');
-        }
 
         $builder
             ->add('prenom', TextType::class, ['label' => 'Prénom'])
@@ -42,10 +40,19 @@ class UserType extends AbstractType
                 'help' => 'Un représentant ne voit que les expéditions vers son pays.',
             ])
             ->add('actif', CheckboxType::class, ['label' => 'Compte actif', 'required' => false])
+            ->add('provisoire', CheckboxType::class, [
+                'mapped' => false,
+                'required' => false,
+                'data' => $options['creation'],
+                'label' => $options['creation']
+                    ? 'Donner le mot de passe provisoire « '.User::MOT_DE_PASSE_PROVISOIRE.' »'
+                    : 'Réinitialiser avec le mot de passe provisoire « '.User::MOT_DE_PASSE_PROVISOIRE.' »',
+                'help' => 'À la première connexion, l\'utilisateur devra le changer et indiquer son adresse e-mail. Sinon, choisissez un mot de passe ci-dessous.',
+            ])
             ->add('plainPassword', RepeatedType::class, [
                 'type' => PasswordType::class,
                 'mapped' => false,
-                'required' => $options['creation'],
+                'required' => false,
                 'first_options' => ['label' => 'Mot de passe', 'attr' => ['autocomplete' => 'new-password'], 'help' => $options['creation'] ? null : 'Laisser vide pour ne pas changer.'],
                 'second_options' => ['label' => 'Confirmation', 'attr' => ['autocomplete' => 'new-password']],
                 'invalid_message' => 'Les mots de passe ne correspondent pas.',

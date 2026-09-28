@@ -25,6 +25,11 @@ final class LoginListener
     {
         $user = $event->getUser();
         if ($user instanceof User) {
+            // Connexion par le formulaire avec le mot de passe provisoire : il faudra le changer (ProfilObligatoireListener).
+            $motDePasse = $event->getRequest()->request->get('_password');
+            if (\is_string($motDePasse) && hash_equals(User::MOT_DE_PASSE_PROVISOIRE, $motDePasse)) {
+                $user->setMotDePasseProvisoire(true);
+            }
             $user->setDerniereConnexion(new \DateTimeImmutable());
             $this->em->flush();
             $this->journal->ecrire($this->em, Journal::CONNEXION, 'Connexion', 'Utilisateur', $user->getId(), utilisateur: $user);
