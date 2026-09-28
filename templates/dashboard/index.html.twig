@@ -260,24 +260,24 @@
 {% endblock %}
 
 {% block javascripts %}
-<script>
+<script nonce="{{ csp_nonce() }}">
 (function () {
     const vert = '#00A15D', options = { legend: { display: false }, maintainAspectRatio: true, scales: { yAxes: [{ ticks: { beginAtZero: true, precision: 0 } }], xAxes: [{ gridLines: { display: false } }] } };
     new Chart(document.getElementById('chart-mois'), {
         type: 'bar',
-        data: { labels: {{ chartMois.labels|json_encode|raw }}, datasets: [{ label: 'Colis', data: {{ chartMois.data|json_encode|raw }}, backgroundColor: vert, borderRadius: 6, barPercentage: .55 }] },
+        data: { labels: {{ donnees_js(chartMois.labels) }}, datasets: [{ label: 'Colis', data: {{ donnees_js(chartMois.data) }}, backgroundColor: vert, borderRadius: 6, barPercentage: .55 }] },
         options: options
     });
     document.getElementById('chart-encaissements') && new Chart(document.getElementById('chart-encaissements'), {
         type: 'line',
-        data: { labels: {{ chartEncaissements.labels|json_encode|raw }}, datasets: [{ label: 'Encaissé', data: {{ chartEncaissements.data|json_encode|raw }}, borderColor: vert, backgroundColor: 'rgba(0,161,93,.12)', pointRadius: 2, lineTension: .35, fill: true }] },
+        data: { labels: {{ donnees_js(chartEncaissements.labels) }}, datasets: [{ label: 'Encaissé', data: {{ donnees_js(chartEncaissements.data) }}, borderColor: vert, backgroundColor: 'rgba(0,161,93,.12)', pointRadius: 2, lineTension: .35, fill: true }] },
         options: options
     });
     new Chart(document.getElementById('chart-statuts'), {
         type: 'doughnut',
         data: {
-            labels: {{ statuts|map(s => s.label)|json_encode|raw }},
-            datasets: [{ data: {{ statuts|map(s => parStatut[s.value]|default(0))|json_encode|raw }}, backgroundColor: ['#FFAB2D', '#3e4954', '#58bad7', '#FF5E4B', '#00A15D', '#09BD3C'], borderWidth: 0 }]
+            labels: {{ donnees_js(statuts|map(s => s.label)) }},
+            datasets: [{ data: {{ donnees_js(statuts|map(s => parStatut[s.value]|default(0))) }}, backgroundColor: ['#FFAB2D', '#3e4954', '#58bad7', '#FF5E4B', '#00A15D', '#09BD3C'], borderWidth: 0 }]
         },
         options: { cutoutPercentage: 68, legend: { position: 'bottom', labels: { boxWidth: 12 } } }
     });

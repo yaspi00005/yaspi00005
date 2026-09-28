@@ -7,6 +7,24 @@
         $(this).select2({ width: '100%', language: { noResults: () => 'Aucun résultat' } });
     });
 
+    // Envoi automatique du formulaire au changement (remplace onchange="this.form.submit()").
+    document.addEventListener('change', function (e) {
+        const champ = e.target;
+        if (champ instanceof Element && champ.hasAttribute('data-autosubmit') && champ.form) {
+            champ.form.submit();
+        }
+    });
+
+    // Case « tout cocher » : coche/décoche toutes les cases visées par le sélecteur data-cocher-tout.
+    document.addEventListener('change', function (e) {
+        const champ = e.target;
+        if (champ instanceof HTMLInputElement && champ.hasAttribute('data-cocher-tout')) {
+            document.querySelectorAll(champ.getAttribute('data-cocher-tout')).forEach(function (c) {
+                c.checked = champ.checked;
+            });
+        }
+    });
+
     /**
      * Fenêtre de confirmation (remplace window.confirm). Retourne une promesse : true si l'utilisateur confirme.
      * options : message, titre, bouton (libellé du bouton), type ('danger', 'warning' ou 'primary'), alerte (texte en rouge).

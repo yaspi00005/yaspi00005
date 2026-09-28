@@ -45,9 +45,9 @@ class UserType extends AbstractType
                 'required' => false,
                 'data' => $options['creation'],
                 'label' => $options['creation']
-                    ? 'Donner le mot de passe provisoire « '.User::MOT_DE_PASSE_PROVISOIRE.' »'
-                    : 'Réinitialiser avec le mot de passe provisoire « '.User::MOT_DE_PASSE_PROVISOIRE.' »',
-                'help' => 'À la première connexion, l\'utilisateur devra le changer et indiquer son adresse e-mail. Sinon, choisissez un mot de passe ci-dessous.',
+                    ? 'Générer un mot de passe provisoire'
+                    : 'Réinitialiser avec un mot de passe provisoire',
+                'help' => 'Un mot de passe unique est généré et affiché après l\'enregistrement (une seule fois). À la première connexion, l\'utilisateur devra le changer et indiquer son adresse e-mail. Sinon, choisissez un mot de passe ci-dessous.',
             ])
             ->add('plainPassword', RepeatedType::class, [
                 'type' => PasswordType::class,

@@ -309,7 +309,7 @@
 
 {% block javascripts %}
     {{ parent() }}
-    <script>
+    <script nonce="{{ csp_nonce() }}">
     // Équivalent en francs CFA du montant saisi (représentants).
     document.querySelectorAll('[data-fcfa-pour]').forEach(function (aide) {
         var champ = document.getElementById(aide.dataset.fcfaPour), taux = parseFloat(aide.dataset.taux);

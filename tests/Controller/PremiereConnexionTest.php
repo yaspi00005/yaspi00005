@@ -8,8 +8,9 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 /**
- * Première connexion avec le mot de passe provisoire « Sotrama2025 » : l'utilisateur doit le changer
- * et indiquer son adresse e-mail avant d'accéder au reste de l'application.
+ * Première connexion avec le mot de passe provisoire (unique, généré à la création du compte et
+ * affiché une seule fois à l'administrateur) : l'utilisateur doit le changer et indiquer son
+ * adresse e-mail avant d'accéder au reste de l'application.
  */
 final class PremiereConnexionTest extends WebTestCase
 {
@@ -27,11 +28,17 @@ final class PremiereConnexionTest extends WebTestCase
         $this->assertTrue($form['user[provisoire]']->hasValue(), 'Mot de passe provisoire proposé par défaut.');
         $client->submit($form);
         $this->assertResponseRedirects('/admin/utilisateurs');
+
+        // Le mot de passe provisoire généré est affiché une seule fois à l'administrateur.
+        $crawler = $client->followRedirect();
+        $this->assertMatchesRegularExpression('/[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}/', $crawler->text());
+        preg_match('/[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}/', $crawler->text(), $m);
+        $provisoire = $m[0];
         $client->restart(); // déconnexion
 
-        // Connexion avec Sotrama2025 : toutes les pages renvoient vers le profil.
+        // Connexion avec le mot de passe provisoire : toutes les pages renvoient vers le profil.
         $crawler = $client->request('GET', '/connexion');
-        $client->submit($crawler->selectButton('Se connecter')->form(['_username' => 'nouvel.agent', '_password' => User::MOT_DE_PASSE_PROVISOIRE]));
+        $client->submit($crawler->selectButton('Se connecter')->form(['_username' => 'nouvel.agent', '_password' => $provisoire]));
         $client->request('GET', '/colis');
         $this->assertResponseRedirects('/profil');
         $crawler = $client->followRedirect();
@@ -40,17 +47,17 @@ final class PremiereConnexionTest extends WebTestCase
         $client->request('GET', '/aide');
         $this->assertResponseIsSuccessful();
 
-        // Le mot de passe provisoire ne peut pas être gardé.
+        // Un mot de passe trop simple est refusé.
         $client->submit($crawler->filter('form[name="mot_de_passe"]')->form([
-            'mot_de_passe[actuel]' => User::MOT_DE_PASSE_PROVISOIRE,
-            'mot_de_passe[nouveau][first]' => User::MOT_DE_PASSE_PROVISOIRE,
-            'mot_de_passe[nouveau][second]' => User::MOT_DE_PASSE_PROVISOIRE,
+            'mot_de_passe[actuel]' => $provisoire,
+            'mot_de_passe[nouveau][first]' => 'azertyuiop',
+            'mot_de_passe[nouveau][second]' => 'azertyuiop',
         ]));
-        $this->assertResponseStatusCodeSame(422, 'Refusé (trop simple, et identique au mot de passe provisoire).');
+        $this->assertResponseStatusCodeSame(422, 'Refusé (mot de passe trop simple).');
 
         $crawler = $client->request('GET', '/profil');
         $client->submit($crawler->filter('form[name="mot_de_passe"]')->form([
-            'mot_de_passe[actuel]' => User::MOT_DE_PASSE_PROVISOIRE,
+            'mot_de_passe[actuel]' => $provisoire,
             'mot_de_passe[nouveau][first]' => 'Colis-Bamako-2026!',
             'mot_de_passe[nouveau][second]' => 'Colis-Bamako-2026!',
         ]));

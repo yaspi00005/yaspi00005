@@ -4,6 +4,7 @@ namespace App\Twig;
 
 use App\Entity\Client;
 use App\Entity\User;
+use App\Security\CspNonce;
 use App\Security\IdChiffreur;
 use App\Security\Perimetre;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -23,6 +24,7 @@ final class AppExtension extends AbstractExtension
         private readonly IdChiffreur $chiffreur,
         #[Autowire('%kernel.project_dir%/public/images/logo-sotrama.png')] private readonly string $cheminLogo,
         private readonly Security $security,
+        private readonly CspNonce $cspNonce,
     ) {
     }
 
@@ -36,6 +38,10 @@ final class AppExtension extends AbstractExtension
             new TwigFunction('itineraire', $this->itineraire(...)),
             new TwigFunction('carte_osm', $this->carteOsm(...)),
             new TwigFunction('logo_data_uri', fn () => is_file($this->cheminLogo) ? 'data:image/png;base64,'.base64_encode((string) file_get_contents($this->cheminLogo)) : null),
+            // Nonce CSP à placer sur chaque <script> intégré : <script nonce="{{ csp_nonce() }}">.
+            new TwigFunction('csp_nonce', $this->cspNonce->valeur(...)),
+            // Encode une valeur PHP en JSON sûr pour un <script> (échappe < > & ' " : pas d'évasion de balise).
+            new TwigFunction('donnees_js', $this->donneesJs(...), ['is_safe' => ['html']]),
         ];
     }
 
@@ -80,6 +86,15 @@ final class AppExtension extends AbstractExtension
         return 'waze' === $appli
             ? 'https://waze.com/ul?q='.rawurlencode($adresse).'&navigate=yes'
             : 'https://www.google.com/maps/dir/?api=1&destination='.rawurlencode($adresse);
+    }
+
+    /**
+     * JSON destiné à être injecté dans un <script> : les drapeaux JSON_HEX_* échappent < > & ' "
+     * pour qu'une valeur contenant « </script> » (ou des guillemets) ne puisse pas rompre le bloc.
+     */
+    public function donneesJs(mixed $valeur): string
+    {
+        return json_encode($valeur, \JSON_HEX_TAG | \JSON_HEX_AMP | \JSON_HEX_APOS | \JSON_HEX_QUOT | \JSON_UNESCAPED_UNICODE | \JSON_THROW_ON_ERROR);
     }
 
     /** Carte OpenStreetMap intégrable (iframe) centrée sur un point. */

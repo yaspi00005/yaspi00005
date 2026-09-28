@@ -55,7 +55,7 @@
 
 {% block javascripts %}
 <script src="{{ asset('js/vendor/html5-qrcode/html5-qrcode.min.js') }}"></script>
-<script>
+<script nonce="{{ csp_nonce() }}">
 document.getElementById('btn-scanner').addEventListener('click', function () {
     const zone = document.getElementById('lecteur-qr');
     zone.style.display = 'block';

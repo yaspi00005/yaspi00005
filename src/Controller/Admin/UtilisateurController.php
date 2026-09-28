@@ -65,8 +65,15 @@ class UtilisateurController extends AbstractController
                 $form->get('plainPassword')->get('first')->addError(new \Symfony\Component\Form\FormError('Choisissez un mot de passe, ou cochez le mot de passe provisoire.'));
             } else {
                 if ($form->get('provisoire')->getData()) {
-                    // L'utilisateur devra le changer à sa première connexion (ProfilObligatoireListener).
-                    $user->setPassword($this->hasher->hashPassword($user, User::MOT_DE_PASSE_PROVISOIRE))->setMotDePasseProvisoire(true);
+                    // Mot de passe provisoire unique, montré une seule fois ci-dessous ; l'utilisateur
+                    // devra le changer à sa première connexion (ProfilObligatoireListener).
+                    $provisoire = User::genererMotDePasseProvisoire();
+                    $user->setPassword($this->hasher->hashPassword($user, $provisoire))->setMotDePasseProvisoire(true);
+                    $this->addFlash('info', \sprintf(
+                        'Mot de passe provisoire de « %s » : %s — notez-le et communiquez-le à la personne. Il ne sera plus affiché ; elle devra le changer à sa première connexion.',
+                        $user->getUsername(),
+                        $provisoire,
+                    ));
                 } elseif ($plain = $form->get('plainPassword')->getData()) {
                     $user->setPassword($this->hasher->hashPassword($user, $plain))->setMotDePasseProvisoire(false);
                 }

@@ -71,7 +71,7 @@
 {% endblock %}
 
 {% block javascripts %}
-<script>
+<script nonce="{{ csp_nonce() }}">
 document.addEventListener('DOMContentLoaded', function () {
     const el = document.getElementById('calendrier');
     const calendrier = new FullCalendar.Calendar(el, {
