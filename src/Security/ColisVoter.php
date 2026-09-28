@@ -12,7 +12,7 @@ use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 /**
  * Règles d'accès aux colis (périmètre de chaque rôle : voir Perimetre) :
  *  - VOIR      : admin ; agent de ramassage pour les colis qu'il a enregistrés ;
- *                représentant pour les colis arrivés dans son pays ;
+ *                représentant pour les colis de son pays (listes : seulement les arrivés) ;
  *  - MODIFIER  : admin, ou l'agent qui l'a enregistré tant que le colis est en préparation ;
  *  - ENCAISSER : admin, ou représentant pour les colis arrivés dans son pays ;
  *  - LIVRER    : admin, ou représentant pour les colis arrivés dans son pays.
@@ -50,7 +50,7 @@ final class ColisVoter extends Voter
         return match ($attribute) {
             self::VOIR => $visible,
             self::MODIFIER => $visible && Perimetre::estRamassage($user) && $subject->isSupprimable(),
-            self::ENCAISSER, self::LIVRER => $visible && Perimetre::estRepresentant($user),
+            self::ENCAISSER, self::LIVRER => Perimetre::estRepresentant($user) && Perimetre::peutTraiter($user, $subject),
             default => false,
         };
     }

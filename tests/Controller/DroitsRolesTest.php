@@ -89,8 +89,20 @@ final class DroitsRolesTest extends WebTestCase
         $this->assertSelectorTextNotContains('table', $enRoute->getNumeroSuivi());
         $this->assertSelectorTextNotContains('table', $senegal->getNumeroSuivi());
 
+        // Recherché par son numéro de suivi, un colis de son pays pas encore arrivé s'affiche (consultation seule).
+        $this->client->request('GET', '/colis', ['q' => strtolower($enRoute->getNumeroSuivi())]);
+        $this->assertSelectorTextContains('table', $enRoute->getNumeroSuivi());
         $this->client->request('GET', '/colis/'.$this->hid($enRoute));
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorNotExists('form[action$="/encaisser"]');
+        $this->assertSelectorNotExists('form[action$="/remettre"]');
+        $this->client->request('POST', '/colis/'.$this->hid($enRoute).'/encaisser');
         $this->assertResponseStatusCodeSame(403);
+        // Une recherche partielle ne suffit pas, et les colis d'un autre pays restent invisibles.
+        $this->client->request('GET', '/colis', ['q' => substr($enRoute->getNumeroSuivi(), 0, -1)]);
+        $this->assertSelectorTextNotContains('table', $enRoute->getNumeroSuivi());
+        $this->client->request('GET', '/colis', ['q' => $senegal->getNumeroSuivi()]);
+        $this->assertSelectorTextNotContains('table', $senegal->getNumeroSuivi());
         $this->client->request('GET', '/colis/'.$this->hid($senegal));
         $this->assertResponseStatusCodeSame(403);
 

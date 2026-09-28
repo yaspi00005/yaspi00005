@@ -34,7 +34,7 @@ class ColisRepository extends ServiceEntityRepository
             ->leftJoin('c.agent', 'ag')
             ->orderBy('c.dateReception', 'DESC')->addOrderBy('c.id', 'DESC');
 
-        $this->restreindrePourUtilisateur($qb, $user);
+        Perimetre::appliquer($qb, $user, 'c', $filtres['q'] ?? null);
 
         if (!empty($filtres['q'])) {
             $q = '%'.mb_strtolower(trim($filtres['q'])).'%';
