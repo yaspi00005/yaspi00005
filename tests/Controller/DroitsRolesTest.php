@@ -108,6 +108,20 @@ final class DroitsRolesTest extends WebTestCase
 
         $this->client->request('GET', '/colis/'.$this->hid($arrive));
         $this->assertResponseIsSuccessful();
+        // Reçu PDF téléchargeable par le représentant : montants en FCFA, sans le code de retrait.
+        $this->client->request('GET', '/colis/'.$this->hid($arrive).'/recu.pdf');
+        $this->assertResponseIsSuccessful();
+        $this->assertResponseHeaderSame('Content-Type', 'application/pdf');
+        $html = static::getContainer()->get('twig')->render('pdf/recu.html.twig', [
+            'colis' => $arrive, 'qr' => '', 'photos' => [], 'lien' => 'https://exemple.test', 'bonusGagne' => 0, 'fcfa' => true, 'masquerCode' => true,
+        ]);
+        $this->assertStringContainsString('FCFA', $html);
+        $this->assertStringNotContainsString((string) $arrive->getCodeRetrait(), $html);
+        $this->client->request('GET', '/encaissements', ['du' => '2000-01-01', 'export' => 'pdf']);
+        $this->assertResponseIsSuccessful();
+        $this->assertResponseHeaderSame('Content-Type', 'application/pdf');
+        $this->client->request('GET', '/colis/'.$this->hid($arrive));
+
         // Montants en euros avec leur équivalent en francs CFA (1 € = 655,957 FCFA).
         $this->assertSelectorTextContains('.montant-fcfa', 'FCFA');
         $fcfa = number_format(round($arrive->getFrais() / 100 * 655.957), 0, ',', "\u{202F}");

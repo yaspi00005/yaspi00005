@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<style>
+    @page { margin: 26px 30px 40px; }
+    body { font-family: 'DejaVu Sans', sans-serif; font-size: 10px; color: #222; }
+    .vert { color: #00A15D; }
+    h1 { font-size: 18px; margin: 0; }
+    .petit { font-size: 8.5px; color: #777; }
+    table { width: 100%; border-collapse: collapse; }
+    .liste th { background: #00A15D; color: #fff; padding: 6px; text-align: left; font-size: 9px; }
+    .liste td { border-bottom: 1px solid #e5e5e5; padding: 5px 6px; vertical-align: top; }
+    .liste tr.total td { font-weight: bold; border-top: 2px solid #00A15D; border-bottom: none; }
+    .num { text-align: right; white-space: nowrap; }
+    .cadre { border: 1px solid #cfe6da; background: #f2f8f5; padding: 8px 10px; }
+    .pied { position: fixed; bottom: -26px; left: 0; right: 0; font-size: 8px; color: #999; }
+</style>
+</head>
+<body>
+<div class="pied">{{ app_nom }} — Relevé d'encaissements de {{ caissier.nomComplet }} — édité le {{ genereLe|date('d/m/Y à H:i') }}{% if fcfa %} · 1 € = 655,957 FCFA{% endif %}</div>
+<table>
+    <tr>
+        <td>
+            {% if logo_data_uri() %}<img src="{{ logo_data_uri() }}" alt="" style="height:58px;float:left;margin-right:12px">{% endif %}
+            <h1 class="vert">{{ app_nom }}</h1>
+            <div style="font-size:14px;font-weight:bold;margin-top:4px">Relevé d'encaissements</div>
+            <div>{{ caissier.nomComplet }}{% if caissier.pays %} · agence {{ caissier.pays.label }}{% endif %}</div>
+            <div class="petit">
+                {% if filtres.du and filtres.au %}Du {{ filtres.du|date('d/m/Y') }} au {{ filtres.au|date('d/m/Y') }}
+                {% elseif filtres.du %}Depuis le {{ filtres.du|date('d/m/Y') }}
+                {% elseif filtres.au %}Jusqu'au {{ filtres.au|date('d/m/Y') }}{% else %}Toutes dates{% endif %}
+                {% if filtres.mode %} · {{ enum('App\\Enum\\ModePaiement').from(filtres.mode).label }}{% endif %}
+            </div>
+        </td>
+        <td style="width:40%;vertical-align:top">
+            <div class="cadre">
+                <div class="petit">Total encaissé</div>
+                <div style="font-size:16px;font-weight:bold" class="vert">{{ total|money }}</div>
+                {% if fcfa %}<div style="font-size:13px;font-weight:bold">≈ {{ total|fcfa }}</div>{% endif %}
+                <div class="petit">{{ paiements|length }} opération(s)</div>
+                {% for mode, montant in parMode|filter(v => v > 0) %}
+                    <div>{{ enum('App\\Enum\\ModePaiement').from(mode).label }} : <strong>{{ montant|money }}</strong>{% if fcfa %} <span class="petit">(≈ {{ montant|fcfa }})</span>{% endif %}</div>
+                {% endfor %}
+            </div>
+        </td>
+    </tr>
+</table>
+<br>
+<table class="liste">
+    <thead><tr><th>Date</th><th>Colis</th><th>Destinataire</th><th>Mode</th><th class="num">Remise</th><th class="num">Montant</th>{% if fcfa %}<th class="num">En FCFA</th>{% endif %}</tr></thead>
+    <tbody>
+    {% for p in paiements %}
+        <tr>
+            <td>{{ p.date|date('d/m/Y H:i') }}</td>
+            <td>{{ p.colis.numeroSuivi }}</td>
+            <td>{{ p.colis.destinataireNom }}</td>
+            <td>{{ p.mode.label }}{% if p.reference %}<br><span class="petit">{{ p.reference }}</span>{% endif %}</td>
+            <td class="num">{{ p.remise ? p.remise|money : '' }}</td>
+            <td class="num">{{ p.montant|money }}</td>
+            {% if fcfa %}<td class="num">{{ p.montant|fcfa }}</td>{% endif %}
+        </tr>
+    {% else %}
+        <tr><td colspan="{{ fcfa ? 7 : 6 }}">Aucun encaissement sur cette période.</td></tr>
+    {% endfor %}
+    {% if paiements %}
+        <tr class="total"><td colspan="5">Total</td><td class="num">{{ total|money }}</td>{% if fcfa %}<td class="num">{{ total|fcfa }}</td>{% endif %}</tr>
+    {% endif %}
+    </tbody>
+</table>
+<br><br>
+<table><tr>
+    <td style="width:50%">Signature du représentant :</td>
+    <td style="width:50%">Visa SOTRAMA :</td>
+</tr></table>
+</body>
+</html>

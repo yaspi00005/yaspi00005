@@ -218,12 +218,11 @@ class ColisController extends AbstractController
     }
 
     #[Route('/{id}/recu.pdf', name: 'colis_recu', requirements: ['id' => self::ID], methods: ['GET'])]
-    #[IsGranted(User::ROLE_RAMASSAGE)]
     public function recu(Colis $colis, DocumentService $documents): Response
     {
         $this->denyAccessUnlessGranted(ColisVoter::VOIR, $colis);
 
-        return new Response($documents->recuPdf($colis), 200, [
+        return new Response($documents->recuPdf($colis, Perimetre::estRepresentant($this->getUser())), 200, [
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'inline; filename="recu-'.$colis->getNumeroSuivi().'.pdf"',
         ]);

@@ -87,7 +87,7 @@ final class SecuriteTest extends WebTestCase
         $this->assertResponseIsSuccessful('Un lien piégé ne peut pas déconnecter l\'utilisateur.');
     }
 
-    public function testCodeRetraitMasqueEtRecuInterditAuRepresentant(): void
+    public function testCodeRetraitMasquePourLeRepresentant(): void
     {
         $client = static::createClient();
         $colis = static::getContainer()->get(ColisRepository::class)->findOneBy(['statut' => 'arrive']);
@@ -98,8 +98,13 @@ final class SecuriteTest extends WebTestCase
         $client->request('GET', "/colis/$id");
         $this->assertResponseIsSuccessful();
         $this->assertSelectorTextNotContains('body', $colis->getCodeRetrait());
+        // Le représentant peut imprimer le reçu, mais le code de retrait y est masqué.
         $client->request('GET', "/colis/$id/recu.pdf");
-        $this->assertResponseStatusCodeSame(403);
+        $this->assertResponseIsSuccessful();
+        $html = static::getContainer()->get('twig')->render('pdf/recu.html.twig', [
+            'colis' => $colis, 'qr' => '', 'photos' => [], 'lien' => 'https://exemple.test', 'bonusGagne' => 0, 'fcfa' => true, 'masquerCode' => true,
+        ]);
+        $this->assertStringNotContainsString((string) $colis->getCodeRetrait(), $html);
     }
 
     public function testCodeRetraitBloqueApresCinqErreurs(): void

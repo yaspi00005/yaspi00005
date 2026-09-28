@@ -66,7 +66,7 @@
     <thead><tr><th>#</th><th>Marchandise</th><th>Observations</th><th class="num">Poids</th><th class="num">Prix</th></tr></thead>
     <tbody>
     {% for a in colis.articles %}
-        <tr><td>{{ loop.index }}</td><td>{{ a.typeMarchandise }}</td><td>{{ a.observations }}</td><td class="num">{{ a.poidsVolume|poids }}</td><td class="num">{{ a.prix|money }}</td></tr>
+        <tr><td>{{ loop.index }}</td><td>{{ a.typeMarchandise }}</td><td>{{ a.observations }}</td><td class="num">{{ a.poidsVolume|poids }}</td><td class="num">{{ a.prix|money }}{% if fcfa|default(false) %}<br><span class="petit">≈ {{ a.prix|fcfa }}</span>{% endif %}</td></tr>
     {% endfor %}
     </tbody>
 </table>
@@ -76,8 +76,13 @@
         <td style="width:55%;vertical-align:top">
             <div class="bloc" style="text-align:center">
                 <div class="titre">Code de retrait à présenter à l'agence</div>
+                {% if masquerCode|default(false) %}
+                <div class="code vert">••••••</div>
+                <div class="petit">Le destinataire présente le code reçu par SMS ou inscrit sur son reçu.</div>
+                {% else %}
                 <div class="code vert">{{ colis.codeRetrait }}</div>
                 <div class="petit">Ne communiquez ce code qu'au destinataire du colis.</div>
+                {% endif %}
             </div>
             <p class="petit">Suivi en ligne : {{ lien }}</p>
             {% if bonusGagne > 0 or colis.client.soldeBonus > 0 %}
@@ -91,10 +96,12 @@
         <td style="width:45%;vertical-align:top;padding-left:10px">
             <table class="totaux">
                 <tr><td>Poids total</td><td class="num">{{ colis.poidsTotal|poids }}</td></tr>
-                <tr><td>Tarif</td><td class="num">{{ colis.frais|money }}</td></tr>
-                {% if colis.remise %}<tr><td>Remises</td><td class="num">− {{ colis.remise|money }}</td></tr>{% endif %}
-                <tr><td>Déjà payé</td><td class="num">{{ colis.montantPaye|money }}</td></tr>
-                <tr><td style="font-size:14px"><strong>Reste à payer</strong></td><td class="num" style="font-size:14px"><strong>{{ colis.montantRestant|money }}</strong></td></tr>
+                {% set f = fcfa|default(false) %}
+                <tr><td>Tarif</td><td class="num">{{ colis.frais|money }}{% if f %}<br><span class="petit">≈ {{ colis.frais|fcfa }}</span>{% endif %}</td></tr>
+                {% if colis.remise %}<tr><td>Remises</td><td class="num">− {{ colis.remise|money }}{% if f %}<br><span class="petit">≈ {{ colis.remise|fcfa }}</span>{% endif %}</td></tr>{% endif %}
+                <tr><td>Déjà payé</td><td class="num">{{ colis.montantPaye|money }}{% if f %}<br><span class="petit">≈ {{ colis.montantPaye|fcfa }}</span>{% endif %}</td></tr>
+                <tr><td style="font-size:14px"><strong>Reste à payer</strong></td><td class="num" style="font-size:14px"><strong>{{ colis.montantRestant|money }}</strong>{% if f %}<br><strong style="font-size:12px">≈ {{ colis.montantRestant|fcfa }}</strong>{% endif %}</td></tr>
+                {% if f %}<tr><td colspan="2" class="petit" style="text-align:right">1 € = 655,957 FCFA</td></tr>{% endif %}
             </table>
         </td>
     </tr>

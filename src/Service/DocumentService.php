@@ -44,7 +44,11 @@ final class DocumentService
         return (string) $dompdf->output();
     }
 
-    public function recuPdf(Colis $colis): string
+    /**
+     * Reçu du colis. $pourRepresentant : montants aussi en francs CFA, et sans le code de retrait
+     * (le représentant le demande au destinataire, il n'a pas à le connaître).
+     */
+    public function recuPdf(Colis $colis, bool $pourRepresentant = false): string
     {
         $photos = [];
         foreach ($colis->getArticles() as $article) {
@@ -59,6 +63,8 @@ final class DocumentService
             'photos' => $photos,
             'lien' => $this->notifications->lienSuivi($colis),
             'bonusGagne' => $this->bonus->gainDuColis($colis)?->getMontant() ?? 0,
+            'fcfa' => $pourRepresentant,
+            'masquerCode' => $pourRepresentant,
         ]);
 
         $options = new Options();

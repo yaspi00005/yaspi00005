@@ -7,6 +7,8 @@ use App\Entity\User;
 use App\Enum\ModePaiement;
 use App\Repository\HistoriqueStatutRepository;
 use App\Repository\PaiementRepository;
+use App\Security\Perimetre;
+use App\Service\DocumentService;
 use App\Util\Csv;
 use App\Util\Pagination;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -20,7 +22,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 class EncaissementController extends AbstractController
 {
     #[Route('/encaissements', name: 'encaissement_index', methods: ['GET'])]
-    public function index(Request $request, PaiementRepository $paiements, HistoriqueStatutRepository $historiques): Response
+    public function index(Request $request, PaiementRepository $paiements, HistoriqueStatutRepository $historiques, DocumentService $documents): Response
     {
         /** @var User $user */
         $user = $this->getUser();
@@ -49,6 +51,25 @@ class EncaissementController extends AbstractController
         }
 
         $parMode = $paiements->totauxParMode($qb);
+
+        if ('pdf' === $request->query->get('export')) {
+            // Relevé imprimable ; montants aussi en francs CFA pour le représentant.
+            $pdf = $documents->pdf('pdf/encaissements.html.twig', [
+                'paiements' => $qb->getQuery()->getResult(),
+                'parMode' => $parMode,
+                'total' => array_sum($parMode),
+                'filtres' => $filtres,
+                'caissier' => $user,
+                'fcfa' => Perimetre::estRepresentant($user),
+                'genereLe' => new \DateTimeImmutable(),
+            ]);
+
+            return new Response($pdf, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="mes-encaissements-'.date('Y-m-d').'.pdf"',
+            ]);
+        }
+
         $debutMois = new \DateTimeImmutable('first day of this month 00:00');
 
         return $this->render('encaissement/index.html.twig', [
