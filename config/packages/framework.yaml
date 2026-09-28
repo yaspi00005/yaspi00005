@@ -2,6 +2,11 @@
 framework:
     secret: '%env(APP_SECRET)%'
 
+    # Adresses des fichiers CSS/JS/images suivies de leur date de modification (?v=…) :
+    # chaque mise à jour est chargée tout de suite par les navigateurs et l'application mobile.
+    assets:
+        version_strategy: App\Asset\VersionParDate
+
     # Note that the session will be started ONLY if you read or write from it.
     session:
         name: SOTRAMA_SESSION
