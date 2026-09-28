@@ -1,0 +1,17 @@
+{# Fenêtre de confirmation des actions sensibles (formulaires data-confirm, voir public/js/sotrama.js). #}
+<div class="modal fade" id="modal-confirmation" tabindex="-1" aria-labelledby="modal-confirmation-titre" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content confirmation">
+            <div class="modal-body text-center p-4">
+                <span class="confirmation-icone js-confirmation-icone"><i class="fas fa-exclamation-triangle"></i></span>
+                <h4 class="mt-3 mb-2" id="modal-confirmation-titre"><span class="js-confirmation-titre">Confirmer</span></h4>
+                <p class="confirmation-message mb-0 js-confirmation-message"></p>
+                <p class="confirmation-alerte mt-3 mb-0 d-none js-confirmation-alerte"></p>
+            </div>
+            <div class="modal-footer justify-content-center border-0 pt-0 pb-4 gap-2">
+                <button type="button" class="btn btn-light btn-rounded px-4 js-confirmation-annuler" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-danger btn-rounded px-4 js-confirmation-ok">Confirmer</button>
+            </div>
+        </div>
+    </div>
+</div>

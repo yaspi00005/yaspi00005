@@ -107,3 +107,12 @@ ol.etapes li { margin-bottom: .35rem; }
 .aide-sommaire { position: sticky; top: 110px; }
 .aide-sommaire a { display: block; padding: .2rem 0; color: #3e4954; }
 .aide-sommaire a:hover { color: var(--primary, #00A15D); }
+
+/* Fenêtre de confirmation (remplace les alertes du navigateur) */
+.confirmation { border: 0; border-radius: 1.25rem; box-shadow: 0 20px 60px rgba(0, 0, 0, .18); }
+.confirmation-icone { display: inline-grid; place-items: center; width: 4.5rem; height: 4.5rem; border-radius: 50%; font-size: 1.8rem; }
+.confirmation-danger { background: #fde8e7; color: #e7372d; }
+.confirmation-warning { background: #fff4de; color: #d68a00; }
+.confirmation-primary { background: #e3f6ed; color: #00A15D; }
+.confirmation-message { color: #555; white-space: pre-line; font-size: 15px; }
+.confirmation-alerte { color: #c0261d; font-weight: 600; font-size: 14px; background: #fdf1f0; border-radius: .75rem; padding: .7rem .9rem; }

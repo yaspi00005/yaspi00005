@@ -26,7 +26,8 @@ final class SuppressionClientTest extends WebTestCase
 
         $crawler = $client->request('GET', '/clients/'.$hid->encode($id));
         $form = $crawler->filter('form[action$="/supprimer"]');
-        $this->assertStringContainsString('IRRÉVERSIBLE', (string) $form->attr('data-confirm'));
+        $this->assertStringContainsString('IRRÉVERSIBLE', (string) $form->attr('data-confirm-alerte'));
+        $this->assertSame('danger', $form->attr('data-confirm-type'));
         $client->submit($form->form());
         $this->assertResponseRedirects('/clients');
         $em->clear();

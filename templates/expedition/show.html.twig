@@ -17,7 +17,7 @@
         {% if is_granted('ROLE_ADMIN') %}
             <a href="{{ path('expedition_edit', {id: expedition.id}) }}" class="btn btn-primary btn-rounded btn-sm"><i class="fas fa-pen me-1"></i> Modifier</a>
             {% if expedition.colis is empty %}
-            <form method="post" action="{{ path('expedition_delete', {id: expedition.id}) }}" data-confirm="Supprimer cette expédition ?">
+            <form method="post" action="{{ path('expedition_delete', {id: expedition.id}) }}" data-confirm="L'expédition {{ expedition.numero }} et ses dépenses seront supprimées." data-confirm-titre="Supprimer cette expédition ?" data-confirm-type="danger" data-confirm-bouton="Oui, supprimer" data-confirm-alerte="Cette suppression est irréversible.">
                 <input type="hidden" name="_token" value="{{ csrf_token('delete-expedition-' ~ expedition.id) }}">
                 <button class="btn btn-danger light btn-rounded btn-sm"><i class="fas fa-trash"></i></button>
             </form>
@@ -75,7 +75,7 @@
                                         <td><i class="fas {{ d.categorie.icone }} text-muted me-1"></i> {{ d.categorie.label }}{% if d.libelle %}<br><small class="text-muted">{{ d.libelle }}</small>{% endif %}</td>
                                         <td class="num font-w600">{{ d.montant|money }}</td>
                                         <td class="text-end">
-                                            <form method="post" action="{{ path('expedition_depense_delete', {id: expedition.id, depense: d.id}) }}" data-confirm="Supprimer cette dépense ?">
+                                            <form method="post" action="{{ path('expedition_depense_delete', {id: expedition.id, depense: d.id}) }}" data-confirm="La marge de l'expédition sera recalculée." data-confirm-titre="Supprimer cette dépense ?" data-confirm-type="danger" data-confirm-bouton="Oui, supprimer">
                                                 <input type="hidden" name="_token" value="{{ csrf_token('supprimer-depense-' ~ d.id) }}">
                                                 <button class="btn btn-danger light btn-xs" aria-label="Supprimer la dépense"><i class="fas fa-trash"></i></button>
                                             </form>
@@ -125,7 +125,7 @@
                                 <td>{% include 'partials/_badge.html.twig' with {statut: c.statut} %}</td>
                                 <td class="text-end">
                                     {% if is_granted('ROLE_ADMIN') and expedition.statut.accepteNouveauxColis %}
-                                    <form method="post" action="{{ path('expedition_retirer', {id: expedition.id, colis: c.id}) }}" data-confirm="Retirer ce colis de l'expédition ?">
+                                    <form method="post" action="{{ path('expedition_retirer', {id: expedition.id, colis: c.id}) }}" data-confirm="Le colis restera enregistré, sans expédition." data-confirm-titre="Retirer ce colis de l'expédition ?" data-confirm-type="warning" data-confirm-bouton="Oui, retirer">
                                         <input type="hidden" name="_token" value="{{ csrf_token('retirer-colis-' ~ c.id) }}">
                                         <button class="btn btn-danger light btn-xs sharp" title="Retirer de l'expédition" aria-label="Retirer de l'expédition"><i class="fas fa-times"></i></button>
                                     </form>
@@ -172,7 +172,7 @@
         <div class="card">
             <div class="card-header"><h4 class="card-title">Statut</h4></div>
             <div class="card-body">
-                <form method="post" action="{{ path('expedition_statut', {id: expedition.id}) }}" data-confirm="Changer le statut de l'expédition et de tous ses colis ?">
+                <form method="post" action="{{ path('expedition_statut', {id: expedition.id}) }}" data-confirm="Le nouveau statut sera appliqué à tous les colis de l'expédition (sauf ceux déjà remis)." data-confirm-titre="Changer le statut ?" data-confirm-type="primary" data-confirm-bouton="Oui, mettre à jour">
                     <input type="hidden" name="_token" value="{{ csrf_token('statut-expedition-' ~ expedition.id) }}">
                     <select name="statut" class="form-select form-control mb-2" aria-label="Nouveau statut">
                         {% for s in statuts %}<option value="{{ s.value }}" {{ s == expedition.statut ? 'selected' }}>{{ s.label }}</option>{% endfor %}
