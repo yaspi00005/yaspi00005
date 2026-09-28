@@ -7,11 +7,60 @@
         $(this).select2({ width: '100%', language: { noResults: () => 'Aucun résultat' } });
     });
 
-    // Confirmation avant les actions sensibles : <form data-confirm="…">.
-    $(document).on('submit', 'form[data-confirm]', function (e) {
-        if (!window.confirm(this.dataset.confirm)) {
-            e.preventDefault();
+    /**
+     * Fenêtre de confirmation (remplace window.confirm). Retourne une promesse : true si l'utilisateur confirme.
+     * options : message, titre, bouton (libellé du bouton), type ('danger', 'warning' ou 'primary'), alerte (texte en rouge).
+     */
+    window.sotramaConfirmer = function (options) {
+        const el = document.getElementById('modal-confirmation');
+        if (!el || !window.bootstrap) {
+            return Promise.resolve(window.confirm(options.message));
         }
+        const type = options.type || 'primary';
+        el.querySelector('.js-confirmation-titre').textContent = options.titre || 'Confirmer';
+        el.querySelector('.js-confirmation-message').textContent = options.message || '';
+        const alerte = el.querySelector('.js-confirmation-alerte');
+        alerte.textContent = options.alerte || '';
+        alerte.classList.toggle('d-none', !options.alerte);
+        const icone = el.querySelector('.js-confirmation-icone');
+        icone.className = 'confirmation-icone js-confirmation-icone confirmation-' + type;
+        icone.innerHTML = '<i class="fas ' + ({ danger: 'fa-trash-alt', warning: 'fa-exclamation-triangle', primary: 'fa-question' })[type] + '"></i>';
+        const ok = el.querySelector('.js-confirmation-ok');
+        ok.className = 'btn btn-rounded px-4 js-confirmation-ok btn-' + type;
+        ok.textContent = options.bouton || 'Confirmer';
+        const modal = bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el); // Bootstrap du thème : pas de getOrCreateInstance
+        return new Promise(function (resolve) {
+            let choix = false;
+            ok.onclick = function () { choix = true; modal.hide(); };
+            el.addEventListener('hidden.bs.modal', function () { resolve(choix); }, { once: true });
+            el.addEventListener('shown.bs.modal', function () { el.querySelector('.js-confirmation-annuler').focus(); }, { once: true });
+            modal.show();
+        });
+    };
+
+    // Confirmation avant les actions sensibles : <form data-confirm="Message" data-confirm-titre="…"
+    // data-confirm-bouton="…" data-confirm-type="danger|warning|primary" data-confirm-alerte="…">.
+    $(document).on('submit', 'form[data-confirm]', function (e) {
+        const form = this;
+        if (form.dataset.confirme === '1') {
+            delete form.dataset.confirme;
+            return;
+        }
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        const bouton = e.originalEvent && e.originalEvent.submitter;
+        window.sotramaConfirmer({
+            message: form.dataset.confirm,
+            titre: form.dataset.confirmTitre,
+            bouton: form.dataset.confirmBouton,
+            type: form.dataset.confirmType,
+            alerte: form.dataset.confirmAlerte,
+        }).then(function (oui) {
+            if (oui) {
+                form.dataset.confirme = '1';
+                form.requestSubmit ? form.requestSubmit(bouton || undefined) : form.submit();
+            }
+        });
     });
 
     // Nouveau colis : avant l'envoi, vérifie qu'un colis semblable n'a pas déjà été saisi
@@ -28,14 +77,21 @@
             e.stopImmediatePropagation();
             const url = form.dataset.doublonsUrl + '?' + new URLSearchParams({ client: client.value, tel: tel.value });
             fetch(url, { credentials: 'same-origin' }).then(r => r.ok ? r.json() : []).catch(() => []).then(function (liste) {
-                if (liste.length) {
-                    const detail = liste.map(c => '• ' + c.numero + ' du ' + c.date + ' pour ' + c.destinataire + (c.agent ? ' (saisi par ' + c.agent + ')' : '')).join('\n');
-                    if (!window.confirm('Ce colis a peut-être déjà été enregistré :\n' + detail + '\n\nEnregistrer quand même ce nouveau colis ?')) {
-                        return;
-                    }
+                const envoyer = function () {
+                    confirme.value = '1';
+                    form.requestSubmit ? form.requestSubmit() : form.submit();
+                };
+                if (!liste.length) {
+                    envoyer();
+                    return;
                 }
-                confirme.value = '1';
-                form.requestSubmit ? form.requestSubmit() : form.submit();
+                window.sotramaConfirmer({
+                    type: 'warning',
+                    titre: 'Ce colis a peut-être déjà été enregistré',
+                    message: liste.map(c => '• ' + c.numero + ' du ' + c.date + ' pour ' + c.destinataire + (c.agent ? ' (saisi par ' + c.agent + ')' : '')).join('\n'),
+                    alerte: 'Même expéditeur et même destinataire ces derniers jours. Enregistrer quand même ce nouveau colis ?',
+                    bouton: 'Oui, enregistrer',
+                }).then(function (oui) { if (oui) { envoyer(); } });
             });
         }, true);
     });

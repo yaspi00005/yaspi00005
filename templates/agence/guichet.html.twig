@@ -18,12 +18,17 @@
                 <button type="button" class="btn btn-outline-primary w-100" id="btn-scanner"><i class="fas fa-camera me-1"></i> Scanner avec la caméra</button>
                 <div id="lecteur-qr" class="mt-3" style="display:none"></div>
                 <p class="fs-12 text-muted mt-3 mb-0">Un lecteur de code-barres USB fonctionne aussi : cliquez dans le champ puis scannez le QR du reçu.</p>
+                <p class="fs-12 text-muted mt-2 mb-0"><i class="fas fa-coins me-1"></i> Montants en euros et en francs CFA : 1 € = 655,957 FCFA.</p>
             </div>
         </div>
     </div>
     <div class="col-xl-7">
         <div class="card">
-            <div class="card-header"><h4 class="card-title">Colis arrivés à remettre ({{ aRetirer|length }})</h4></div>
+            {% set resteTotal = aRetirer|reduce((total, c) => total + c.montantRestant, 0) %}
+            <div class="card-header flex-wrap gap-2">
+                <h4 class="card-title">Colis arrivés à remettre ({{ aRetirer|length }})</h4>
+                {% if resteTotal %}<span class="text-end"><small class="text-muted d-block">Reste à encaisser</small><strong class="text-danger">{{ resteTotal|money }}</strong> <span class="text-muted">≈ {{ resteTotal|fcfa }}</span></span>{% endif %}
+            </div>
             <div class="card-body pt-0">
                 <div class="table-responsive">
                     <table class="table table-hover">
@@ -33,7 +38,7 @@
                             <tr>
                                 <td><a href="{{ path('colis_show', {id: c.id}) }}" class="text-primary font-w600">{{ c.numeroSuivi }}</a></td>
                                 <td>{{ c.destinataireNom }}<br><small class="text-muted"><a href="tel:{{ c.destinataireTelephone }}">{{ c.destinataireTelephone|tel }}</a></small></td>
-                                <td class="num {{ c.montantRestant ? 'text-danger font-w600' : 'text-success' }}">{{ c.montantRestant ? c.montantRestant|money_local : 'Soldé' }}</td>
+                                <td class="num {{ c.montantRestant ? 'text-danger font-w600' : 'text-success' }}">{{ c.montantRestant ? c.montantRestant|money_local(true) : 'Soldé' }}</td>
                                 <td>{{ c.updatedAt|date('d/m/Y') }}</td>
                             </tr>
                         {% else %}

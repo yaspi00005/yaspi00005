@@ -159,6 +159,11 @@ final class DroitsRolesTest extends WebTestCase
         $this->assertSelectorTextContains('body', 'Performance des agents');
         $this->assertSelectorTextContains('body', 'Moussa TRAORÉ');
 
+        // Guichet agence : montants aussi en francs CFA, même pour l'administrateur.
+        $this->client->request('GET', '/agence');
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorTextContains('body', 'FCFA');
+
         $enRoute = $this->colis(fn (Colis $c) => StatutColis::EnPreparation === $c->getStatut() && !$c->isSolde());
         $this->client->request('GET', '/colis/'.$this->hid($enRoute));
         $this->assertResponseIsSuccessful();

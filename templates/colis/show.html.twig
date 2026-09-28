@@ -28,7 +28,7 @@
         {% if is_granted('COLIS_MODIFIER', colis) %}
             <a href="{{ path('colis_edit', {id: colis.id}) }}" class="btn btn-primary btn-rounded btn-sm"><i class="fas fa-pen me-1"></i> Modifier</a>
             {% if colis.supprimable %}
-            <form method="post" action="{{ path('colis_delete', {id: colis.id}) }}" data-confirm="Mettre ce colis à la corbeille ? Il ne comptera plus nulle part. Vous pourrez le restaurer pendant 7 jours depuis la Corbeille ; ensuite il sera supprimé définitivement.">
+            <form method="post" action="{{ path('colis_delete', {id: colis.id}) }}" data-confirm="Le colis {{ colis.numeroSuivi }} ne comptera plus nulle part (listes, totaux, statistiques). Vous pourrez le restaurer depuis la Corbeille pendant 7 jours ; ensuite il sera supprimé définitivement avec ses photos." data-confirm-titre="Supprimer ce colis ?" data-confirm-type="danger" data-confirm-bouton="Oui, mettre à la corbeille">
                 <input type="hidden" name="_token" value="{{ csrf_token('delete-colis-' ~ colis.id) }}">
                 <button class="btn btn-danger light btn-rounded btn-sm"><i class="fas fa-trash me-1"></i> Supprimer</button>
             </form>
@@ -133,7 +133,7 @@
                                 <td>{{ p.caissier ? p.caissier.nomComplet : '—' }}</td>
                                 <td class="text-end">
                                     {% if is_granted('ROLE_ADMIN') %}
-                                    <form method="post" action="{{ path('paiement_annuler', {id: p.id}) }}" data-confirm="Annuler ce paiement ?">
+                                    <form method="post" action="{{ path('paiement_annuler', {id: p.id}) }}" data-confirm="Le montant sera retiré du total payé de ce colis. L'annulation est enregistrée dans le journal." data-confirm-titre="Annuler ce paiement ?" data-confirm-type="warning" data-confirm-bouton="Oui, annuler le paiement">
                                         <input type="hidden" name="_token" value="{{ csrf_token('annuler-paiement-' ~ p.id) }}">
                                         <button class="btn btn-danger light btn-xs sharp" title="Annuler ce paiement" aria-label="Annuler ce paiement"><i class="fas fa-undo"></i></button>
                                     </form>
@@ -227,7 +227,7 @@
                     <button class="btn btn-primary w-100"><i class="fas fa-check me-1"></i> Enregistrer le paiement</button>
                 {{ form_end(encaissement) }}
                 {% if bonusDisponible > 0 %}
-                <form method="post" action="{{ path('colis_bonus', {id: colis.id}) }}" class="mt-2" data-confirm="Utiliser le bonus fidélité du client sur ce colis ?">
+                <form method="post" action="{{ path('colis_bonus', {id: colis.id}) }}" class="mt-2" data-confirm="Le bonus disponible du client sera déduit du reste à payer de ce colis." data-confirm-titre="Utiliser le bonus fidélité ?" data-confirm-type="primary" data-confirm-bouton="Oui, utiliser le bonus">
                     <input type="hidden" name="_token" value="{{ csrf_token('bonus-colis-' ~ colis.id) }}">
                     <button class="btn btn-outline-info w-100"><i class="fas fa-gift me-1"></i> Utiliser le bonus ({{ bonusDisponible|money }})</button>
                 </form>
@@ -241,7 +241,7 @@
             <div class="card-header"><h4 class="card-title"><i class="fas fa-hand-holding text-primary me-2"></i>Agence</h4></div>
             <div class="card-body">
                 {% if colis.statut.value == 'arrive' %}
-                    <form method="post" action="{{ path('colis_remettre', {id: colis.id}) }}" data-confirm="Confirmer la remise du colis ?">
+                    <form method="post" action="{{ path('colis_remettre', {id: colis.id}) }}" data-confirm="Le colis sera marqué comme récupéré par le destinataire." data-confirm-titre="Remettre le colis ?" data-confirm-type="primary" data-confirm-bouton="Oui, remettre le colis">
                         <input type="hidden" name="_token" value="{{ csrf_token('remettre-colis-' ~ colis.id) }}">
                         <label class="form-label" for="code-retrait">Code de retrait présenté par le destinataire</label>
                         <input type="text" id="code-retrait" name="code" class="form-control mb-2 code-retrait text-uppercase" value="{{ app.request.query.get('code') }}" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="12" placeholder="Code reçu par SMS ou inscrit sur le reçu">

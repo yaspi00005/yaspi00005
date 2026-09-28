@@ -104,11 +104,12 @@ final class AppExtension extends AbstractExtension
         return number_format(round(($centimes ?? 0) / 100 * self::EURO_EN_FCFA), 0, ',', "\u{202F}")."\u{00A0}FCFA";
     }
 
-    public function moneyLocal(?int $centimes): Markup
+    /** $toujours : équivalent FCFA pour tous (pages de l'agence), sinon pour les représentants seulement. */
+    public function moneyLocal(?int $centimes, bool $toujours = false): Markup
     {
         $html = htmlspecialchars($this->money($centimes), \ENT_QUOTES);
         $user = $this->security->getUser();
-        if ($user instanceof User && Perimetre::estRepresentant($user)) {
+        if ($toujours || ($user instanceof User && Perimetre::estRepresentant($user))) {
             $html .= '<small class="montant-fcfa">≈&nbsp;'.htmlspecialchars($this->fcfa($centimes), \ENT_QUOTES).'</small>';
         }
 

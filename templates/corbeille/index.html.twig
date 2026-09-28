@@ -29,7 +29,7 @@
                                     <button class="btn btn-primary btn-xs"><i class="fas fa-undo me-1"></i> Restaurer</button>
                                 </form>
                                 {% if is_granted('ROLE_ADMIN') %}
-                                <form method="post" action="{{ path('corbeille_supprimer', {id: c.id}) }}" data-confirm="Supprimer définitivement le colis {{ c.numeroSuivi }} ? Cette action est irréversible : le colis et ses photos seront effacés.">
+                                <form method="post" action="{{ path('corbeille_supprimer', {id: c.id}) }}" data-confirm="Le colis {{ c.numeroSuivi }} et ses photos vont être effacés tout de suite." data-confirm-titre="Supprimer définitivement ?" data-confirm-type="danger" data-confirm-bouton="Oui, supprimer définitivement" data-confirm-alerte="Cette action est IRRÉVERSIBLE : le colis ne pourra plus être restauré.">
                                     <input type="hidden" name="_token" value="{{ csrf_token('corbeille-supprimer-' ~ c.id) }}">
                                     <button class="btn btn-danger light btn-xs" title="Supprimer définitivement" aria-label="Supprimer définitivement"><i class="fas fa-times"></i></button>
                                 </form>
