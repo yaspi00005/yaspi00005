@@ -17,8 +17,11 @@ adb shell getprop ro.build.version.release | sed 's/^/Android /'
 adb shell settings put global window_animation_scale 0
 adb shell settings put global transition_animation_scale 0
 adb shell settings put global animator_duration_scale 0
-# Évite l'écran d'accueil de Chrome au premier lancement.
-adb shell 'echo "chrome --disable-fre --no-default-browser-check --no-first-run" > /data/local/tmp/chrome-command-line'
+# Évite l'écran d'accueil de Chrome au premier lancement (Chrome ne lit ce fichier
+# que s'il est déclaré comme application de débogage).
+adb shell 'echo "_ --disable-fre --no-default-browser-check --no-first-run" > /data/local/tmp/chrome-command-line'
+adb shell am set-debug-app --persistent com.android.chrome
+adb shell am force-stop com.android.chrome
 
 echo "== Installation"
 adb install -r -g "$APK" || { echo "::error::Installation de l'APK impossible"; exit 1; }
@@ -43,6 +46,10 @@ adb shell dumpsys activity activities | grep -E "mResumedActivity|topResumedActi
 adb shell uiautomator dump /sdcard/ecran.xml >/dev/null 2>&1 && adb pull /sdcard/ecran.xml "$OUT/ecran.xml" >/dev/null
 adb logcat -d > "$OUT/logcat.txt"
 grep -E "Digital Asset|TWA|TrustedWebActivity|LauncherActivity" "$OUT/logcat.txt" | tail -20
+
+if grep -q "FirstRunActivity" "$OUT/activite.txt"; then
+  echo "::warning::Chrome est resté sur son écran d'accueil : le site n'a pas été affiché"
+fi
 
 # Échec si l'application a planté.
 if grep -A20 "FATAL EXCEPTION" "$OUT/logcat.txt" | grep -q "$PKG"; then
