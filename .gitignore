@@ -33,3 +33,6 @@
 # Autres projets posés dans le dossier (ancienne application, copies) : jamais dans ce dépôt
 /gesco-v2/
 /sotrama/
+
+# Généré par Symfony à chaque vidage du cache (autocomplétion de l'éditeur), varie selon la version de PHP
+/config/reference.php
