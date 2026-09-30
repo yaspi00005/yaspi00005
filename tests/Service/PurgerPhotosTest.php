@@ -63,4 +63,35 @@ final class PurgerPhotosTest extends KernelTestCase
 
         array_map(fn ($f) => @unlink($photos->chemin($f)), $fichiers[1]);
     }
+
+    /** Tant qu'un colis n'est pas récupéré par le destinataire, ses photos ne sont jamais supprimées, même anciennes. */
+    public function testPhotosConserveesTantQueLeColisNestPasRecupere(): void
+    {
+        $kernel = static::bootKernel();
+        $em = static::getContainer()->get(EntityManagerInterface::class);
+        $photos = static::getContainer()->get(PhotoUploader::class);
+        $conserves = [];
+        foreach ([StatutColis::EnPreparation, StatutColis::EnTransit, StatutColis::RetenuDouane, StatutColis::Arrive] as $i => $statut) {
+            $colis = static::getContainer()->get(ColisRepository::class)->findOneBy(['statut' => $statut])
+                ?? static::getContainer()->get(ColisRepository::class)->findBy([], ['id' => 'DESC'], 1, $i)[0];
+            $nom = 'test/garde-'.$i.'.jpg';
+            @mkdir(\dirname($photos->chemin($nom)), 0775, true);
+            file_put_contents($photos->chemin($nom), 'jpg');
+            $colis->setStatut($statut)->setPhoto($nom);
+            $colis->setDateReception(new \DateTimeImmutable('-2 years'));
+            $colis->setDateRecuperation(null);
+            $conserves[$colis->getId()] = $nom;
+        }
+        $em->flush();
+
+        $tester = new CommandTester((new Application($kernel))->find('app:purger-photos'));
+        $tester->execute(['--mois' => 1]);
+        $tester->assertCommandIsSuccessful();
+        $em->clear();
+        foreach ($conserves as $id => $nom) {
+            $this->assertSame($nom, static::getContainer()->get(ColisRepository::class)->find($id)->getPhoto(), 'Colis non récupéré : photo conservée.');
+            $this->assertFileExists($photos->chemin($nom));
+            @unlink($photos->chemin($nom));
+        }
+    }
 }

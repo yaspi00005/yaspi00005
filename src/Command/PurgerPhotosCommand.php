@@ -20,6 +20,7 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 /**
  * Supprime les photos des colis remis depuis plus de N mois (PHOTOS_CONSERVATION_MOIS, 5 par défaut),
  * comme l'ancienne application. Le colis, ses articles et son historique sont conservés.
+ * Règle ferme : tant qu'un colis n'est pas récupéré par le destinataire, ses photos ne sont jamais touchées.
  * À lancer une fois par mois, le 1er à 00 h 30 (tâche cron) :
  *   30 0 1 * * cd /chemin/sotrama && php bin/console app:purger-photos --env=prod
  */
