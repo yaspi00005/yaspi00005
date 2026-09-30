@@ -26,7 +26,8 @@ final class VitrineTest extends WebTestCase
         $this->assertSelectorExists('a[href="https://www.tiktok.com/@sotrama1"]');
         $this->assertSelectorExists('form[action="/suivi"] input[name="numero"]');
         $this->assertSelectorExists('script[type="application/ld+json"]');
-        $this->assertSelectorExists('a[href="https://app.sotrama.net/connexion"]');
+        // Pas de lien vers l'espace équipe sur le site public (l'adresse de l'application reste connue de l'équipe).
+        $this->assertSelectorNotExists('a[href="https://app.sotrama.net/connexion"]');
 
         // www. aussi
         $this->client->request('GET', '/', server: ['HTTP_HOST' => 'www.sotrama.net']);

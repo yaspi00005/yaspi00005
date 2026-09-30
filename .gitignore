@@ -29,3 +29,7 @@
 
 # Fichiers système du Mac
 .DS_Store
+
+# Autres projets posés dans le dossier (ancienne application, copies) : jamais dans ce dépôt
+/gesco-v2/
+/sotrama/
