@@ -136,7 +136,7 @@ code { background: var(--vert-clair); color: var(--vert-fonce); padding: .05em .
 .destination-mali::after { background: var(--jaune); opacity: .35; }
 .destination-senegal::after { background: var(--vert); }
 .destination-image { display: block; width: calc(100% + 64px); max-width: none; height: 170px; object-fit: cover; margin: -32px -32px 24px; }
-.destination-photo { height: auto; aspect-ratio: 16 / 9; } /* photo déposée : affichée en entier */
+.destination-photo { height: auto; aspect-ratio: auto; object-fit: contain; } /* photo déposée : affichée en entier, dans son format */
 .destination-entete { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.2rem; }
 .destination-entete h3 { font-size: 1.8rem; margin: 0; }
 .destination-entete p { margin: 0; color: var(--gris); font-weight: 500; }
@@ -145,6 +145,7 @@ code { background: var(--vert-clair); color: var(--vert-fonce); padding: .05em .
 .drapeau-mali i:nth-child(1) { background: #14b53a; } .drapeau-mali i:nth-child(2) { background: #fcd116; } .drapeau-mali i:nth-child(3) { background: #ce1126; }
 .drapeau-senegal i:nth-child(1) { background: #00853f; } .drapeau-senegal i:nth-child(2) { background: #fdef42; } .drapeau-senegal i:nth-child(3) { background: #e31b23; }
 .drapeau-senegal::after { content: '★'; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -52%); color: #00853f; font-size: 17px; line-height: 1; }
+.etiquette-nouveau.etiquette-titre { position: static; display: inline-block; vertical-align: middle; margin-left: .5rem; font-size: .7rem; }
 .etiquette-nouveau { position: absolute; top: 16px; left: 16px; background: var(--rouge); color: #fff; font-weight: 700; font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; padding: .3rem .7rem; border-radius: 999px; }
 .coche { list-style: none; padding: 0; margin: 0 0 1.4rem; }
 .coche li { position: relative; padding-left: 1.8rem; margin-bottom: .55rem; }
