@@ -125,10 +125,10 @@
             </article>
             <article class="destination destination-senegal">
                 <img class="destination-image{{ dakar ends with '.svg' ? '' : ' destination-photo' }}" src="{{ asset(dakar) }}" alt="Dakar" loading="lazy" width="600" height="220">
-                <span class="etiquette-nouveau">Nouveau</span>
+                {% if dakar ends with '.svg' %}<span class="etiquette-nouveau">Nouveau</span>{% endif %}
                 <div class="destination-entete">
                     <span class="drapeau drapeau-senegal" aria-hidden="true"><i></i><i></i><i></i></span>
-                    <div><h3>Dakar</h3><p>Sénégal · DKR</p></div>
+                    <div><h3>Dakar {% if not (dakar ends with '.svg') %}<span class="etiquette-nouveau etiquette-titre">Nouveau</span>{% endif %}</h3><p>Sénégal · DKR</p></div>
                 </div>
                 <ul class="coche">
                     <li>Conteneur : colis, valises, marchandises</li>

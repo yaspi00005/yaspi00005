@@ -57,6 +57,9 @@ final class ImportAncienneBaseCommand extends Command
     /** @var array<string, list<string>>|null nom de fichier (minuscules) → chemins, pour les anciennes photos */
     private ?array $indexPhotos = null;
     private int $photosTrouvees = 0;
+    /** @var list<string> photos copiées pendant l'import : effacées s'il est annulé */
+    private array $photosCopiees = [];
+    private float $dernierSignal = 0.0;
 
     public function __construct(
         private readonly EntityManagerInterface $em,
@@ -94,6 +97,16 @@ final class ImportAncienneBaseCommand extends Command
         $params = (new DsnParser(['mysql' => 'pdo_mysql', 'mariadb' => 'pdo_mysql']))->parse($input->getArgument('dsn'));
         $params['charset'] ??= 'utf8mb4';
         $this->ancienne = DriverManager::getConnection($params);
+        // Hébergement mutualisé : MySQL coupe les connexions inactives au bout de quelques minutes
+        // (« MySQL server has gone away ») pendant la réduction des photos. Délais allongés + signal régulier.
+        foreach ([$this->em->getConnection(), $this->ancienne] as $connexion) {
+            try {
+                $connexion->executeStatement('SET SESSION wait_timeout = 28800, net_read_timeout = 600, net_write_timeout = 600');
+            } catch (\Throwable) {
+                // Réglage refusé par l'hébergeur : le signal régulier (garderConnexions) suffit.
+            }
+        }
+        $this->dernierSignal = microtime(true);
 
         // Pas une ligne de journal par élément importé : un résumé est écrit à la fin.
         $this->journal->suspendre();
@@ -122,8 +135,14 @@ final class ImportAncienneBaseCommand extends Command
                 ), 'Import');
             }
         } catch (\Throwable $e) {
-            $this->em->getConnection()->rollBack();
-            $this->io->error('Import annulé : '.$e->getMessage());
+            try {
+                $this->em->getConnection()->rollBack();
+            } catch (\Throwable) {
+                // Connexion déjà perdue : la transaction est de toute façon annulée par MySQL.
+            }
+            // Rien n'est enregistré : les photos déjà copiées sont retirées.
+            array_walk($this->photosCopiees, fn ($f) => @unlink($f));
+            $this->io->error('Import annulé, rien n\'a été enregistré'.($this->photosCopiees ? ' (et les '.\count($this->photosCopiees).' photos copiées ont été retirées)' : '').' : '.$e->getMessage());
 
             return Command::FAILURE;
         }
@@ -580,6 +599,7 @@ final class ImportAncienneBaseCommand extends Command
         if ('' === $nom || !$dossier) {
             return null;
         }
+        $this->garderConnexions();
         $source = $this->trouverPhoto($nom, $dossier);
         if (!$source) {
             $this->avertissements[] = "Photo introuvable : $nom";
@@ -607,6 +627,8 @@ final class ImportAncienneBaseCommand extends Command
             mkdir(\dirname($cible), 0775, true);
         }
         if ($this->reduirePhoto($source, $cible.'.jpg')) {
+            $this->photosCopiees[] = $cible.'.jpg';
+
             return $relatif.'.jpg';
         }
         @unlink($cible.'.jpg'); // réduction commencée puis abandonnée
@@ -623,8 +645,20 @@ final class ImportAncienneBaseCommand extends Command
 
             return null;
         }
+        $this->photosCopiees[] = $cible.'.'.$extension;
 
         return $relatif.'.'.$extension;
+    }
+
+    /** Petite requête toutes les 20 s sur les deux bases, pour que MySQL ne coupe pas la connexion. */
+    private function garderConnexions(): void
+    {
+        if (microtime(true) - $this->dernierSignal < 20) {
+            return;
+        }
+        $this->em->getConnection()->executeQuery('SELECT 1');
+        $this->ancienne->executeQuery('SELECT 1');
+        $this->dernierSignal = microtime(true);
     }
 
     /**
