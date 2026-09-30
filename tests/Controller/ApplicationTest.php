@@ -41,12 +41,13 @@ final class ApplicationTest extends WebTestCase
         }
     }
 
-    public function testManifesteEtLienDepuisLaConnexion(): void
+    public function testManifesteSurLaConnexion(): void
     {
         $client = static::createClient();
         $client->request('GET', '/connexion');
         $this->assertSelectorExists('link[rel="manifest"][href="/manifest.webmanifest"]');
-        $this->assertSelectorExists('a[href="/application"]');
+        // Plus de lien vers l'APK sur la page de connexion (publique) : il reste dans le menu, après connexion.
+        $this->assertSelectorNotExists('a[href="/application"]');
 
         $manifeste = json_decode((string) file_get_contents(__DIR__.'/../../public/manifest.webmanifest'), true);
         $this->assertSame('SOTRAMA', $manifeste['short_name']);
