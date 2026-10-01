@@ -95,7 +95,10 @@ final class DemandeRamassage
         if (!Destination::tryFrom($d['destination'])) {
             $erreurs['destination'] = 'Choisissez la destination.';
         }
-        if (mb_strlen($d['colis']) > 500 || mb_strlen($d['message']) > 1000) {
+        // Ce qu'il faut ramasser : indispensable pour prévoir le camion.
+        if ('' === $d['colis']) {
+            $erreurs['colis'] = 'Indiquez ce que nous devons ramasser (nombre de valises, cartons…).';
+        } elseif (mb_strlen($d['colis']) > 500 || mb_strlen($d['message']) > 1000) {
             $erreurs['colis'] = 'Texte trop long.';
         }
         if (!$d['consentement']) {

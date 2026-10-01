@@ -70,8 +70,8 @@
                         {% if erreurs.destination is defined %}<span class="erreur">{{ erreurs.destination }}</span>{% endif %}
                     </div>
                     <div class="champ plein{{ erreurs.colis is defined ? ' champ-erreur' }}">
-                        <label for="ramassage-colis">Vos colis (facultatif)</label>
-                        <textarea id="ramassage-colis" name="colis" rows="2" maxlength="500" placeholder="Ex. : 2 valises et 1 carton de vêtements">{{ donnees.colis }}</textarea>
+                        <label for="ramassage-colis">Vos colis</label>
+                        <textarea id="ramassage-colis" name="colis" rows="2" maxlength="500" required{% if erreurs.colis is defined %} aria-invalid="true"{% endif %} placeholder="Ex. : 2 valises et 1 carton de vêtements">{{ donnees.colis }}</textarea>
                         {% if erreurs.colis is defined %}<span class="erreur">{{ erreurs.colis }}</span>{% endif %}
                     </div>
                     <div class="champ plein">

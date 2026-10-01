@@ -115,8 +115,9 @@ final class AnnonceEtDemandeRamassageTest extends WebTestCase
             'date' => $jour->format('Y-m-d'), 'colis' => '2 valises',
         ];
 
-        // Hors Île-de-France et sans consentement : refusé.
-        $this->client->submit($form, $valeurs);
+        // Hors Île-de-France, sans consentement et sans description des colis : refusé.
+        $this->client->submit($form, ['colis' => ''] + $valeurs);
+        $this->assertSelectorTextContains('body', 'Indiquez ce que nous devons ramasser');
         $this->assertResponseStatusCodeSame(422);
         $this->assertSelectorTextContains('.champ-erreur', 'Île-de-France');
         $this->assertSelectorTextContains('body', 'Veuillez accepter');
@@ -168,7 +169,7 @@ final class AnnonceEtDemandeRamassageTest extends WebTestCase
         $this->client->submit($form, [
             'prenom' => 'Autre', 'nom' => 'Personne', 'telephone' => '+33 '.$existant->getTelephone(),
             'adresse' => '1 place de la Gare', 'code_postal' => '75010', 'ville' => 'Paris',
-            'date' => $crawler->filter('input[name="date"]')->attr('value'), 'destination' => 'mali',
+            'date' => $crawler->filter('input[name="date"]')->attr('value'), 'destination' => 'mali', 'colis' => '1 carton',
         ]);
         $this->assertResponseRedirects('/ramassage/merci');
 
