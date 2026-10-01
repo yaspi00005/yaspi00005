@@ -58,4 +58,14 @@ class RamassageRepository extends ServiceEntityRepository
             ->setMaxResults($limit)
             ->getQuery()->getResult();
     }
+
+    /** @return Ramassage[] demandes faites sur le site vitrine, encore à valider par l'équipe */
+    public function demandesEnLigne(): array
+    {
+        return $this->createQueryBuilder('r')
+            ->addSelect('c')->join('r.client', 'c')
+            ->andWhere('r.statut = :s')->setParameter('s', StatutRamassage::Demande)
+            ->orderBy('r.datePrevue', 'ASC')
+            ->getQuery()->getResult();
+    }
 }

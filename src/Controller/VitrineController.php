@@ -2,8 +2,13 @@
 
 namespace App\Controller;
 
+use App\Entity\Expedition;
+use App\Enum\Destination;
 use App\Repository\ColisRepository;
+use App\Repository\ExpeditionRepository;
+use App\Security\IdChiffreur;
 use App\Service\SuiviColis;
+use App\Vitrine\DemandeRamassage;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Request;
@@ -30,9 +35,11 @@ class VitrineController extends AbstractController
     }
 
     #[Route('/', name: 'vitrine_accueil', condition: self::CONDITION, methods: ['GET'], priority: 10)]
-    public function accueil(): Response
+    public function accueil(ExpeditionRepository $expeditions): Response
     {
         return $this->page('vitrine/accueil.html.twig', [
+            // Départs annoncés par l'administrateur (bouton « Publier sur le site » de l'expédition).
+            'departs' => $expeditions->annoncesPubliees(),
             'hero' => $this->photo('hero'),
             // Illustrations par défaut, remplacées par bamako.jpg / dakar.jpg si déposées.
             'bamako' => $this->photo('bamako') ?? 'images/vitrine/illustrations/bamako.svg',
@@ -76,6 +83,65 @@ class VitrineController extends AbstractController
         return $reponse;
     }
 
+    #[Route('/ramassage', name: 'vitrine_ramassage', condition: self::CONDITION, methods: ['GET', 'POST'], priority: 10)]
+    public function ramassage(Request $request, DemandeRamassage $demandes, ExpeditionRepository $expeditions, IdChiffreur $chiffreur, RateLimiterFactory $demandeRamassageLimiter): Response
+    {
+        // Départ choisi depuis « Prochains départs » : uniquement s'il est encore annoncé sur le site.
+        $departId = $chiffreur->decodeOptionnel($request->request->get('depart', $request->query->get('depart')));
+        $depart = $departId ? $expeditions->find($departId) : null;
+        if (!$depart instanceof Expedition || !$depart->isAnnonceVisible()) {
+            $depart = null;
+        }
+
+        $donnees = DemandeRamassage::lire($request->request->all());
+        $donnees['destination'] = $donnees['destination'] ?: ($depart?->getDestination()->value ?? '');
+        $erreurs = [];
+
+        if ($request->isMethod('POST')) {
+            if ('' !== $request->request->getString('site_web')) {
+                // Champ piège invisible rempli : robot. On fait comme si tout s'était bien passé.
+                return $this->redirectToRoute('vitrine_ramassage_merci', [], Response::HTTP_SEE_OTHER);
+            }
+            if (!$this->isCsrfTokenValid('demande-ramassage', $request->request->getString('_token'))) {
+                $erreurs['general'] = 'La page a expiré, vérifiez puis renvoyez le formulaire.';
+            } elseif (!($erreurs = $demandes->valider($donnees, $depart))) {
+                if (!$demandeRamassageLimiter->create($request->getClientIp())->consume()->isAccepted()) {
+                    $erreurs['general'] = 'Trop de demandes envoyées depuis votre connexion. Réessayez plus tard ou écrivez-nous sur WhatsApp.';
+                } else {
+                    $ramassage = $demandes->enregistrer($donnees, $depart);
+                    $request->getSession()->set('demande_ramassage', [
+                        'prenom' => $donnees['prenom'],
+                        'date' => $ramassage->getDatePrevue()->format('Y-m-d'),
+                        'creneau' => DemandeRamassage::CRENEAUX[$donnees['creneau']][0],
+                        'adresse' => $ramassage->getAdresse(),
+                        'destination' => Destination::from($donnees['destination'])->ville(),
+                    ]);
+
+                    return $this->redirectToRoute('vitrine_ramassage_merci', [], Response::HTTP_SEE_OTHER);
+                }
+            }
+        }
+
+        return $this->page('vitrine/ramassage.html.twig', [
+            'donnees' => $donnees,
+            'erreurs' => $erreurs,
+            'depart' => $depart,
+            'creneaux' => DemandeRamassage::CRENEAUX,
+            'destinations' => Destination::cases(),
+            'premierJour' => $demandes->premierJour(),
+            'dernierJour' => $demandes->dernierJour($depart),
+        ], new Response(null, $erreurs ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_OK));
+    }
+
+    #[Route('/ramassage/merci', name: 'vitrine_ramassage_merci', condition: self::CONDITION, methods: ['GET'], priority: 10)]
+    public function ramassageMerci(Request $request): Response
+    {
+        $reponse = $this->page('vitrine/ramassage_merci.html.twig', ['demande' => $request->getSession()->get('demande_ramassage')]);
+        $reponse->headers->set('X-Robots-Tag', 'noindex');
+
+        return $reponse;
+    }
+
     #[Route('/mentions-legales', name: 'vitrine_mentions', condition: self::CONDITION, methods: ['GET'], priority: 10)]
     public function mentions(): Response
     {
@@ -105,7 +171,7 @@ class VitrineController extends AbstractController
     #[Route('/sitemap.xml', name: 'vitrine_sitemap', condition: self::CONDITION, methods: ['GET'], priority: 10)]
     public function sitemap(): Response
     {
-        $urls = array_map(fn ($r) => $this->generateUrl($r, [], UrlGeneratorInterface::ABSOLUTE_URL), ['vitrine_accueil', 'vitrine_suivi', 'vitrine_mentions', 'vitrine_confidentialite', 'vitrine_conditions']);
+        $urls = array_map(fn ($r) => $this->generateUrl($r, [], UrlGeneratorInterface::ABSOLUTE_URL), ['vitrine_accueil', 'vitrine_suivi', 'vitrine_ramassage', 'vitrine_mentions', 'vitrine_confidentialite', 'vitrine_conditions']);
         $xml = '<?xml version="1.0" encoding="UTF-8"?>'."\n".'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
             .implode('', array_map(fn ($u) => '<url><loc>'.htmlspecialchars($u).'</loc></url>', $urls)).'</urlset>';
 

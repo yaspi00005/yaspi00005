@@ -42,6 +42,21 @@ final class Doublons
         return $ids ? $this->em->getRepository(Client::class)->findBy(['id' => $ids]) : [];
     }
 
+    /** Client déjà enregistré avec ce téléphone (même écrit autrement), le plus ancien en priorité. */
+    public function clientParTelephone(?string $telephone): ?Client
+    {
+        if (!$tel = self::finTelephone($telephone)) {
+            return null;
+        }
+        foreach ($this->em->createQuery('SELECT c.id, c.telephone FROM App\Entity\Client c ORDER BY c.id ASC')->getArrayResult() as $r) {
+            if (self::finTelephone($r['telephone']) === $tel) {
+                return $this->em->getRepository(Client::class)->find($r['id']);
+            }
+        }
+
+        return null;
+    }
+
     /** @return list<Colis> */
     public function colisSemblables(?Client $client, ?string $telephoneDestinataire, ?int $saufId = null): array
     {

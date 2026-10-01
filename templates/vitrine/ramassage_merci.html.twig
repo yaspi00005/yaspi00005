@@ -1,0 +1,24 @@
+{% extends 'vitrine/base.html.twig' %}
+
+{% block title %}Demande de ramassage envoyée · SOTRAMA{% endblock %}
+
+{% block body %}
+<section class="page-suivi">
+    <div class="conteneur conteneur-etroit">
+        <div class="carte-suivi">
+            <h2><i class="fas fa-check-circle"></i> Merci{{ demande ? ' ' ~ demande.prenom }}, votre demande est envoyée</h2>
+            <p>Notre équipe vous appelle rapidement pour confirmer l'heure du ramassage. Préparez vos colis fermés et, si possible, la liste de leur contenu.</p>
+            {% if demande %}
+            <dl class="recap-demande">
+                <div><dt>Jour souhaité</dt><dd>{{ date(demande.date)|jour_fr }}</dd></div>
+                <div><dt>Créneau</dt><dd>{{ demande.creneau }}</dd></div>
+                <div><dt>Adresse</dt><dd>{{ demande.adresse }}</dd></div>
+                <div><dt>Destination</dt><dd>{{ demande.destination }}</dd></div>
+            </dl>
+            {% endif %}
+            <p class="aide">Une question ou un changement ? <a href="https://wa.me/{{ infos.whatsapp }}?text={{ ('Bonjour SOTRAMA, j\'ai fait une demande de ramassage sur le site' ~ (demande ? ' pour le ' ~ demande.date|date('d/m/Y') : '') ~ '.')|url_encode }}" target="_blank" rel="noopener">Écrivez-nous sur WhatsApp</a> ou appelez le <a href="tel:+{{ infos.whatsapp }}">{{ infos.telephone }}</a>.</p>
+            <a href="{{ path('vitrine_accueil') }}" class="bouton bouton-contour"><i class="fas fa-arrow-left"></i> Retour à l'accueil</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

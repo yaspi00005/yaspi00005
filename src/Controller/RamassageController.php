@@ -30,6 +30,7 @@ class RamassageController extends AbstractController
     public function index(RamassageRepository $ramassages): Response
     {
         return $this->render('ramassage/index.html.twig', [
+            'demandes' => $ramassages->demandesEnLigne(),
             'aVenir' => $ramassages->aVenir(10),
             'statuts' => StatutRamassage::cases(),
         ]);
@@ -137,8 +138,15 @@ class RamassageController extends AbstractController
     #[Route('/{id}/confirmer', name: 'ramassage_confirmer', requirements: ['id' => self::ID], methods: ['POST'])]
     public function confirmer(Request $request, Ramassage $ramassage, EntityManagerInterface $em): Response
     {
-        if ($this->isCsrfTokenValid('confirmer-ramassage-'.$ramassage->getId(), $request->getPayload()->getString('_token'))
-            && StatutRamassage::EnAttente === $ramassage->getStatut()) {
+        if (!$this->isCsrfTokenValid('confirmer-ramassage-'.$ramassage->getId(), $request->getPayload()->getString('_token'))) {
+            return $this->redirectToRoute('ramassage_edit', ['id' => $ramassage->getId()], Response::HTTP_SEE_OTHER);
+        }
+        if (StatutRamassage::Demande === $ramassage->getStatut()) {
+            // Demande du site vitrine validée après appel au client : elle entre dans le planning et les rappels.
+            $ramassage->setStatut(StatutRamassage::Confirme)->setAgent($ramassage->getAgent() ?? $this->getUser());
+            $em->flush();
+            $this->addFlash('success', 'Demande de '.$ramassage->getClient()->getNomComplet().' validée : le ramassage est planifié.');
+        } elseif (StatutRamassage::EnAttente === $ramassage->getStatut()) {
             $ramassage->setStatut(StatutRamassage::Confirme);
             $em->flush();
             $this->addFlash('success', 'Ramassage confirmé par '.$ramassage->getClient()->getNomComplet().'.');

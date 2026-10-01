@@ -115,4 +115,16 @@ class ExpeditionRepository extends ServiceEntityRepository
             ];
         }, $expeditions);
     }
+
+    /** @return Expedition[] départs annoncés sur le site vitrine, du plus proche au plus lointain */
+    public function annoncesPubliees(int $max = 6): array
+    {
+        return $this->createQueryBuilder('e')
+            ->andWhere('e.publieeSurSite = true AND e.statut = :preparation AND e.dateDepart >= :aujourdhui')
+            ->setParameter('preparation', StatutExpedition::EnPreparation)
+            ->setParameter('aujourdhui', new \DateTimeImmutable('today'))
+            ->orderBy('e.dateDepart', 'ASC')
+            ->setMaxResults($max)
+            ->getQuery()->getResult();
+    }
 }

@@ -4,6 +4,8 @@ namespace App\Enum;
 
 enum StatutRamassage: string
 {
+    /** Demandée par un visiteur sur sotrama.net : l'équipe doit la valider (pas de rappels avant). */
+    case Demande = 'demande';
     case EnAttente = 'en_attente';
     case Confirme = 'confirme';
     case Effectue = 'effectue';
@@ -12,6 +14,7 @@ enum StatutRamassage: string
     public function label(): string
     {
         return match ($this) {
+            self::Demande => 'Demande en ligne',
             self::EnAttente => 'En attente',
             self::Confirme => 'Confirmé par le client',
             self::Effectue => 'Effectué',
@@ -22,6 +25,7 @@ enum StatutRamassage: string
     public function badge(): string
     {
         return match ($this) {
+            self::Demande => 'primary',
             self::EnAttente => 'warning',
             self::Confirme => 'info',
             self::Effectue => 'success',

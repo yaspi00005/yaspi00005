@@ -8,7 +8,15 @@
         <div class="card">
             <div class="card-header"><h4 class="card-title">{{ block('title') }}</h4></div>
             <div class="card-body">
-                {% if ramassage.id and ramassage.statut.value == 'en_attente' %}
+                {% if ramassage.id and ramassage.statut.value == 'demande' %}
+                <div class="alert alert-primary d-flex flex-wrap align-items-center justify-content-between gap-2">
+                    <span><i class="fas fa-globe me-1"></i> Demande reçue sur le site le {{ ramassage.createdAt|date('d/m/Y à H:i') }} : appelez {{ ramassage.client.nomComplet }} au <a href="tel:{{ ramassage.client.telephone }}">{{ ramassage.client.telephone|tel }}</a> pour fixer l'heure, puis validez.</span>
+                    <form method="post" action="{{ path('ramassage_confirmer', {id: ramassage.id}) }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('confirmer-ramassage-' ~ ramassage.id) }}">
+                        <button class="btn btn-primary btn-sm"><i class="fas fa-check me-1"></i> Valider le rendez-vous</button>
+                    </form>
+                </div>
+                {% elseif ramassage.id and ramassage.statut.value == 'en_attente' %}
                 <div class="alert alert-warning d-flex flex-wrap align-items-center justify-content-between gap-2">
                     <span><i class="fas fa-phone-alt me-1"></i> Rendez-vous pas encore confirmé : appelez {{ ramassage.client.nomComplet }} au <a href="tel:{{ ramassage.client.telephone }}">{{ ramassage.client.telephone|tel }}</a>.</span>
                     <form method="post" action="{{ path('ramassage_confirmer', {id: ramassage.id}) }}">

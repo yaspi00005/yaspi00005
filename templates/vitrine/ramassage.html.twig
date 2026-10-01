@@ -1,0 +1,82 @@
+{% extends 'vitrine/base.html.twig' %}
+
+{% block title %}Programmer un ramassage gratuit · SOTRAMA{% endblock %}
+{% block description %}Demandez le ramassage gratuit de vos colis à domicile en Île-de-France pour un envoi vers Bamako ou Dakar.{% endblock %}
+
+{% macro champ(nom, libelle, donnees, erreurs, attributs = '', type = 'text', aide = null, plein = false) %}
+    <div class="champ{{ erreurs[nom] is defined ? ' champ-erreur' }}{{ plein ? ' plein' }}">
+        <label for="ramassage-{{ nom }}">{{ libelle }}</label>
+        <input id="ramassage-{{ nom }}" name="{{ nom }}" type="{{ type }}" value="{{ donnees[nom] }}" {{ attributs|raw }}{% if erreurs[nom] is defined %} aria-invalid="true" aria-describedby="erreur-{{ nom }}"{% endif %}>
+        {% if aide %}<small>{{ aide }}</small>{% endif %}
+        {% if erreurs[nom] is defined %}<span class="erreur" id="erreur-{{ nom }}">{{ erreurs[nom] }}</span>{% endif %}
+    </div>
+{% endmacro %}
+
+{% block body %}
+{% import _self as f %}
+<section class="page-suivi">
+    <div class="conteneur conteneur-etroit">
+        <p class="surtitre">Ramassage gratuit · Île-de-France</p>
+        <h1>Programmer un ramassage</h1>
+        <p class="chapeau">Indiquez vos coordonnées et le jour qui vous arrange : nous vous rappelons pour confirmer l'heure exacte, puis nous venons chercher vos colis chez vous.</p>
+
+        {% if depart %}
+        <p class="alerte alerte-info"><i class="fas fa-calendar-check"></i> Départ du <strong>{{ depart.dateDepart|jour_fr }}</strong> vers <strong>{{ depart.destination.ville }}</strong>{% if depart.dateLimiteDepot %} — ramassage possible jusqu'au <strong>{{ depart.dateLimiteDepot|jour_fr }}</strong>{% endif %}.</p>
+        {% endif %}
+
+        <div class="carte-suivi formulaire-ramassage">
+            {% if erreurs.general is defined %}<p class="alerte alerte-erreur" role="alert"><i class="fas fa-exclamation-circle"></i> {{ erreurs.general }}</p>
+            {% elseif erreurs %}<p class="alerte alerte-erreur" role="alert"><i class="fas fa-exclamation-circle"></i> Vérifiez les champs signalés en rouge.</p>{% endif %}
+
+            <form method="post" action="{{ path('vitrine_ramassage') }}" novalidate>
+                <input type="hidden" name="_token" value="{{ csrf_token('demande-ramassage') }}">
+                {% if depart %}<input type="hidden" name="depart" value="{{ hid(depart.id) }}">{% endif %}
+                <div class="piege" aria-hidden="true"><label for="ramassage-site">Ne pas remplir</label><input id="ramassage-site" name="site_web" tabindex="-1" autocomplete="off"></div>
+
+                <div class="grille-champs">
+                    {{ f.champ('prenom', 'Prénom', donnees, erreurs, 'autocomplete="given-name" maxlength="100" required') }}
+                    {{ f.champ('nom', 'Nom', donnees, erreurs, 'autocomplete="family-name" maxlength="100" required') }}
+                    {{ f.champ('telephone', 'Téléphone', donnees, erreurs, 'inputmode="tel" autocomplete="tel" placeholder="06 12 34 56 78" required', 'tel', 'Nous vous appelons à ce numéro pour confirmer.') }}
+                    {{ f.champ('email', 'E-mail (facultatif)', donnees, erreurs, 'autocomplete="email" maxlength="180"', 'email') }}
+                    {{ f.champ('adresse', 'Adresse du ramassage', donnees, erreurs, 'autocomplete="street-address" maxlength="255" placeholder="N°, rue, bâtiment, étage, code d\'accès…" required', 'text', null, true) }}
+                    {{ f.champ('code_postal', 'Code postal', donnees, erreurs, 'inputmode="numeric" autocomplete="postal-code" maxlength="5" pattern="[0-9]{5}" required', 'text', 'Paris et Île-de-France (75, 77, 78, 91 à 95).') }}
+                    {{ f.champ('ville', 'Ville', donnees, erreurs, 'autocomplete="address-level2" maxlength="100" required') }}
+                    {{ f.champ('date', 'Jour souhaité', donnees, erreurs, 'min="' ~ premierJour|date('Y-m-d') ~ '" max="' ~ dernierJour|date('Y-m-d') ~ '" required', 'date', 'Du lundi au samedi, jusqu\'au ' ~ dernierJour|date('d/m/Y') ~ '.') }}
+
+                    <div class="champ{{ erreurs.creneau is defined ? ' champ-erreur' }}">
+                        <label for="ramassage-creneau">Créneau</label>
+                        <select id="ramassage-creneau" name="creneau" required>
+                            <option value="">Choisir…</option>
+                            {% for cle, c in creneaux %}<option value="{{ cle }}" {{ donnees.creneau == cle ? 'selected' }}>{{ c[0] }}</option>{% endfor %}
+                        </select>
+                        {% if erreurs.creneau is defined %}<span class="erreur">{{ erreurs.creneau }}</span>{% endif %}
+                    </div>
+                    <div class="champ{{ erreurs.destination is defined ? ' champ-erreur' }}">
+                        <label for="ramassage-destination">Destination</label>
+                        <select id="ramassage-destination" name="destination" required>
+                            <option value="">Choisir…</option>
+                            {% for d in destinations %}<option value="{{ d.value }}" {{ donnees.destination == d.value ? 'selected' }}>{{ d.ville }} ({{ d.label }})</option>{% endfor %}
+                        </select>
+                        {% if erreurs.destination is defined %}<span class="erreur">{{ erreurs.destination }}</span>{% endif %}
+                    </div>
+                    <div class="champ plein{{ erreurs.colis is defined ? ' champ-erreur' }}">
+                        <label for="ramassage-colis">Vos colis (facultatif)</label>
+                        <textarea id="ramassage-colis" name="colis" rows="2" maxlength="500" placeholder="Ex. : 2 valises et 1 carton de vêtements">{{ donnees.colis }}</textarea>
+                        {% if erreurs.colis is defined %}<span class="erreur">{{ erreurs.colis }}</span>{% endif %}
+                    </div>
+                    <div class="champ plein">
+                        <label for="ramassage-message">Message (facultatif)</label>
+                        <textarea id="ramassage-message" name="message" rows="2" maxlength="1000" placeholder="Précisions utiles pour le chauffeur">{{ donnees.message }}</textarea>
+                    </div>
+                    <div class="champ plein{{ erreurs.consentement is defined ? ' champ-erreur' }}">
+                        <label class="case"><input type="checkbox" name="consentement" value="1" {{ donnees.consentement ? 'checked' }} required> <span>J'accepte que SOTRAMA utilise ces informations pour me recontacter et organiser le ramassage (<a href="{{ path('vitrine_confidentialite') }}">politique de confidentialité</a>).</span></label>
+                        {% if erreurs.consentement is defined %}<span class="erreur">{{ erreurs.consentement }}</span>{% endif %}
+                    </div>
+                </div>
+                <button class="bouton bouton-plein"><i class="fas fa-truck"></i> Envoyer ma demande</button>
+            </form>
+            <p class="aide aide-centre">Hors Île-de-France ou pressé ? <a href="https://wa.me/{{ infos.whatsapp }}?text={{ 'Bonjour SOTRAMA, je souhaite programmer un ramassage.'|url_encode }}" target="_blank" rel="noopener">Écrivez-nous sur WhatsApp</a>.</p>
+        </div>
+    </div>
+</section>
+{% endblock %}

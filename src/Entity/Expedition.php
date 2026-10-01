@@ -52,6 +52,19 @@ class Expedition
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $notes = null;
 
+    /** Annonce affichée sur le site vitrine (« Prochains départs ») tant que l'expédition n'est pas partie. */
+    #[ORM\Column(options: ['default' => false])]
+    private bool $publieeSurSite = false;
+
+    /** Message de l'annonce (ex. « Places limitées, réservez vite »). */
+    #[ORM\Column(length: 500, nullable: true)]
+    #[Assert\Length(max: 500)]
+    private ?string $annonce = null;
+
+    /** Dernier jour pour déposer ou faire ramasser un colis pour ce départ. */
+    #[ORM\Column(type: Types::DATE_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $dateLimiteDepot = null;
+
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
 
@@ -276,5 +289,48 @@ class Expedition
     public function __toString(): string
     {
         return $this->getLibelle();
+    }
+
+    public function isPublieeSurSite(): bool
+    {
+        return $this->publieeSurSite;
+    }
+
+    public function setPublieeSurSite(bool $publiee): static
+    {
+        $this->publieeSurSite = $publiee;
+
+        return $this;
+    }
+
+    public function getAnnonce(): ?string
+    {
+        return $this->annonce;
+    }
+
+    public function setAnnonce(?string $annonce): static
+    {
+        $this->annonce = null !== $annonce && '' !== trim($annonce) ? trim($annonce) : null;
+
+        return $this;
+    }
+
+    public function getDateLimiteDepot(): ?\DateTimeImmutable
+    {
+        return $this->dateLimiteDepot;
+    }
+
+    public function setDateLimiteDepot(?\DateTimeImmutable $date): static
+    {
+        $this->dateLimiteDepot = $date;
+
+        return $this;
+    }
+
+    /** Visible sur le site : publiée, encore en préparation, départ aujourd'hui ou plus tard. */
+    public function isAnnonceVisible(): bool
+    {
+        return $this->publieeSurSite && StatutExpedition::EnPreparation === $this->statut
+            && $this->dateDepart >= new \DateTimeImmutable('today');
     }
 }

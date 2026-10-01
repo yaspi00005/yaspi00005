@@ -4,6 +4,11 @@ framework:
             policy: sliding_window
             limit: 20
             interval: '10 minutes'
+        # Demandes de ramassage envoyées depuis le site vitrine
+        demande_ramassage:
+            policy: sliding_window
+            limit: 5
+            interval: '1 hour'
         # Codes de retrait erronés à la remise d'un colis
         code_retrait:
             policy: fixed_window
@@ -17,3 +22,7 @@ when@test:
                 policy: sliding_window
                 limit: 1000          # les tests font beaucoup de recherches depuis la même adresse
                 interval: '10 minutes'
+            demande_ramassage:
+                policy: sliding_window
+                limit: 1000
+                interval: '1 hour'

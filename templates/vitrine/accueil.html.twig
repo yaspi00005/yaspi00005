@@ -30,6 +30,7 @@
             <div class="actions">
                 <a href="{{ wa }}?text={{ 'Bonjour SOTRAMA, je souhaite envoyer un colis.'|url_encode }}" class="bouton bouton-wa" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> Écrire sur WhatsApp</a>
                 <a href="tel:+{{ infos.whatsapp }}" class="bouton bouton-contour"><i class="fas fa-phone"></i> {{ infos.telephone }}</a>
+                <a href="{{ path('vitrine_ramassage') }}" class="bouton bouton-contour"><i class="fas fa-truck"></i> Programmer un ramassage</a>
             </div>
             <ul class="atouts">
                 <li><i class="fas fa-truck"></i> Ramassage gratuit IDF</li>
@@ -82,6 +83,7 @@
                 <span class="service-icone rouge"><i class="fas fa-truck-loading"></i></span>
                 <h3>Ramassage gratuit</h3>
                 <p>Nous venons chercher vos colis chez vous, <strong>gratuitement dans toute l'Île-de-France</strong>. Ramassage dans toute la France bientôt disponible.</p>
+                <a href="{{ path('vitrine_ramassage') }}" class="lien-fleche">Programmer un ramassage <i class="fas fa-arrow-right"></i></a>
             </article>
             <article class="service">
                 <span class="service-icone vert"><i class="fas fa-warehouse"></i></span>
@@ -101,6 +103,42 @@
         </div>
     </div>
 </section>
+
+{# ---------- Prochains départs (expéditions publiées par l'administrateur) ---------- #}
+{% if departs %}
+<section class="section" id="departs">
+    <div class="conteneur">
+        <div class="titre-section">
+            <p class="surtitre">Prochains départs</p>
+            <h2>Réservez votre place dans le prochain envoi</h2>
+            <p>Déposez votre colis ou faites-le ramasser gratuitement avant la date limite.</p>
+        </div>
+        <div class="grille-departs">
+            {% for e in departs %}
+            <article class="depart">
+                <div class="depart-entete">
+                    <span class="drapeau drapeau-{{ e.destination.value }}" aria-hidden="true"><i></i><i></i><i></i></span>
+                    <div>
+                        <h3>{{ e.destination.ville }} <small>{{ e.destination.label }}</small></h3>
+                        <p><i class="fas {{ e.modeTransport.icone }}"></i> {{ e.modeTransport.label }}</p>
+                    </div>
+                </div>
+                <dl class="depart-dates">
+                    <div><dt>Départ</dt><dd>{{ e.dateDepart|jour_fr }}</dd></div>
+                    {% if e.dateLimiteDepot %}<div class="depart-limite"><dt>Dépôt des colis jusqu'au</dt><dd>{{ e.dateLimiteDepot|jour_fr }}</dd></div>{% endif %}
+                    {% if e.dateArriveePrevue %}<div><dt>Arrivée prévue</dt><dd>{{ e.dateArriveePrevue|jour_fr }}</dd></div>{% endif %}
+                </dl>
+                {% if e.annonce %}<p class="depart-annonce"><i class="fas fa-bullhorn"></i> {{ e.annonce }}</p>{% endif %}
+                <div class="depart-actions">
+                    <a href="{{ path('vitrine_ramassage', {depart: hid(e.id)}) }}" class="bouton bouton-plein bouton-petit"><i class="fas fa-truck"></i> Programmer un ramassage</a>
+                    <a href="{{ wa }}?text={{ ('Bonjour SOTRAMA, je souhaite envoyer un colis par le départ du ' ~ e.dateDepart|date('d/m/Y') ~ ' vers ' ~ e.destination.ville ~ '.')|url_encode }}" class="bouton bouton-wa bouton-petit" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> WhatsApp</a>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
 
 {# ---------- Destinations ---------- #}
 <section class="section section-sable" id="destinations">

@@ -20,6 +20,21 @@
         </div>
     </div>
     <div class="col-xl-3">
+        {% if demandes %}
+        <div class="card border border-primary">
+            <div class="card-header"><h4 class="card-title"><i class="fas fa-globe text-primary me-2"></i>Demandes en ligne à traiter <span class="badge badge-primary ms-1">{{ demandes|length }}</span></h4></div>
+            <div class="card-body">
+                {% for r in demandes %}
+                    <a href="{{ path('ramassage_edit', {id: r.id}) }}" class="d-block border-bottom py-2 text-decoration-none">
+                        <span class="d-flex justify-content-between"><strong class="text-black">{{ r.client.nomComplet }}</strong><span class="text-primary">{{ r.datePrevue|date('d/m') }}</span></span>
+                        <small class="text-muted d-block">{{ r.adresse ?: r.client.adresse }}</small>
+                        <small class="text-muted"><i class="fas fa-phone-alt me-1"></i>{{ r.client.telephone|tel }}</small>
+                    </a>
+                {% endfor %}
+                <p class="fs-12 text-muted mt-2 mb-0">Appelez le client pour fixer l'heure, puis « Valider le rendez-vous ».</p>
+            </div>
+        </div>
+        {% endif %}
         <div class="card">
             <div class="card-header"><h4 class="card-title">À venir</h4></div>
             <div class="card-body">

@@ -218,6 +218,21 @@ class ExpeditionController extends AbstractController
         return $this->redirectToRoute('expedition_show', ['id' => $expedition->getId()], Response::HTTP_SEE_OTHER);
     }
 
+    /** Bouton « Publier sur le site » / « Retirer » : annonce du départ sur sotrama.net. */
+    #[Route('/{id}/publier', name: 'expedition_publier', requirements: ['id' => self::ID], methods: ['POST'])]
+    #[IsGranted(User::ROLE_ADMIN)]
+    public function publier(Request $request, Expedition $expedition, EntityManagerInterface $em): Response
+    {
+        $this->verifierCsrf($request, 'publier-expedition-'.$expedition->getId());
+        $expedition->setPublieeSurSite(!$expedition->isPublieeSurSite());
+        $em->flush();
+        $this->addFlash('success', $expedition->isPublieeSurSite()
+            ? 'Départ annoncé sur sotrama.net'.($expedition->isAnnonceVisible() ? '.' : ' (visible quand la date de départ est à venir et l\'expédition en préparation).')
+            : 'Annonce retirée du site.');
+
+        return $this->redirectToRoute('expedition_show', ['id' => $expedition->getId()], Response::HTTP_SEE_OTHER);
+    }
+
     #[Route('/{id}/depenses', name: 'expedition_depense_new', requirements: ['id' => self::ID], methods: ['POST'])]
     #[IsGranted(User::ROLE_ADMIN)]
     public function ajouterDepense(Request $request, Expedition $expedition, EntityManagerInterface $em): Response

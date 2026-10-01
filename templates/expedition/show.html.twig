@@ -15,6 +15,16 @@
     <div class="d-flex gap-2 flex-wrap">
         <a href="?export=csv" class="btn btn-outline-primary btn-rounded btn-sm"><i class="fas fa-file-excel me-1"></i> Manifeste</a>
         {% if is_granted('ROLE_ADMIN') %}
+            {% if expedition.statut.value == 'en_preparation' %}
+            <form method="post" action="{{ path('expedition_publier', {id: expedition.id}) }}">
+                <input type="hidden" name="_token" value="{{ csrf_token('publier-expedition-' ~ expedition.id) }}">
+                {% if expedition.publieeSurSite %}
+                    <button class="btn btn-success btn-rounded btn-sm" title="Annonce visible sur sotrama.net — cliquer pour la retirer"><i class="fas fa-bullhorn me-1"></i> Publiée sur le site · Retirer</button>
+                {% else %}
+                    <button class="btn btn-outline-success btn-rounded btn-sm" title="Annoncer ce départ sur sotrama.net"><i class="fas fa-bullhorn me-1"></i> Publier sur le site</button>
+                {% endif %}
+            </form>
+            {% endif %}
             <a href="{{ path('expedition_edit', {id: expedition.id}) }}" class="btn btn-primary btn-rounded btn-sm"><i class="fas fa-pen me-1"></i> Modifier</a>
             {% if expedition.colis is empty %}
             <form method="post" action="{{ path('expedition_delete', {id: expedition.id}) }}" data-confirm="L'expédition {{ expedition.numero }} et ses dépenses seront supprimées." data-confirm-titre="Supprimer cette expédition ?" data-confirm-type="danger" data-confirm-bouton="Oui, supprimer" data-confirm-alerte="Cette suppression est irréversible.">
