@@ -121,6 +121,33 @@ final class RegistreAppelsTest extends WebTestCase
         $this->assertSame(0, (int) static::getContainer()->get(Connection::class)->fetchOne('SELECT COUNT(*) FROM ramassage WHERE id = ?', [$ramassageId]));
     }
 
+    public function testClientChoisiDansLaBase(): void
+    {
+        $this->connecter('ramassage');
+        $connu = static::getContainer()->get(ClientRepository::class)->findOneBy([], ['nom' => 'DESC']);
+        $avant = static::getContainer()->get(ClientRepository::class)->count([]);
+
+        // « Client de la base » sans choisir de client : refusé.
+        $crawler = $this->client->request('GET', '/appels');
+        $form = $crawler->selectButton("Enregistrer l'appel")->form();
+        $form['appel[modeClient]']->select('existant');
+        $this->client->submit($form, ['appel[codePostal]' => '75010', 'appel[ville]' => 'Paris']);
+        $this->assertResponseStatusCodeSame(422);
+        $this->assertSelectorTextContains('body', 'Choisissez le client dans la liste');
+
+        // Client choisi : l'appel reprend ses nom et coordonnées, aucune nouvelle fiche.
+        $form = $this->client->getCrawler()->selectButton("Enregistrer l'appel")->form();
+        $form['appel[modeClient]']->select('existant');
+        $this->client->submit($form, ['appel[client]' => (string) $connu->getId(), 'appel[nom]' => '', 'appel[telephone]' => '', 'appel[codePostal]' => '', 'appel[ville]' => '', 'appel[commentaire]' => 'Choisi dans la base']);
+        $this->assertResponseRedirects('/appels');
+        $appel = static::getContainer()->get(AppelRepository::class)->findOneBy(['commentaire' => 'Choisi dans la base']);
+        $this->assertSame($connu->getId(), $appel->getClient()->getId());
+        $this->assertSame($connu->getNom(), $appel->getNom());
+        $this->assertSame($connu->getTelephone(), $appel->getTelephone());
+        $this->assertSame($avant, static::getContainer()->get(ClientRepository::class)->count([]));
+        static::getContainer()->get(Connection::class)->executeStatement('DELETE FROM appel WHERE id = ?', [$appel->getId()]);
+    }
+
     public function testClientConnuExportEtDroits(): void
     {
         $this->connecter('ramassage');

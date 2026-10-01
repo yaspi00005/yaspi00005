@@ -105,6 +105,7 @@ class AppelController extends AbstractController
         }
 
         return $this->json(['client' => [
+            'id' => $client->getId(),
             'nom' => $client->getNom(), 'prenom' => $client->getPrenom(), 'codePostal' => $client->getCodePostal(),
             'ville' => $client->getVille(), 'adresse' => $client->getAdresse(),
             'colis' => $colis->count(['client' => $client]),

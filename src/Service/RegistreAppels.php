@@ -104,13 +104,10 @@ final class RegistreAppels
         ]));
     }
 
-    /** Client existant avec ce téléphone (ses champs vides sont complétés), sinon nouvelle fiche. */
+    /** Client choisi dans la base ; sinon retrouvé par le téléphone (doublon), sinon nouvelle fiche. Ses champs vides sont complétés. */
     private function client(Appel $appel): Client
     {
-        $client = $appel->getClient();
-        if (!$client || Doublons::finTelephone($client->getTelephone()) !== Doublons::finTelephone($appel->getTelephone())) {
-            $client = $this->doublons->clientParTelephone($appel->getTelephone());
-        }
+        $client = $appel->getClient() ?? $this->doublons->clientParTelephone($appel->getTelephone());
         if (!$client) {
             $client = (new Client())
                 ->setNom($appel->getNom())->setPrenom($appel->getPrenom() ?? '')->setTelephone($appel->getTelephone())

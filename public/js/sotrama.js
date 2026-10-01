@@ -413,10 +413,14 @@
         return;
     }
 
-    const cleServeur = (function (base64) {
-        const b = (base64 + '='.repeat((4 - base64.length % 4) % 4)).replace(/-/g, '+').replace(/_/g, '/');
-        return Uint8Array.from(atob(b), c => c.charCodeAt(0));
-    })(corps.pushCle);
+    // Clé mal configurée sur le serveur : on abandonne ce bloc seulement (le reste du script doit tourner).
+    let cleServeur;
+    try {
+        const b = (corps.pushCle + '='.repeat((4 - corps.pushCle.length % 4) % 4)).replace(/-/g, '+').replace(/_/g, '/');
+        cleServeur = Uint8Array.from(atob(b), c => c.charCodeAt(0));
+    } catch (e) {
+        return;
+    }
 
     const envoyer = (url, donnees) => fetch(url, {
         method: 'POST',
@@ -646,30 +650,57 @@
         document.addEventListener('visibilitychange', function () { if (!document.hidden) { rafraichir(); } });
     }
 
-    // Téléphone d'un client déjà connu : nom et adresse pré-remplis (sans écraser une saisie).
+    // Client : choisi dans la base ou nouveau client.
     const form = document.querySelector('.js-form-appel');
-    const tel = form ? form.querySelector('.js-appel-telephone') : null;
-    if (!form || !tel || !form.dataset.clientUrl) { return; }
-    const info = form.querySelector('.js-client-connu');
+    if (!form) { return; }
     const champ = nom => form.querySelector('[name$="[' + nom + ']"]');
+    const choixClient = form.querySelector('select.js-appel-client');
+    const info = form.querySelector('.js-client-connu');
+    const mode = () => (form.querySelector('.js-mode-client input:checked') || {}).value || 'nouveau';
+    const afficherMode = function () {
+        const existant = mode() === 'existant';
+        form.querySelectorAll('.js-bloc-existant').forEach(b => b.classList.toggle('d-none', !existant));
+        form.querySelectorAll('.js-bloc-nouveau').forEach(b => b.classList.toggle('d-none', existant));
+    };
+    form.querySelectorAll('.js-mode-client input').forEach(r => r.addEventListener('change', afficherMode));
+    afficherMode();
+
+    // Client choisi dans la liste : ses coordonnées remplissent l'appel (l'adresse reste modifiable).
+    if (choixClient && window.jQuery) {
+        jQuery(choixClient).on('change', function () {
+            const o = choixClient.selectedOptions[0];
+            if (!o || !o.value) { return; }
+            [['nom', 'nom'], ['prenom', 'prenom'], ['telephone', 'telephone'], ['codePostal', 'codePostal'], ['ville', 'ville'], ['adresse', 'adresse']].forEach(function ([k, d]) {
+                const c = champ(k);
+                if (c) { c.value = o.dataset[d] || ''; }
+            });
+            if (info) { info.classList.add('d-none'); }
+        });
+    }
+
+    // Nouveau client dont le téléphone est déjà dans la base : on bascule sur sa fiche.
+    const tel = form.querySelector('.js-appel-telephone');
+    if (!tel || !form.dataset.clientUrl) { return; }
     let dernier = '';
     const chercher = function () {
         const chiffres = tel.value.replace(/\D/g, '');
-        if (chiffres.length < 8 || chiffres === dernier) { return; }
+        if (mode() !== 'nouveau' || chiffres.length < 8 || chiffres === dernier) { return; }
         dernier = chiffres;
         fetch(form.dataset.clientUrl + '?' + new URLSearchParams({ telephone: tel.value }), { credentials: 'same-origin' })
             .then(r => r.ok ? r.json() : { client: null })
             .then(function (d) {
                 if (!info) { return; }
                 if (!d.client) { info.classList.add('d-none'); return; }
-                ['nom', 'prenom', 'codePostal', 'ville', 'adresse'].forEach(function (k) {
-                    const c = champ(k);
-                    if (c && !c.value && d.client[k]) { c.value = d.client[k]; }
-                });
+                const radio = form.querySelector('.js-mode-client input[value="existant"]');
+                if (radio && choixClient && window.jQuery) {
+                    radio.checked = true;
+                    afficherMode();
+                    jQuery(choixClient).val(String(d.client.id)).trigger('change');
+                }
                 info.innerHTML = '';
                 const lien = document.createElement('a');
                 lien.href = d.client.fiche; lien.target = '_blank'; lien.className = 'text-success';
-                lien.textContent = '✔ Client connu : ' + [d.client.prenom, d.client.nom].filter(Boolean).join(' ') + ' (' + d.client.colis + ' colis)';
+                lien.textContent = '✔ Déjà client : ' + [d.client.prenom, d.client.nom].filter(Boolean).join(' ') + ' (' + d.client.colis + ' colis) — fiche sélectionnée';
                 info.appendChild(lien);
                 info.classList.remove('d-none');
             })

@@ -8,10 +8,14 @@
     <div class="col-md-6 col-xl-3">{{ form_row(form.camion) }}</div>
     <div class="col-md-6 col-xl-3">{{ form_row(form.expedition) }}</div>
 </div>
-<div class="row">
+<div class="row align-items-start">
+    <div class="col-12 mb-2">{{ form_row(form.modeClient) }}</div>
+    {# Client de la base : recherche par nom ou téléphone, coordonnées reprises (modifiables pour l'adresse du ramassage). #}
+    <div class="col-xl-8 js-bloc-existant">{{ form_row(form.client) }}</div>
+    {# Nouveau client : sa fiche est créée à l'enregistrement. #}
+    <div class="col-md-6 col-xl-4 js-bloc-nouveau">{{ form_row(form.nom) }}</div>
+    <div class="col-md-6 col-xl-4 js-bloc-nouveau">{{ form_row(form.prenom) }}</div>
     <div class="col-md-6 col-xl-4">{{ form_row(form.telephone) }}<div class="client-connu text-success d-none js-client-connu"></div></div>
-    <div class="col-md-6 col-xl-4">{{ form_row(form.nom) }}</div>
-    <div class="col-md-6 col-xl-4">{{ form_row(form.prenom) }}</div>
 </div>
 <div class="row">
     <div class="col-md-4 col-xl-2">{{ form_row(form.codePostal) }}</div>
