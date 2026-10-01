@@ -223,6 +223,27 @@
     </div>
 </section>
 
+{# ---------- Témoignages vidéo (public/images/vitrine/temoignages/) ---------- #}
+{% if temoignages %}
+<section class="section section-sable" id="temoignages">
+    <div class="conteneur">
+        <div class="titre-section">
+            <p class="surtitre">Témoignages</p>
+            <h2>Nos clients en parlent</h2>
+        </div>
+        <div class="grille-temoignages">
+            {% for t in temoignages %}{% include 'vitrine/_temoignage.html.twig' %}{% endfor %}
+        </div>
+        {% if nbTemoignages > temoignages|length %}
+        <p class="aide-centre"><a href="{{ path('vitrine_temoignages') }}" class="bouton bouton-contour"><i class="fas fa-play-circle"></i> Voir les {{ nbTemoignages }} témoignages</a></p>
+        {% endif %}
+    </div>
+</section>
+{% endif %}
+
+{# ---------- Enseignes partenaires (public/images/vitrine/enseignes/) ---------- #}
+{% if enseignes %}{% include 'vitrine/_enseignes.html.twig' %}{% endif %}
+
 {# ---------- Galerie (photos déposées dans public/images/vitrine/galerie/) ---------- #}
 {% if galerie %}
 <section class="section" id="galerie">

@@ -25,14 +25,16 @@ final class DemandeRamassage
     /** Ramassage gratuit en Île-de-France uniquement (départements). */
     public const DEPARTEMENTS = ['75', '77', '78', '91', '92', '93', '94', '95'];
 
-    /** créneau → [libellé, heure du rendez-vous provisoire] */
-    public const CRENEAUX = [
-        'matin' => ['Matin (9 h – 12 h)', 9],
-        'apres-midi' => ['Après-midi (14 h – 18 h)', 14],
-        'soir' => ['Soirée (18 h – 21 h)', 18],
-    ];
+    /** Jours de ramassage proposés (numéro ISO du jour) ; l'heure est fixée au téléphone. */
+    public const JOURS = [2 => 'mardi', 4 => 'jeudi', 7 => 'dimanche'];
+
+    /** Heure provisoire dans le planning, en attendant l'appel de confirmation. */
+    public const HEURE_PROVISOIRE = 10;
 
     public const JOURS_MAX = 60;
+
+    /** Nombre de jours proposés au visiteur (environ trois semaines). */
+    public const NB_JOURS_PROPOSES = 9;
 
     public function __construct(
         private readonly EntityManagerInterface $em,
@@ -53,7 +55,7 @@ final class DemandeRamassage
      */
     public static function lire(array $saisie): array
     {
-        $champs = ['prenom', 'nom', 'telephone', 'email', 'adresse', 'code_postal', 'ville', 'date', 'creneau', 'destination', 'colis', 'message'];
+        $champs = ['prenom', 'nom', 'telephone', 'email', 'adresse', 'code_postal', 'ville', 'date', 'destination', 'colis', 'message'];
         $donnees = [];
         foreach ($champs as $champ) {
             $valeur = $saisie[$champ] ?? '';
@@ -86,16 +88,9 @@ final class DemandeRamassage
         } elseif (!\in_array(substr($d['code_postal'], 0, 2), self::DEPARTEMENTS, true)) {
             $erreurs['code_postal'] = 'Le ramassage en ligne est réservé à l\'Île-de-France. Contactez-nous sur WhatsApp pour les autres régions.';
         }
-        $date = self::date($d['date']);
-        if (!$date) {
-            $erreurs['date'] = 'Choisissez une date.';
-        } elseif ($date < $this->premierJour() || $date > $this->dernierJour($depart)) {
-            $erreurs['date'] = 'Choisissez une date entre le '.$this->premierJour()->format('d/m/Y').' et le '.$this->dernierJour($depart)->format('d/m/Y').'.';
-        } elseif ('7' === $date->format('N')) {
-            $erreurs['date'] = 'Pas de ramassage le dimanche.';
-        }
-        if (!isset(self::CRENEAUX[$d['creneau']])) {
-            $erreurs['creneau'] = 'Choisissez un créneau.';
+        $proposes = array_map(fn (\DateTimeImmutable $j) => $j->format('Y-m-d'), $this->joursProposes($depart));
+        if (!\in_array($d['date'], $proposes, true)) {
+            $erreurs['date'] = 'Choisissez un des jours proposés (mardi, jeudi ou dimanche).';
         }
         if (!Destination::tryFrom($d['destination'])) {
             $erreurs['destination'] = 'Choisissez la destination.';
@@ -123,9 +118,9 @@ final class DemandeRamassage
 
         // La fiche d'un client existant n'est jamais modifiée par un visiteur : tout est noté sur le ramassage.
         $destination = Destination::from($d['destination']);
-        [$creneau, $heure] = self::CRENEAUX[$d['creneau']];
+        $jour = self::date($d['date']);
         $commentaire = implode("\n", array_filter([
-            'Demande en ligne (sotrama.net) — créneau souhaité : '.$creneau.'.',
+            'Demande en ligne (sotrama.net) — jour souhaité : '.\App\Util\DateFr::jour($jour).'. Heure à fixer en appelant le client.',
             'Destination : '.$destination->ville().' ('.$destination->label().')'.($depart ? ', départ du '.$depart->getDateDepart()->format('d/m/Y') : '').'.',
             'Demandeur : '.$d['prenom'].' '.$d['nom'].' — '.$d['telephone'].($d['email'] ? ' — '.$d['email'] : ''),
             $d['colis'] ? 'Colis : '.$d['colis'] : null,
@@ -134,7 +129,7 @@ final class DemandeRamassage
 
         $ramassage = (new Ramassage())
             ->setClient($client)
-            ->setDatePrevue(self::date($d['date'])->setTime($heure, 0))
+            ->setDatePrevue($jour->setTime(self::HEURE_PROVISOIRE, 0))
             ->setAdresse($d['adresse'].', '.$d['code_postal'].' '.$d['ville'])
             ->setCommentaire($commentaire)
             ->setStatut(StatutRamassage::Demande);
@@ -143,9 +138,27 @@ final class DemandeRamassage
         $this->registre->depuisDemandeEnLigne($ramassage, $d, $depart);
         $this->em->flush();
 
-        $this->prevenirEquipe($ramassage, $creneau);
+        $this->prevenirEquipe($ramassage);
 
         return $ramassage;
+    }
+
+    /**
+     * Prochains mardis, jeudis et dimanches, à partir de demain et jusqu'à la date limite du départ choisi.
+     *
+     * @return list<\DateTimeImmutable>
+     */
+    public function joursProposes(?Expedition $depart): array
+    {
+        $jours = [];
+        $fin = $this->dernierJour($depart);
+        for ($j = $this->premierJour(); $j <= $fin && \count($jours) < self::NB_JOURS_PROPOSES; $j = $j->modify('+1 day')) {
+            if (isset(self::JOURS[(int) $j->format('N')])) {
+                $jours[] = $j;
+            }
+        }
+
+        return $jours;
     }
 
     public function premierJour(): \DateTimeImmutable
@@ -171,10 +184,10 @@ final class DemandeRamassage
     }
 
     /** Notification sur le téléphone des administrateurs et agents de ramassage (si activée). */
-    private function prevenirEquipe(Ramassage $ramassage, string $creneau): void
+    private function prevenirEquipe(Ramassage $ramassage): void
     {
         $url = $this->vitrine->urlApplication().$this->urls->generate('ramassage_edit', ['id' => $ramassage->getId()]);
-        $corps = $ramassage->getClient()->getNomComplet().' — '.$ramassage->getDatePrevue()->format('d/m').', '.mb_strtolower($creneau).' — '.$ramassage->getAdresse();
+        $corps = $ramassage->getClient()->getNomComplet().' — '.\App\Util\DateFr::jour($ramassage->getDatePrevue()).' (heure à confirmer) — '.$ramassage->getAdresse();
         foreach ($this->users->findBy(['actif' => true]) as $user) {
             if (!array_intersect([User::ROLE_ADMIN, User::ROLE_RAMASSAGE], $user->getRoles())) {
                 continue;
