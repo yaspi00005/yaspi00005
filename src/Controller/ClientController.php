@@ -12,8 +12,10 @@ use App\Repository\JournalRepository;
 use App\Service\CodePostal;
 use App\Service\Corbeille;
 use App\Service\Doublons;
+use App\Service\ExportExcel;
 use App\Service\Geocodage;
 use App\Service\PaiementService;
+use App\Util\Csv;
 use App\Util\Pagination;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -31,9 +33,32 @@ class ClientController extends AbstractController
     private const ID = '[A-Za-z0-9_-]{22}';
 
     #[Route('', name: 'client_index', methods: ['GET'])]
-    public function index(Request $request, ClientRepository $clients): Response
+    public function index(Request $request, ClientRepository $clients, ExportExcel $excel, EntityManagerInterface $em): Response
     {
         $q = $request->query->getString('q');
+
+        // Export du fichier clients : administrateurs seulement (données personnelles en masse).
+        if ('csv' === $request->query->get('export')) {
+            $this->denyAccessUnlessGranted(User::ROLE_ADMIN);
+            $qb = $clients->rechercheQb($q);
+            // Nombre de colis de chaque client en une seule requête.
+            $nbColis = array_column($em->createQuery('SELECT IDENTITY(c.client) AS client, COUNT(c.id) AS nb FROM App\Entity\Colis c GROUP BY c.client')->getArrayResult(), 'nb', 'client');
+
+            return $excel->reponse('clients-'.date('Y-m-d').'.xlsx', 'Liste des clients',
+                ['Nom', 'Prénom', 'Téléphone', 'E-mail', 'Adresse', 'Code postal', 'Ville', 'Pays', 'Colis', 'Bonus disponible', 'Client depuis', 'Notes'],
+                (function () use ($qb, $nbColis) {
+                    foreach ($qb->getQuery()->toIterable() as $c) {
+                        /* @var Client $c */
+                        yield [
+                            $c->getNom(), $c->getPrenom(), $c->getTelephone(), $c->getEmail(), $c->getAdresse(), $c->getCodePostal(),
+                            $c->getVille(), $c->getPays(), (int) ($nbColis[$c->getId()] ?? 0), Csv::montant($c->getSoldeBonus()),
+                            $c->getCreatedAt()->format('d/m/Y'), $c->getNotes(),
+                        ];
+                    }
+                })(),
+                '' !== trim($q) ? 'Recherche : « '.trim($q).' »' : null,
+            );
+        }
 
         return $this->render('client/index.html.twig', [
             'clients' => Pagination::depuis($clients->rechercheQb($q), $request->query->get('page', 1)),

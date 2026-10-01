@@ -21,7 +21,7 @@ class ClientRepository extends ServiceEntityRepository
     {
         $qb = $this->createQueryBuilder('c')->orderBy('c.nom', 'ASC')->addOrderBy('c.prenom', 'ASC');
         if ($q = trim((string) $q)) {
-            $qb->andWhere('LOWER(c.nom) LIKE :q OR LOWER(c.prenom) LIKE :q OR c.telephone LIKE :q OR LOWER(c.email) LIKE :q OR LOWER(c.ville) LIKE :q')
+            $qb->andWhere('LOWER(c.nom) LIKE :q OR LOWER(c.prenom) LIKE :q OR c.telephone LIKE :q OR LOWER(c.email) LIKE :q OR LOWER(c.ville) LIKE :q OR LOWER(c.adresse) LIKE :q OR c.codePostal LIKE :q')
                 ->setParameter('q', '%'.mb_strtolower($q).'%');
         }
 

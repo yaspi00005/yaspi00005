@@ -8,16 +8,17 @@
         <h4 class="card-title">{{ clients.total }} clients</h4>
         <div class="d-flex gap-2 flex-wrap">
             <form method="get" class="d-flex gap-2">
-                <input type="search" name="q" value="{{ q }}" class="form-control" placeholder="Nom, téléphone, ville…" aria-label="Rechercher un client">
+                <input type="search" name="q" value="{{ q }}" class="form-control" placeholder="Nom, téléphone, adresse, ville…" aria-label="Rechercher un client">
                 <button class="btn btn-primary" aria-label="Rechercher"><i class="fas fa-search"></i></button>
             </form>
+            {% if is_granted('ROLE_ADMIN') %}<a href="?{{ app.request.query.all|merge({export: 'csv', page: null})|url_encode }}" class="btn btn-outline-primary btn-rounded"><i class="fas fa-file-excel me-1"></i> Export Excel</a>{% endif %}
             <a href="{{ path('client_new') }}" class="btn btn-primary btn-rounded"><i class="fas fa-user-plus me-1"></i> Nouveau client</a>
         </div>
     </div>
     <div class="card-body">
         <div class="table-responsive">
             <table class="table table-hover">
-                <thead><tr><th>Client</th><th>Téléphone</th><th>Ville</th><th class="num">Colis</th><th class="num">Bonus</th><th></th></tr></thead>
+                <thead><tr><th>Client</th><th>Téléphone</th><th>Adresse</th><th class="num">Colis</th><th class="num">Bonus</th><th></th></tr></thead>
                 <tbody>
                 {% for c in clients %}
                     <tr>
@@ -27,7 +28,11 @@
                             </a>
                         </td>
                         <td><a href="tel:{{ c.telephone }}">{{ c.telephone|tel }}</a>{% if c.email %}<br><small class="text-muted">{{ c.email }}</small>{% endif %}</td>
-                        <td>{{ c.ville }}{% if c.pays != 'France' %} <small class="text-muted">({{ c.pays }})</small>{% endif %}</td>
+                        <td>
+                            {% if c.adresse %}<span class="d-block">{{ c.adresse }}</span>{% endif %}
+                            <span class="{{ c.adresse ? 'text-muted fs-13' }}">{{ c.codePostal }} {{ c.ville }}{% if c.pays != 'France' %} ({{ c.pays }}){% endif %}</span>
+                            {% if not c.adresse and not c.ville %}<span class="text-muted">—</span>{% endif %}
+                        </td>
                         <td class="num">{{ c.colis|length }}</td>
                         <td class="num">{{ c.soldeBonus ? c.soldeBonus|money : '—' }}</td>
                         <td class="text-end">

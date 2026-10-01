@@ -13,6 +13,8 @@ final class ExportListener
 {
     private const EXPORTS = [
         'colis_index' => 'Export Excel des colis',
+        'client_index' => 'Export Excel des clients',
+        'appel_index' => 'Export Excel du registre des appels',
         'paiement_index' => 'Export Excel des paiements',
         'expedition_show' => "Export Excel du manifeste d'une expédition",
         'ramassage_export' => 'Export PDF du planning des ramassages',
