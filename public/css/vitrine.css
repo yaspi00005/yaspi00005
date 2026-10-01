@@ -1,4 +1,10 @@
 /* Site vitrine SOTRAMA (sotrama.net) — couleurs du logo : vert, jaune, rouge. */
+
+/* Polices hébergées sur le site (licence SIL OFL, public/fonts) : aucune donnée de visiteur envoyée à Google. */
+@font-face { font-family: 'Outfit'; font-style: normal; font-display: swap; font-weight: 100 900; src: url('../fonts/outfit-latin-ext-wght-normal.woff2') format('woff2-variations'), url('../fonts/outfit-latin-ext-wght-normal.woff2') format('woff2'); unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF; }
+@font-face { font-family: 'Outfit'; font-style: normal; font-display: swap; font-weight: 100 900; src: url('../fonts/outfit-latin-wght-normal.woff2') format('woff2-variations'), url('../fonts/outfit-latin-wght-normal.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: 'Inter'; font-style: normal; font-display: swap; font-weight: 100 900; src: url('../fonts/inter-latin-ext-wght-normal.woff2') format('woff2-variations'), url('../fonts/inter-latin-ext-wght-normal.woff2') format('woff2'); unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF; }
+@font-face { font-family: 'Inter'; font-style: normal; font-display: swap; font-weight: 100 900; src: url('../fonts/inter-latin-wght-normal.woff2') format('woff2-variations'), url('../fonts/inter-latin-wght-normal.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
 :root {
     --vert: #0b7a3b;
     --vert-fonce: #075a2b;
@@ -315,3 +321,24 @@ code { background: var(--vert-clair); color: var(--vert-fonce); padding: .05em .
     html { scroll-behavior: auto; }
     * { transition: none !important; }
 }
+
+/* Bandeau « vie privée » (première visite) */
+.bandeau-cookies { position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 1000; max-width: 980px; margin: 0 auto; display: flex; gap: 20px; align-items: center; background: var(--blanc); border: 1px solid var(--bord); border-radius: var(--rayon); box-shadow: 0 18px 50px rgba(0, 0, 0, .18); padding: 20px 24px; }
+.bandeau-cookies[hidden] { display: none; }
+.bandeau-cookies h2 { font-size: 1.1rem; margin: 0 0 .35rem; }
+.bandeau-cookies h2 i { color: var(--vert); margin-right: .3rem; }
+.bandeau-cookies p { margin: 0; font-size: .92rem; color: var(--gris); }
+.bandeau-cookies a { color: var(--vert); font-weight: 600; }
+.bandeau-cookies-boutons { display: flex; gap: .6rem; flex-shrink: 0; }
+.bandeau-cookies-boutons .bouton { width: auto; }
+.bandeau-cookies-ouvert .wa-flottant { bottom: 170px; }
+@media (max-width: 720px) {
+    .bandeau-cookies { flex-direction: column; align-items: stretch; left: 10px; right: 10px; bottom: 10px; padding: 18px; }
+    .bandeau-cookies-boutons .bouton { flex: 1; }
+    .bandeau-cookies-ouvert .wa-flottant { bottom: 300px; }
+}
+.texte-discret { color: var(--gris); font-size: .92rem; }
+.tableau-defilant { overflow-x: auto; }
+.tableau-cookies { width: 100%; border-collapse: collapse; font-size: .92rem; margin: .5rem 0 1rem; }
+.tableau-cookies th, .tableau-cookies td { border: 1px solid var(--bord); padding: .55rem .7rem; text-align: left; vertical-align: top; }
+.tableau-cookies th { background: var(--vert-clair); }

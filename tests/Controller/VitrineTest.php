@@ -16,6 +16,33 @@ final class VitrineTest extends WebTestCase
         $this->client = static::createClient([], ['HTTP_HOST' => 'sotrama.net']);
     }
 
+    /** Bandeau « vie privée », pages légales, et aucune ressource tierce (polices hébergées sur le site). */
+    public function testViePriveeEtPagesLegales(): void
+    {
+        $this->client->request('GET', '/');
+        $this->assertSelectorExists('#bandeau-cookies [data-cookies-choix="accepte"]');
+        $this->assertSelectorExists('#bandeau-cookies [data-cookies-choix="refuse"]');
+        $this->assertSelectorExists('#bandeau-cookies a[href="/confidentialite"]');
+        $this->assertSelectorExists('#bandeau-cookies a[href="/conditions-utilisation"]');
+        $html = (string) $this->client->getResponse()->getContent();
+        $this->assertStringNotContainsString('fonts.googleapis.com', $html);
+        $this->assertStringNotContainsString('fonts.gstatic.com', $html);
+
+        foreach (['/confidentialite' => 'Politique de confidentialité', '/conditions-utilisation' => "Conditions d'utilisation", '/mentions-legales' => 'Mentions légales'] as $url => $titre) {
+            $this->client->request('GET', $url);
+            $this->assertResponseIsSuccessful($url);
+            $this->assertSelectorTextContains('h1', $titre);
+        }
+        $this->client->request('GET', '/confidentialite');
+        $this->assertSelectorTextContains('#cookies', 'Cookies');
+        $this->assertSelectorTextContains('body', 'SOTRAMA_SESSION');
+        $this->assertSelectorTextContains('body', 'CNIL');
+
+        // Le bandeau n'existe que sur le site vitrine, pas dans l'application.
+        $this->client->request('GET', '/connexion', server: ['HTTP_HOST' => 'app.sotrama.net']);
+        $this->assertSelectorNotExists('#bandeau-cookies');
+    }
+
     public function testAccueilPublic(): void
     {
         $this->client->request('GET', '/');

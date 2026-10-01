@@ -1,0 +1,76 @@
+{% extends 'vitrine/base.html.twig' %}
+
+{% block title %}Politique de confidentialité · SOTRAMA{% endblock %}
+{% block description %}Comment SOTRAMA collecte, utilise et protège vos données personnelles, et quels cookies le site utilise.{% endblock %}
+
+{% block body %}
+<section class="page-texte">
+    <div class="conteneur conteneur-etroit">
+        <h1>Politique de confidentialité</h1>
+        <p class="texte-discret">Dernière mise à jour : {{ infos.mise_a_jour_confidentialite|default('') }}</p>
+
+        <p>SOTRAMA attache une grande importance à la protection de vos données personnelles. Cette page explique, conformément au Règlement général sur la protection des données (RGPD) et à la loi « Informatique et Libertés », quelles données nous collectons, pourquoi, combien de temps nous les gardons et quels sont vos droits.</p>
+
+        <h2>1. Responsable du traitement</h2>
+        <p>SOTRAMA{% if infos.entreprise|default(null) %} — {{ infos.entreprise }}{% endif %}{% if infos.adresse|default(null) %}, {{ infos.adresse }}{% endif %}, représentée par Yacouba Traoré, gérant.<br>
+        Contact : {% if infos.email|default(null) %}<a href="mailto:{{ infos.email }}">{{ infos.email }}</a> ou {% endif %}<a href="tel:+{{ infos.whatsapp }}">{{ infos.telephone }}</a>.</p>
+
+        <h2>2. Les données que nous collectons</h2>
+        <h3>Visiteurs du site sotrama.net</h3>
+        <ul>
+            <li><strong>Suivi de colis</strong> : le numéro de suivi et le téléphone saisis servent uniquement à retrouver votre colis et à vous en montrer l'état ; ils ne sont pas enregistrés.</li>
+            <li><strong>Sécurité</strong> : l'adresse IP est utilisée quelques minutes pour limiter les recherches abusives, et figure dans les journaux techniques de l'hébergeur (conservés au plus 12 mois).</li>
+            <li><strong>Liens WhatsApp, téléphone, réseaux sociaux</strong> : en cliquant, vous quittez notre site ; ces services appliquent leur propre politique de confidentialité.</li>
+        </ul>
+        <h3>Clients (expéditeurs) et destinataires</h3>
+        <ul>
+            <li><strong>Expéditeur</strong> : nom, prénom, téléphone, adresse e-mail (facultative), adresse postale et, pour les ramassages, la position GPS du domicile.</li>
+            <li><strong>Destinataire</strong> : nom et téléphone.</li>
+            <li><strong>Colis</strong> : contenu déclaré, poids, photos des articles, tarif, paiements, étapes du transport, code de retrait.</li>
+        </ul>
+
+        <h2>3. Pourquoi nous les utilisons (finalités et bases légales)</h2>
+        <ul>
+            <li><strong>Transporter et remettre vos colis</strong>, établir les reçus, encaisser les paiements, organiser les ramassages : exécution du contrat de transport.</li>
+            <li><strong>Prévenir le destinataire</strong> (SMS, WhatsApp, e-mail) de l'arrivée et lui permettre de retirer son colis en toute sécurité grâce au code de retrait : exécution du contrat.</li>
+            <li><strong>Tenir la comptabilité</strong> et répondre aux obligations légales et douanières : obligation légale.</li>
+            <li><strong>Gérer le bonus fidélité</strong> et améliorer notre service : intérêt légitime de SOTRAMA.</li>
+            <li><strong>Sécuriser le site et l'application</strong> (prévention des fraudes et des abus) : intérêt légitime.</li>
+        </ul>
+        <p>Vos données ne sont jamais vendues ni utilisées à des fins publicitaires.</p>
+
+        <h2>4. Combien de temps nous les gardons</h2>
+        <ul>
+            <li><strong>Photos des colis</strong> : supprimées automatiquement 5 mois après la remise du colis.</li>
+            <li><strong>Fiche client et historique des envois</strong> : pendant la relation commerciale, puis 3 ans après le dernier envoi.</li>
+            <li><strong>Pièces comptables</strong> (reçus, paiements) : 10 ans, comme l'exige la loi.</li>
+            <li><strong>Journaux techniques</strong> : 12 mois au plus.</li>
+        </ul>
+
+        <h2>5. Qui peut y accéder</h2>
+        <p>Uniquement les personnes qui en ont besoin : l'équipe SOTRAMA en France, nos agences de Bamako (Mali) et de Dakar (Sénégal) pour la remise des colis, et nos prestataires techniques (hébergement du site, envoi des SMS et des e-mails), tenus à la confidentialité. Les données nécessaires à la remise sont transmises à nos agences au Mali et au Sénégal : ce transfert hors de l'Union européenne est indispensable à l'exécution du transport que vous nous confiez (article 49 du RGPD).</p>
+
+        <h2>6. Sécurité</h2>
+        <p>Connexion chiffrée (HTTPS), accès à l'application réservé à l'équipe avec mot de passe personnel, droits limités selon le rôle de chacun, code de retrait secret pour chaque colis, journal des actions et sauvegardes.</p>
+
+        <h2>7. Vos droits</h2>
+        <p>Vous pouvez demander à accéder à vos données, à les faire rectifier ou effacer, à limiter leur utilisation, vous y opposer ou les récupérer (portabilité). Écrivez-nous {% if infos.email|default(null) %}à <a href="mailto:{{ infos.email }}">{{ infos.email }}</a> {% endif %}ou appelez le {{ infos.telephone }} : nous répondons dans un délai d'un mois. Certaines données doivent toutefois être conservées pour respecter nos obligations légales (comptabilité). Si vous estimez que vos droits ne sont pas respectés, vous pouvez saisir la CNIL (<a href="https://www.cnil.fr" target="_blank" rel="noopener">www.cnil.fr</a>).</p>
+
+        <h2 id="cookies">8. Cookies</h2>
+        <p>Le site sotrama.net n'utilise <strong>aucun cookie publicitaire, aucun outil de mesure d'audience et aucun traceur de réseau social</strong>. Les polices de caractères sont hébergées sur notre propre serveur : aucune donnée n'est envoyée à des services tiers lors de votre visite.</p>
+        <div class="tableau-defilant">
+            <table class="tableau-cookies">
+                <thead><tr><th>Nom</th><th>Rôle</th><th>Durée</th><th>Type</th></tr></thead>
+                <tbody>
+                    <tr><td>SOTRAMA_SESSION</td><td>Sécurise le formulaire de suivi de colis (protection contre les envois frauduleux).</td><td>Fermeture du navigateur</td><td>Indispensable</td></tr>
+                    <tr><td>sotrama_choix_cookies</td><td>Mémorise votre choix dans le bandeau d'information (stocké dans votre navigateur).</td><td>6 mois</td><td>Indispensable</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <p>Ces éléments sont indispensables au fonctionnement du site : ils ne nécessitent pas votre consentement et ne servent jamais à vous suivre. Vous pouvez les supprimer à tout moment depuis les réglages de votre navigateur, et <a href="#" data-cookies-ouvrir>revoir votre choix ici</a>.</p>
+
+        <h2>9. Modifications</h2>
+        <p>Cette politique peut évoluer ; la date de mise à jour figure en haut de la page. Voir aussi nos <a href="{{ path('vitrine_conditions') }}">conditions d'utilisation</a> et nos <a href="{{ path('vitrine_mentions') }}">mentions légales</a>.</p>
+    </div>
+</section>
+{% endblock %}

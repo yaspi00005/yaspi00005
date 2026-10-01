@@ -16,9 +16,7 @@
         <meta property="og:description" content="{{ block('description') }}">
         <meta property="og:image" content="{{ absolute_url(asset(hero|default(null) ?: 'images/app/icone-512.png')) }}">
         <meta property="og:locale" content="fr_FR">
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+        <link rel="preload" href="{{ asset('fonts/inter-latin-wght-normal.woff2') }}" as="font" type="font/woff2" crossorigin>
         <link href="{{ asset('theme/icons/font-awesome/css/all.min.css') }}" rel="stylesheet">
         <link href="{{ asset('css/vitrine.css') }}" rel="stylesheet">
         {% block head %}{% endblock %}
@@ -81,6 +79,9 @@
                         <li><a href="{{ path('vitrine_accueil') }}#services">Nos services</a></li>
                         <li><a href="{{ path('vitrine_accueil') }}#faq">Questions fréquentes</a></li>
                         <li><a href="{{ path('vitrine_mentions') }}">Mentions légales</a></li>
+                        <li><a href="{{ path('vitrine_confidentialite') }}">Politique de confidentialité</a></li>
+                        <li><a href="{{ path('vitrine_conditions') }}">Conditions d'utilisation</a></li>
+                        <li><a href="{{ path('vitrine_confidentialite') }}#cookies" data-cookies-ouvrir>Gestion des cookies</a></li>
                     </ul>
                 </div>
             </div>
@@ -88,6 +89,18 @@
         </footer>
 
         <a href="{{ wa }}?text={{ message_wa|url_encode }}" class="wa-flottant" target="_blank" rel="noopener" aria-label="Écrire à SOTRAMA sur WhatsApp"><i class="fab fa-whatsapp"></i></a>
+
+        {# Bandeau d'information à la première visite (affiché par vitrine.js, choix mémorisé 6 mois). #}
+        <div class="bandeau-cookies" id="bandeau-cookies" role="dialog" aria-live="polite" aria-labelledby="bandeau-cookies-titre" hidden>
+            <div class="bandeau-cookies-texte">
+                <h2 id="bandeau-cookies-titre"><i class="fas fa-shield-alt"></i> Votre vie privée</h2>
+                <p>Bienvenue sur le site de SOTRAMA. Nous utilisons uniquement des cookies <strong>indispensables</strong> au fonctionnement du site (suivi de colis sécurisé) : aucune publicité, aucune mesure d'audience, aucune revente de données. En cliquant sur « Accepter », vous acceptez nos <a href="{{ path('vitrine_conditions') }}">conditions d'utilisation</a> et notre <a href="{{ path('vitrine_confidentialite') }}">politique de confidentialité</a>, qui décrit les informations collectées et vos droits.</p>
+            </div>
+            <div class="bandeau-cookies-boutons">
+                <button type="button" class="bouton bouton-contour bouton-petit" data-cookies-choix="refuse">Refuser</button>
+                <button type="button" class="bouton bouton-plein bouton-petit" data-cookies-choix="accepte">Accepter</button>
+            </div>
+        </div>
 
         <script src="{{ asset('js/vitrine.js') }}" defer></script>
     </body>

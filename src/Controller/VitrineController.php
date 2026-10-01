@@ -82,6 +82,18 @@ class VitrineController extends AbstractController
         return $this->page('vitrine/mentions.html.twig');
     }
 
+    #[Route('/confidentialite', name: 'vitrine_confidentialite', condition: self::CONDITION, methods: ['GET'], priority: 10)]
+    public function confidentialite(): Response
+    {
+        return $this->page('vitrine/confidentialite.html.twig');
+    }
+
+    #[Route('/conditions-utilisation', name: 'vitrine_conditions', condition: self::CONDITION, methods: ['GET'], priority: 10)]
+    public function conditions(): Response
+    {
+        return $this->page('vitrine/conditions.html.twig');
+    }
+
     #[Route('/robots.txt', name: 'vitrine_robots', condition: self::CONDITION, methods: ['GET'], priority: 10)]
     public function robots(): Response
     {
@@ -93,7 +105,7 @@ class VitrineController extends AbstractController
     #[Route('/sitemap.xml', name: 'vitrine_sitemap', condition: self::CONDITION, methods: ['GET'], priority: 10)]
     public function sitemap(): Response
     {
-        $urls = array_map(fn ($r) => $this->generateUrl($r, [], UrlGeneratorInterface::ABSOLUTE_URL), ['vitrine_accueil', 'vitrine_suivi', 'vitrine_mentions']);
+        $urls = array_map(fn ($r) => $this->generateUrl($r, [], UrlGeneratorInterface::ABSOLUTE_URL), ['vitrine_accueil', 'vitrine_suivi', 'vitrine_mentions', 'vitrine_confidentialite', 'vitrine_conditions']);
         $xml = '<?xml version="1.0" encoding="UTF-8"?>'."\n".'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
             .implode('', array_map(fn ($u) => '<url><loc>'.htmlspecialchars($u).'</loc></url>', $urls)).'</urlset>';
 

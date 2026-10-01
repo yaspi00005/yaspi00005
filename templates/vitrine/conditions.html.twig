@@ -1,0 +1,48 @@
+{% extends 'vitrine/base.html.twig' %}
+
+{% block title %}Conditions d'utilisation · SOTRAMA{% endblock %}
+{% block description %}Conditions d'utilisation du site sotrama.net et du suivi de colis en ligne SOTRAMA.{% endblock %}
+
+{% block body %}
+<section class="page-texte">
+    <div class="conteneur conteneur-etroit">
+        <h1>Conditions d'utilisation du site</h1>
+        <p class="texte-discret">Dernière mise à jour : {{ infos.mise_a_jour_confidentialite|default('') }}</p>
+
+        <h2>1. Objet</h2>
+        <p>Les présentes conditions encadrent l'utilisation du site sotrama.net, édité par SOTRAMA, qui présente nos services de transport de colis entre la France, le Mali et le Sénégal et permet de suivre un colis en ligne. En utilisant le site, vous acceptez ces conditions.</p>
+
+        <h2>2. Accès au site</h2>
+        <p>Le site est accessible gratuitement, à tout moment, sauf interruption pour maintenance ou cas de force majeure. SOTRAMA s'efforce d'assurer son bon fonctionnement mais ne peut garantir une disponibilité permanente.</p>
+
+        <h2>3. Suivi de colis</h2>
+        <ul>
+            <li>Le suivi nécessite le numéro de suivi figurant sur votre reçu et le numéro de téléphone de l'expéditeur ou du destinataire.</li>
+            <li>Les informations affichées (étape du transport, date prévue) sont données à titre indicatif ; les délais peuvent varier, notamment en raison des formalités douanières.</li>
+            <li>Ne communiquez votre code de retrait qu'au destinataire du colis : il est nécessaire pour retirer le colis à l'agence.</li>
+            <li>Les recherches répétées ou automatisées sont limitées pour protéger les données de nos clients.</li>
+        </ul>
+
+        <h2>4. Tarifs et prestations</h2>
+        <p>Les informations du site sont présentées à titre indicatif. Le tarif, les conditions et le contenu de chaque envoi sont ceux du reçu remis lors du dépôt ou du ramassage du colis.</p>
+
+        <h2>5. Responsabilité</h2>
+        <p>SOTRAMA ne saurait être tenue responsable d'une mauvaise utilisation du site, d'une interruption de service ou de dommages résultant de l'accès à des sites externes. Vous êtes responsable de la confidentialité de votre reçu et de votre code de retrait.</p>
+
+        <h2>6. Propriété intellectuelle</h2>
+        <p>Le nom et le logo SOTRAMA, les textes, photos et illustrations du site sont la propriété de SOTRAMA. Toute reproduction sans autorisation est interdite.</p>
+
+        <h2>7. Liens externes</h2>
+        <p>Le site contient des liens vers WhatsApp et nos réseaux sociaux (TikTok, Instagram, Facebook). Ces services ont leurs propres conditions et politiques de confidentialité.</p>
+
+        <h2>8. Données personnelles et cookies</h2>
+        <p>Leur traitement est décrit dans notre <a href="{{ path('vitrine_confidentialite') }}">politique de confidentialité</a>.</p>
+
+        <h2>9. Droit applicable</h2>
+        <p>Ces conditions sont soumises au droit français. En cas de litige, une solution amiable sera recherchée avant toute action ; à défaut, les tribunaux français seront compétents.</p>
+
+        <h2>10. Contact</h2>
+        <p>{% if infos.email|default(null) %}<a href="mailto:{{ infos.email }}">{{ infos.email }}</a> · {% endif %}<a href="tel:+{{ infos.whatsapp }}">{{ infos.telephone }}</a> (téléphone et WhatsApp).</p>
+    </div>
+</section>
+{% endblock %}

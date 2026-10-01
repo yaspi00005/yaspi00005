@@ -8,18 +8,19 @@
         <h1>Mentions légales</h1>
 
         <h2>Éditeur du site</h2>
-        <p>SOTRAMA, transport de colis France → Mali et Sénégal.<br>
+        <p>SOTRAMA, transport de colis France → Mali et Sénégal.{% if infos.entreprise|default(null) %}<br>{{ infos.entreprise }}{% endif %}{% if infos.adresse|default(null) %}<br>Siège : {{ infos.adresse }}{% endif %}<br>
         Responsable de la publication : Yacouba Traoré.<br>
         Contact : <a href="tel:+{{ infos.whatsapp }}">{{ infos.telephone }}</a> (téléphone et WhatsApp){% if infos.email|default(null) %}, <a href="mailto:{{ infos.email }}">{{ infos.email }}</a>{% endif %}.</p>
 
         <h2>Hébergement</h2>
+        {% if infos.hebergeur.nom|default(null) %}
+        <p>{{ infos.hebergeur.nom }}{% if infos.hebergeur.adresse|default(null) %}, {{ infos.hebergeur.adresse }}{% endif %}{% if infos.hebergeur.telephone|default(null) %} · {{ infos.hebergeur.telephone }}{% endif %}.</p>
+        {% else %}
         <p>Le site est hébergé par le prestataire d'hébergement de SOTRAMA, en France.</p>
+        {% endif %}
 
-        <h2>Données personnelles</h2>
-        <p>Les informations saisies dans le formulaire de suivi (numéro de suivi, téléphone) servent uniquement à retrouver votre colis ; elles ne sont pas conservées à d'autres fins. Les données des clients (nom, téléphone, adresse) sont utilisées pour l'envoi et la remise des colis, et pour prévenir le destinataire par SMS. Pour exercer vos droits d'accès, de rectification ou de suppression, contactez-nous au {{ infos.telephone }}{% if infos.email|default(null) %} ou à {{ infos.email }}{% endif %}.</p>
-
-        <h2>Cookies</h2>
-        <p>Le site n'utilise qu'un cookie technique, nécessaire à la sécurité du formulaire de suivi. Aucun cookie publicitaire ni de mesure d'audience.</p>
+        <h2>Données personnelles et cookies</h2>
+        <p>Voir notre <a href="{{ path('vitrine_confidentialite') }}">politique de confidentialité</a> (données collectées, durées de conservation, vos droits, <a href="{{ path('vitrine_confidentialite') }}#cookies">cookies</a>) et nos <a href="{{ path('vitrine_conditions') }}">conditions d'utilisation</a>.</p>
     </div>
 </section>
 {% endblock %}
