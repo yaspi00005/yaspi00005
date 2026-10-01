@@ -383,3 +383,29 @@ code { background: var(--vert-clair); color: var(--vert-fonce); padding: .05em .
 .tableau-cookies { width: 100%; border-collapse: collapse; font-size: .92rem; margin: .5rem 0 1rem; }
 .tableau-cookies th, .tableau-cookies td { border: 1px solid var(--bord); padding: .55rem .7rem; text-align: left; vertical-align: top; }
 .tableau-cookies th { background: var(--vert-clair); }
+
+/* Compte à rebours du prochain départ */
+.compte-rebours { background: linear-gradient(90deg, var(--vert-fonce), var(--vert)); color: #fff; }
+.compte-rebours[hidden] { display: none; }
+.compte-rebours-contenu { display: flex; align-items: center; justify-content: space-between; gap: .8rem 1.4rem; padding: .7rem 0; flex-wrap: wrap; }
+.compte-rebours-texte { display: flex; align-items: center; gap: .7rem; margin: 0; font-size: .95rem; line-height: 1.35; }
+.compte-rebours-texte strong { color: var(--jaune); }
+.compte-rebours-court { display: none; }
+.drapeau-mini { width: 30px; height: 20px; border-radius: 4px; }
+.drapeau-mini.drapeau-senegal::after { font-size: 9px; }
+.compte-rebours-chiffres { display: flex; gap: .45rem; font-variant-numeric: tabular-nums; }
+.compte-rebours-chiffres span { display: flex; flex-direction: column; align-items: center; min-width: 3.1rem; padding: .3rem .4rem; border-radius: 10px; background: rgba(255, 255, 255, .14); }
+.compte-rebours-chiffres b { font-family: var(--titre); font-size: 1.35rem; line-height: 1.1; }
+.compte-rebours-chiffres small { font-size: .7rem; opacity: .85; text-transform: uppercase; letter-spacing: .05em; }
+.compte-rebours-bouton.bouton-plein { width: auto; background: var(--jaune); color: var(--encre); }
+.compte-rebours-bouton.bouton-plein:hover { background: #ffdf6b; }
+@media (max-width: 760px) {
+    .compte-rebours-contenu { justify-content: center; text-align: center; }
+    .compte-rebours-texte { justify-content: center; font-size: .88rem; }
+    .compte-rebours-contenu { padding: .55rem 0; gap: .5rem .8rem; }
+    .compte-rebours-long { display: none; }
+    .compte-rebours-court { display: inline; }
+    .compte-rebours-texte { flex-basis: 100%; }
+    .compte-rebours-chiffres span { min-width: 2.7rem; }
+    .compte-rebours-chiffres b { font-size: 1.15rem; }
+}

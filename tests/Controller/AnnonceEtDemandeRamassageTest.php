@@ -67,6 +67,13 @@ final class AnnonceEtDemandeRamassageTest extends WebTestCase
         $this->assertSelectorTextContains('#departs .depart-limite', 'Dépôt des colis');
         $this->assertSelectorExists('#departs a[href^="/ramassage?depart="]');
 
+        // Compte à rebours en haut de toutes les pages, jusqu'à la fin du dernier jour de dépôt (heure de Paris).
+        $this->assertSelectorTextContains('.compte-rebours', 'Prochain départ '.$expedition->getDestination()->ville());
+        $fin = $this->client->getCrawler()->filter('[data-compte-rebours]')->attr('data-compte-rebours');
+        $this->assertSame($expedition->getDateDepart()->modify('-2 days')->format('Y-m-d').'T23:59:59', substr($fin, 0, 19));
+        $this->client->request('GET', '/suivi', server: ['HTTP_HOST' => 'sotrama.net']);
+        $this->assertSelectorExists('.compte-rebours [data-unite="s"]');
+
         // L'agent de ramassage ne peut pas publier.
         $this->connecter(static::getContainer()->get(UserRepository::class)->findOneBy(['username' => 'ramassage']));
         $this->client->request('POST', self::APP.'/expeditions/'.$id.'/publier');
@@ -78,6 +85,7 @@ final class AnnonceEtDemandeRamassageTest extends WebTestCase
         $this->client->submit($crawler->filter('form[action$="/publier"]')->form());
         $this->client->request('GET', '/', server: ['HTTP_HOST' => 'sotrama.net']);
         $this->assertSelectorNotExists('#departs');
+        $this->assertSelectorNotExists('.compte-rebours');
     }
 
     public function testUnVisiteurDemandeUnRamassageEtLEquipeLeValide(): void

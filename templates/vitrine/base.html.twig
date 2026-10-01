@@ -45,6 +45,28 @@
             </div>
         </header>
 
+        {% if compteur %}
+        {% set d = compteur.depart %}
+        {% set reste = compteur.fin.timestamp - 'now'|date('U') %}
+        <aside class="compte-rebours" aria-label="Prochain départ">
+            <div class="conteneur compte-rebours-contenu">
+                <p class="compte-rebours-texte">
+                    <span class="drapeau drapeau-{{ d.destination.value }} drapeau-mini" aria-hidden="true"><i></i><i></i><i></i></span>
+                    <span class="compte-rebours-long"><strong>Prochain départ {{ d.destination.ville }}</strong> le {{ d.dateDepart|jour_fr }}
+                        — {{ compteur.depot ? 'dépôt des colis encore possible pendant' : 'départ dans' }}</span>
+                    <span class="compte-rebours-court"><strong>Départ {{ d.destination.ville }} · {{ d.dateDepart|date('d/m') }}</strong> — {{ compteur.depot ? 'dépôts encore' : 'départ dans' }}</span>
+                </p>
+                <div class="compte-rebours-chiffres" data-compte-rebours="{{ compteur.fin|date('c', false) }}" role="timer" aria-live="off">
+                    <span><b data-unite="j">{{ (reste // 86400) }}</b><small>jours</small></span>
+                    <span><b data-unite="h">{{ '%02d'|format(reste % 86400 // 3600) }}</b><small>h</small></span>
+                    <span><b data-unite="m">{{ '%02d'|format(reste % 3600 // 60) }}</b><small>min</small></span>
+                    <span><b data-unite="s">{{ '%02d'|format(reste % 60) }}</b><small>s</small></span>
+                </div>
+                <a href="{{ path('vitrine_ramassage', {depart: hid(d.id)}) }}" class="bouton bouton-plein bouton-petit compte-rebours-bouton"><i class="fas fa-truck"></i> Réserver</a>
+            </div>
+        </aside>
+        {% endif %}
+
         <main id="contenu">
             {% block body %}{% endblock %}
         </main>

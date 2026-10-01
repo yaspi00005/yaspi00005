@@ -32,6 +32,7 @@ class VitrineController extends AbstractController
     public function __construct(
         #[Autowire('%app.vitrine%')] private readonly array $infos,
         #[Autowire('%kernel.project_dir%/public')] private readonly string $public,
+        private readonly ExpeditionRepository $expeditions,
     ) {
     }
 
@@ -183,10 +184,37 @@ class VitrineController extends AbstractController
 
     private function page(string $vue, array $donnees = [], ?Response $reponse = null): Response
     {
-        $reponse = $this->render($vue, ['infos' => $this->infos, 'logo' => $this->photo('logo') ?? 'images/logo-sotrama.png'] + $donnees, $reponse);
+        $reponse = $this->render($vue, ['infos' => $this->infos, 'logo' => $this->photo('logo') ?? 'images/logo-sotrama.png', 'compteur' => $this->compteur()] + $donnees, $reponse);
         $reponse->setVary(['Host'], false);
 
         return $reponse;
+    }
+
+    /**
+     * Compte à rebours du bandeau en haut des pages : prochain départ publié, jusqu'à la fin de la date limite
+     * de dépôt (sinon jusqu'au jour du départ), heure de Paris.
+     *
+     * @return array{depart: \App\Entity\Expedition, fin: \DateTimeImmutable, depot: bool}|null
+     */
+    private function compteur(): ?array
+    {
+        $depart = $this->expeditions->annoncesPubliees(1)[0] ?? null;
+        if (!$depart) {
+            return null;
+        }
+        $paris = new \DateTimeZone('Europe/Paris');
+        $limite = $depart->getDateLimiteDepot();
+        $fin = $limite
+            ? new \DateTimeImmutable($limite->format('Y-m-d').' 23:59:59', $paris)
+            : new \DateTimeImmutable($depart->getDateDepart()->format('Y-m-d').' 00:00:00', $paris);
+
+        // Date limite de dépôt passée : on compte jusqu'au départ.
+        if ($limite && $fin < new \DateTimeImmutable('now', $paris)) {
+            $fin = new \DateTimeImmutable($depart->getDateDepart()->format('Y-m-d').' 00:00:00', $paris);
+            $limite = null;
+        }
+
+        return $fin > new \DateTimeImmutable('now', $paris) ? ['depart' => $depart, 'fin' => $fin, 'depot' => null !== $limite] : null;
     }
 
     /**

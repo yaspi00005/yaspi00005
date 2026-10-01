@@ -40,3 +40,30 @@
     });
     if (!lire()) { ouvrir(); }
 })();
+
+/* Compte à rebours du prochain départ (bandeau en haut des pages). */
+(function () {
+    'use strict';
+    const zone = document.querySelector('[data-compte-rebours]');
+    if (!zone) { return; }
+    const fin = new Date(zone.dataset.compteRebours).getTime();
+    if (isNaN(fin)) { return; }
+    const cases = {};
+    zone.querySelectorAll('[data-unite]').forEach(b => { cases[b.dataset.unite] = b; });
+    const deux = n => String(n).padStart(2, '0');
+    let minuterie = null;
+    const afficher = function () {
+        const reste = Math.max(0, Math.floor((fin - Date.now()) / 1000));
+        cases.j.textContent = Math.floor(reste / 86400);
+        cases.h.textContent = deux(Math.floor(reste % 86400 / 3600));
+        cases.m.textContent = deux(Math.floor(reste % 3600 / 60));
+        cases.s.textContent = deux(reste % 60);
+        if (reste === 0) {
+            clearInterval(minuterie);
+            const bandeau = zone.closest('.compte-rebours');
+            if (bandeau) { bandeau.hidden = true; }
+        }
+    };
+    afficher();
+    minuterie = setInterval(afficher, 1000);
+})();
