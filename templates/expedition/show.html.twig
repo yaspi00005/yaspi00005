@@ -149,7 +149,7 @@
                     <input type="hidden" name="_token" value="{{ csrf_token('affecter-expedition-' ~ expedition.id) }}">
                     <div class="table-responsive">
                         <table class="table">
-                            <thead><tr><th><input type="checkbox" class="form-check-input" onclick="document.querySelectorAll('.js-affecter').forEach(c => c.checked = this.checked)" aria-label="Tout sélectionner"></th><th>N° suivi</th><th>Client</th><th>Reçu le</th><th class="num">Poids</th></tr></thead>
+                            <thead><tr><th><input type="checkbox" class="form-check-input" data-tout-cocher=".js-affecter" aria-label="Tout sélectionner"></th><th>N° suivi</th><th>Client</th><th>Reçu le</th><th class="num">Poids</th></tr></thead>
                             <tbody>
                             {% for c in colisSansExpedition %}
                                 <tr>

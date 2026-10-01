@@ -33,7 +33,7 @@
             {% endif %}
             {% if is_granted('ROLE_ADMIN') %}
                 <li class="{{ route starts with 'admin_' ? 'mm-active' }}">
-                    <a class="has-arrow" href="javascript:void(0)" aria-expanded="{{ route starts with 'admin_' ? 'true' : 'false' }}">
+                    <a class="has-arrow" href="#" role="button" aria-expanded="{{ route starts with 'admin_' ? 'true' : 'false' }}">
                         <i class="fas fa-cog"></i>
                         <span class="nav-text">Administration</span>
                     </a>

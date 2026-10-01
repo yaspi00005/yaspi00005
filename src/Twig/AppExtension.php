@@ -23,12 +23,14 @@ final class AppExtension extends AbstractExtension
         private readonly IdChiffreur $chiffreur,
         #[Autowire('%kernel.project_dir%/public/images/logo-sotrama.png')] private readonly string $cheminLogo,
         private readonly Security $security,
+        private readonly \App\Security\CspNonce $nonce,
     ) {
     }
 
     public function getFunctions(): array
     {
         return [
+            new TwigFunction('csp_nonce', fn () => $this->nonce->get()),
             new TwigFunction('aide_section', fn (?string $route) => \App\Controller\AideController::section($route, ($u = $this->security->getUser()) instanceof User && Perimetre::estRepresentant($u))),
             new TwigFunction('hid', fn (?int $id) => null === $id ? '' : $this->chiffreur->encode($id)),
             // Logo de l'entreprise : public/images/logo-sotrama.png (facultatif, sinon icône par défaut).

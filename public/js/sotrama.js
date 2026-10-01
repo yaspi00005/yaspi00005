@@ -96,6 +96,14 @@
         }, true);
     });
 
+    // Comportements sans attribut onclick/onchange (interdits par la CSP) :
+    // <select data-envoi-auto> envoie son formulaire ; <input type="checkbox" data-tout-cocher=".classe"> coche tout.
+    $(document).on('change', '[data-envoi-auto]', function () { this.form && this.form.submit(); });
+    $(document).on('click', '[data-tout-cocher]', function () {
+        const coche = this.checked;
+        document.querySelectorAll(this.dataset.toutCocher).forEach(c => { c.checked = coche; });
+    });
+
     // Empêche le double envoi des formulaires.
     $(document).on('submit', 'form:not([data-multi-submit])', function () {
         const form = this;

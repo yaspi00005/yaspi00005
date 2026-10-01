@@ -2,7 +2,7 @@
 <div class="row page-titles">
     <ol class="breadcrumb">
         {% for lien in liens %}
-            <li class="breadcrumb-item {{ loop.last ? 'active' }}">{% if lien.url is defined and lien.url %}<a href="{{ lien.url }}">{{ lien.label }}</a>{% else %}<a href="javascript:void(0)">{{ lien.label }}</a>{% endif %}</li>
+            <li class="breadcrumb-item {{ loop.last ? 'active' }}">{% if lien.url is defined and lien.url %}<a href="{{ lien.url }}">{{ lien.label }}</a>{% else %}<span>{{ lien.label }}</span>{% endif %}</li>
         {% endfor %}
     </ol>
 </div>

@@ -38,6 +38,27 @@ final class SecuriteTest extends WebTestCase
         }
     }
 
+    /** Scripts autorisés seulement s'ils portent le nonce de la page : ni 'unsafe-inline' ni 'unsafe-eval', ni onclick. */
+    public function testCspSansScriptsInlineNonSignes(): void
+    {
+        $client = static::createClient();
+        $client->loginUser(static::getContainer()->get(UserRepository::class)->findOneBy(['username' => 'admin']));
+        $nonces = [];
+        foreach (['/', '/admin/bonus/bareme'] as $url) {
+            $crawler = $client->request('GET', $url);
+            $csp = (string) $client->getResponse()->headers->get('Content-Security-Policy');
+            $this->assertMatchesRegularExpression("/script-src 'self' 'nonce-([A-Za-z0-9_-]{20,})'/", $csp, $url);
+            $this->assertStringNotContainsString('unsafe-eval', $csp, $url);
+            $this->assertStringContainsString("script-src-attr 'none'", $csp, $url);
+            preg_match("/'nonce-([A-Za-z0-9_-]+)'/", $csp, $m);
+            $nonces[] = $m[1];
+            $crawler->filter('script:not([src])')->each(fn ($script) => $this->assertSame($m[1], $script->attr('nonce'), $url.' : script inline sans le nonce de la page.'));
+            $this->assertDoesNotMatchRegularExpression('/\son[a-z]+="/', (string) $client->getResponse()->getContent(), $url.' : attribut on… interdit.');
+        }
+        $this->assertNotSame($nonces[0], $nonces[1], 'Un nouveau nonce à chaque page.');
+        $this->assertDoesNotMatchRegularExpression("/script-src[^;]*unsafe-inline/", (string) $client->getResponse()->headers->get('Content-Security-Policy'));
+    }
+
     public function testCompteDesactivePendantLaSessionDeconnecte(): void
     {
         $client = static::createClient();

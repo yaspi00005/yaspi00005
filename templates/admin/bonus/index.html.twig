@@ -114,7 +114,7 @@
 {% endblock %}
 
 {% block javascripts %}
-<script>
+<script nonce="{{ csp_nonce() }}">
 new Chart(document.getElementById('chart-bonus'), {
     type: 'bar',
     data: {

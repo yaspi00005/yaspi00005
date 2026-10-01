@@ -260,7 +260,7 @@
 {% endblock %}
 
 {% block javascripts %}
-<script>
+<script nonce="{{ csp_nonce() }}">
 (function () {
     const vert = '#00A15D', options = { legend: { display: false }, maintainAspectRatio: true, scales: { yAxes: [{ ticks: { beginAtZero: true, precision: 0 } }], xAxes: [{ gridLines: { display: false } }] } };
     new Chart(document.getElementById('chart-mois'), {

@@ -2,6 +2,7 @@
 
 namespace App\EventListener;
 
+use App\Security\CspNonce;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpKernel\Event\ResponseEvent;
@@ -19,8 +20,8 @@ final class EnTetesSecuriteListener
 {
     private const CSP = [
         "default-src 'self'",
-        // Scripts du thème et quelques scripts intégrés aux pages (graphiques, calendrier).
-        "script-src 'self' 'unsafe-inline'",
+        // Scripts du site, et scripts des pages seulement s'ils portent le nonce de la requête (ajouté plus bas).
+        "script-src 'self'",
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
         "font-src 'self' data: https://fonts.gstatic.com",
         // blob: aperçu des photos avant envoi ; data: QR codes.
@@ -35,8 +36,10 @@ final class EnTetesSecuriteListener
         "form-action 'self'",
     ];
 
-    public function __construct(#[Autowire('%kernel.environment%')] private readonly string $environnement)
-    {
+    public function __construct(
+        #[Autowire('%kernel.environment%')] private readonly string $environnement,
+        private readonly CspNonce $nonce,
+    ) {
     }
 
     #[AsEventListener(event: KernelEvents::RESPONSE, priority: -10)]
@@ -53,7 +56,11 @@ final class EnTetesSecuriteListener
         $en->set('Cross-Origin-Opener-Policy', 'same-origin');
         if (!$en->has('Content-Security-Policy') && 'dev' !== $this->environnement) {
             // En développement, la barre de débogage de Symfony a besoin de plus de libertés.
-            $en->set('Content-Security-Policy', implode('; ', self::CSP));
+            $directives = self::CSP;
+            $directives[1] .= " 'nonce-".$this->nonce->get()."'";
+            // Pas d'attribut onclick/onchange : interdits, les comportements passent par public/js.
+            $directives[] = "script-src-attr 'none'";
+            $en->set('Content-Security-Policy', implode('; ', $directives));
         }
         if ('prod' === $this->environnement && $event->getRequest()->isSecure()) {
             $en->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
