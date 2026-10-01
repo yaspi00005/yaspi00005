@@ -29,11 +29,14 @@ class RamassageRepository extends ServiceEntityRepository
     }
 
     /** @return Ramassage[] ramassages filtrés par statut et période (bornes incluses), triés par date */
-    public function pourExport(?StatutRamassage $statut, ?\DateTimeImmutable $du, ?\DateTimeImmutable $au): array
+    public function pourExport(?StatutRamassage $statut, ?\DateTimeImmutable $du, ?\DateTimeImmutable $au, ?\App\Entity\Camion $camion = null): array
     {
         $qb = $this->createQueryBuilder('r')
             ->addSelect('c', 'a')->join('r.client', 'c')->leftJoin('r.agent', 'a')
             ->orderBy('r.datePrevue', 'ASC');
+        if ($camion) {
+            $qb->andWhere('r.camion = :camion')->setParameter('camion', $camion);
+        }
         if ($statut) {
             $qb->andWhere('r.statut = :s')->setParameter('s', $statut);
         }

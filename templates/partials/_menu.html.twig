@@ -23,6 +23,7 @@
             {% endif %}
             {% if is_granted('ROLE_RAMASSAGE') %}
                 {{ m.item(route, ['client_'], path('client_index'), 'fas fa-users', 'Clients') }}
+                {{ m.item(route, ['appel_'], path('appel_index'), 'fas fa-phone-alt', 'Registre des appels') }}
                 {{ m.item(route, ['ramassage_'], path('ramassage_index'), 'fas fa-calendar-alt', 'Ramassages') }}
                 {{ m.item(route, ['corbeille_'], path('corbeille_index'), 'fas fa-trash-restore', 'Corbeille') }}
             {% endif %}
@@ -41,6 +42,7 @@
                         <li><a href="{{ path('admin_user_index') }}" class="{{ route starts with 'admin_user' ? 'mm-active' }}">Utilisateurs</a></li>
                         <li><a href="{{ path('admin_bonus_index') }}" class="{{ route == 'admin_bonus_index' ? 'mm-active' }}">Suivi des bonus</a></li>
                         <li><a href="{{ path('admin_bonus_bareme') }}" class="{{ route == 'admin_bonus_bareme' ? 'mm-active' }}">Barème des bonus</a></li>
+                        <li><a href="{{ path('admin_camion_index') }}" class="{{ route starts with 'admin_camion' ? 'mm-active' }}">Camions</a></li>
                         <li><a href="{{ path('admin_type_index') }}" class="{{ route starts with 'admin_type' ? 'mm-active' }}">Types de marchandises</a></li>
                         <li><a href="{{ path('admin_notification_index') }}" class="{{ route starts with 'admin_notification' ? 'mm-active' }}">SMS &amp; e-mails envoyés</a></li>
                         <li><a href="{{ path('admin_journal_index') }}" class="{{ route starts with 'admin_journal' ? 'mm-active' }}">Journal d'activité</a></li>

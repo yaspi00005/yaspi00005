@@ -40,6 +40,10 @@ class Ramassage
     #[ORM\JoinColumn(onDelete: 'SET NULL')]
     private ?User $agent = null;
 
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(onDelete: 'SET NULL')]
+    private ?Camion $camion = null;
+
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
 
@@ -163,6 +167,18 @@ class Ramassage
     public function setRappelProcheEnvoyeLe(?\DateTimeImmutable $date): static
     {
         $this->rappelProcheEnvoyeLe = $date;
+
+        return $this;
+    }
+
+    public function getCamion(): ?Camion
+    {
+        return $this->camion;
+    }
+
+    public function setCamion(?Camion $camion): static
+    {
+        $this->camion = $camion;
 
         return $this;
     }

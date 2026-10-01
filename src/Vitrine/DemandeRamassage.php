@@ -11,6 +11,7 @@ use App\Enum\StatutRamassage;
 use App\Repository\UserRepository;
 use App\Service\Doublons;
 use App\Service\NotificationPush;
+use App\Service\RegistreAppels;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -38,6 +39,7 @@ final class DemandeRamassage
         private readonly Doublons $doublons,
         private readonly UserRepository $users,
         private readonly NotificationPush $push,
+        private readonly RegistreAppels $registre,
         private readonly UrlGeneratorInterface $urls,
         private readonly Vitrine $vitrine,
         private readonly LoggerInterface $logger,
@@ -137,6 +139,8 @@ final class DemandeRamassage
             ->setCommentaire($commentaire)
             ->setStatut(StatutRamassage::Demande);
         $this->em->persist($ramassage);
+        // Elle apparaît aussi dans le registre des appels (source « Site web »).
+        $this->registre->depuisDemandeEnLigne($ramassage, $d, $depart);
         $this->em->flush();
 
         $this->prevenirEquipe($ramassage, $creneau);

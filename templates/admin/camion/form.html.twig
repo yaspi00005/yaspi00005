@@ -1,0 +1,21 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier « {{ camion.nom }} »{% endblock %}
+
+{% block body %}
+<div class="row justify-content-center">
+    <div class="col-xl-5">
+        <div class="card">
+            <div class="card-body">
+                {{ form_start(form) }}{{ form_rest(form) }}
+                <p class="fs-12 text-muted">Un camion retiré n'est plus proposé dans le registre, mais reste visible sur les anciens appels.</p>
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{{ path('admin_camion_index') }}" class="btn btn-light">Annuler</a>
+                    <button class="btn btn-primary">Enregistrer</button>
+                </div>
+                {{ form_end(form) }}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

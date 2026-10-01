@@ -116,3 +116,19 @@ ol.etapes li { margin-bottom: .35rem; }
 .confirmation-primary { background: #e3f6ed; color: #00A15D; }
 .confirmation-message { color: #555; white-space: pre-line; font-size: 15px; }
 .confirmation-alerte { color: #c0261d; font-weight: 600; font-size: 14px; background: #fdf1f0; border-radius: .75rem; padding: .7rem .9rem; }
+
+/* Registre des appels et camions */
+.pastille-camion { display: inline-block; width: .7rem; height: .7rem; border-radius: 50%; margin-right: .4rem; vertical-align: middle; }
+.registre-onglets { display: flex; flex-wrap: wrap; gap: .4rem; }
+.registre-onglets .btn { white-space: nowrap; }
+.registre-table td, .registre-table th { white-space: nowrap; font-size: .85rem; padding: .55rem .6rem; vertical-align: middle; }
+.registre-table td.registre-commentaire { white-space: normal; min-width: 14rem; max-width: 22rem; }
+.registre-table tr.non-confirme td:first-child { box-shadow: inset 3px 0 0 #FF5E4B; }
+.registre-compteur { text-align: center; padding: .9rem .5rem; border-radius: .75rem; background: #f6f8f7; }
+.registre-compteur strong { display: block; font-size: 1.6rem; line-height: 1.2; color: #1d2b22; }
+.registre-compteur span { font-size: .8rem; color: #6c757d; }
+.registre-synchro { font-size: .75rem; color: #6c757d; }
+.client-connu { font-size: .8rem; }
+.registre-table thead th { font-size: .8rem; font-weight: 600; text-transform: none; }
+.registre-fiche { padding: .75rem .25rem .75rem .75rem; border-bottom: 1px solid #eee; }
+.registre-fiche.non-confirme { box-shadow: inset 3px 0 0 #FF5E4B; }

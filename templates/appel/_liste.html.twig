@@ -1,0 +1,71 @@
+{# Compteurs et tableau du registre : rafraîchis automatiquement toutes les 30 s (requête XHR sur appel_index). #}
+<div class="row g-2 mb-3">
+    <div class="col-6 col-md"><div class="registre-compteur"><strong>{{ compteurs.total }}</strong><span>Total des appels</span></div></div>
+    <div class="col-6 col-md"><div class="registre-compteur"><strong class="text-success">{{ compteurs.confirmes }}</strong><span>Confirmés ✅</span></div></div>
+    <div class="col-6 col-md"><div class="registre-compteur"><strong class="text-warning">{{ compteurs.attente }}</strong><span>En attente ⏳</span></div></div>
+    <div class="col-6 col-md"><div class="registre-compteur"><strong class="text-info">{{ compteurs.aPlanifier }}</strong><span>À planifier 📅</span></div></div>
+    <div class="col-12 col-md"><div class="registre-compteur"><strong>{{ compteurs.estimation|money }}</strong><span>Estimations</span></div></div>
+</div>
+{% macro confirmer(a) %}
+    <form method="post" action="{{ path('appel_confirmer', {id: a.id}) }}" class="d-inline">
+        <input type="hidden" name="_token" value="{{ csrf_token('confirmer-appel-' ~ a.id) }}">
+        <input type="hidden" name="retour" value="{{ app.request.pathInfo }}?{{ app.request.query.all|url_encode }}">
+        <button class="btn btn-xs {{ a.confirme ? 'btn-success' : 'btn-outline-danger' }}" title="{{ a.confirme ? 'Cliquer pour remettre en attente' : 'Cliquer pour confirmer' }}">{{ a.confirme ? 'Oui' : 'Non' }}</button>
+    </form>
+{% endmacro %}
+{% import _self as m %}
+{# Téléphone : une fiche par appel (le tableau serait trop large). #}
+<div class="d-md-none">
+    {% for a in appels %}
+        {% set etat = a.etat %}
+        <div class="registre-fiche {{ a.confirme ? '' : 'non-confirme' }}">
+            <div class="d-flex justify-content-between align-items-start gap-2">
+                <a href="{{ path('appel_edit', {id: a.id}) }}" class="font-w600 text-black">{{ a.nomComplet }}</a>
+                {{ m.confirmer(a) }}
+            </div>
+            <a href="tel:{{ a.telephone|replace({' ': ''}) }}" class="d-block"><i class="fas fa-phone-alt me-1"></i>{{ a.telephone|tel }}</a>
+            <small class="d-block text-muted">{{ a.adresse ? a.adresse ~ ', ' }}{{ a.codePostal }} {{ a.ville }}</small>
+            <small class="d-block mt-1">
+                {% if a.camion %}<span class="pastille-camion" style="background: {{ a.camion.couleur }}"></span>{{ a.camion.nom }} · {% endif %}
+                {% if a.dateConteneurPrevue %}📦 {{ a.dateConteneurPrevue|date('d/m') }} · {% endif %}
+                {% if a.estimation is not null %}{{ a.estimation|money }} · {% endif %}
+                <span class="badge badge-{{ etat[1] }} light">{{ etat[0] }}</span>
+            </small>
+            {% if a.commentaire %}<small class="d-block text-muted mt-1">{{ a.commentaire|u.truncate(100, '…') }}</small>{% endif %}
+        </div>
+    {% else %}
+        <div class="empty-state"><i class="fas fa-phone-alt"></i>Aucun appel.</div>
+    {% endfor %}
+</div>
+<div class="table-responsive d-none d-md-block">
+    <table class="table table-hover registre-table mb-0">
+        <thead>
+            <tr><th>Date appel</th><th>Conteneur</th><th>Camion</th><th>Nom</th><th>Téléphone</th><th>CP</th><th>Ville</th><th>Adresse</th><th class="num">Estimation</th><th>Utilisateur</th><th>Confirmé</th><th>Ramassage</th><th>Commentaire</th><th></th></tr>
+        </thead>
+        <tbody>
+        {% for a in appels %}
+            {% set etat = a.etat %}
+            <tr class="{{ a.confirme ? '' : 'non-confirme' }}">
+                <td>{{ a.dateAppel|date('d/m/Y') }}{% if a.source == 'site' %} <span class="badge badge-primary light" title="Demande faite sur sotrama.net">Site</span>{% endif %}</td>
+                <td>{{ a.dateConteneurPrevue ? a.dateConteneurPrevue|date('d/m/Y') : '—' }}</td>
+                <td>{% if a.camion %}<span class="pastille-camion" style="background: {{ a.camion.couleur }}"></span>{{ a.camion.nom }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
+                <td class="font-w600"><a href="{{ path('appel_edit', {id: a.id}) }}" class="text-black">{{ a.nomComplet }}</a></td>
+                <td><a href="tel:{{ a.telephone|replace({' ': ''}) }}">{{ a.telephone|tel }}</a></td>
+                <td>{{ a.codePostal }}</td>
+                <td>{{ a.ville }}</td>
+                <td>{{ a.adresse ?: '—' }}</td>
+                <td class="num">{{ a.estimation is not null ? a.estimation|money : '—' }}</td>
+                <td>{{ a.utilisateur ? a.utilisateur.prenom : (a.source == 'site' ? 'Site web' : '—') }}</td>
+                <td>{{ m.confirmer(a) }}</td>
+                <td>{% if a.ramassage %}<a href="{{ path('ramassage_edit', {id: a.ramassage.id}) }}" class="badge badge-{{ etat[1] }} light">{{ etat[0] }}</a>{% else %}<span class="badge badge-{{ etat[1] }} light">{{ etat[0] }}</span>{% endif %}</td>
+                <td class="registre-commentaire">{{ a.commentaire|u.truncate(120, '…') }}</td>
+                <td class="text-end"><a href="{{ path('appel_edit', {id: a.id}) }}" class="btn btn-primary shadow btn-xs sharp" title="Modifier" aria-label="Modifier l'appel de {{ a.nomComplet }}"><i class="fas fa-pencil-alt"></i></a></td>
+            </tr>
+        {% else %}
+            <tr><td colspan="14"><div class="empty-state"><i class="fas fa-phone-alt"></i>Aucun appel{{ filtres.q or filtres.vue != 'tous' or filtres.camion or filtres.chauffeur or filtres.expedition ? ' pour ces critères' }}.</div></td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% include 'partials/_pagination.html.twig' with {pagination: appels} %}
+<p class="registre-synchro mt-2 mb-0">Dernière synchro : <span class="js-synchro">{{ synchro|date('H:i:s') }}</span></p>

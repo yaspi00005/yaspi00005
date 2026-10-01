@@ -6,10 +6,13 @@ use App\Entity\Ramassage;
 use App\Entity\User;
 use App\Enum\StatutRamassage;
 use App\Form\RamassageType;
+use App\Repository\AppelRepository;
+use App\Repository\CamionRepository;
 use App\Repository\ClientRepository;
 use App\Repository\RamassageRepository;
 use App\Security\IdChiffreur;
 use App\Service\DocumentService;
+use App\Service\RegistreAppels;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -27,25 +30,29 @@ class RamassageController extends AbstractController
     private const ID = '[A-Za-z0-9_-]{22}';
 
     #[Route('', name: 'ramassage_index', methods: ['GET'])]
-    public function index(RamassageRepository $ramassages): Response
+    public function index(RamassageRepository $ramassages, AppelRepository $appels, CamionRepository $camions): Response
     {
         return $this->render('ramassage/index.html.twig', [
             'demandes' => $ramassages->demandesEnLigne(),
+            // Appels confirmés du registre sans date de ramassage.
+            'aPlanifier' => $appels->aPlanifier(),
+            'camions' => $camions->actifs(),
             'aVenir' => $ramassages->aVenir(10),
             'statuts' => StatutRamassage::cases(),
         ]);
     }
 
     #[Route('/export.pdf', name: 'ramassage_export', methods: ['GET'])]
-    public function export(Request $request, RamassageRepository $ramassages, DocumentService $documents): Response
+    public function export(Request $request, RamassageRepository $ramassages, DocumentService $documents, CamionRepository $camions, IdChiffreur $chiffreur): Response
     {
         $statut = StatutRamassage::tryFrom($request->query->getString('statut'));
+        $camion = ($id = $chiffreur->decodeOptionnel($request->query->get('camion'))) ? $camions->find($id) : null;
         $du = $this->date($request->query->getString('du'));
         $au = $this->date($request->query->getString('au'));
         if ($du && $au && $au < $du) {
             [$du, $au] = [$au, $du];
         }
-        $liste = $ramassages->pourExport($statut, $du, $au);
+        $liste = $ramassages->pourExport($statut, $du, $au, $camion);
 
         $parStatut = [];
         foreach (StatutRamassage::cases() as $s) {
@@ -58,10 +65,11 @@ class RamassageController extends AbstractController
             'du' => $du,
             'au' => $au,
             'parStatut' => $parStatut,
+            'camion' => $camion,
             'genereLe' => new \DateTimeImmutable(),
         ], 'landscape');
 
-        $nom = 'ramassages'.($statut ? '-'.$statut->value : '').($du ? '-du-'.$du->format('Y-m-d') : '').($au ? '-au-'.$au->format('Y-m-d') : '').'.pdf';
+        $nom = 'ramassages'.($camion ? '-'.strtolower(preg_replace('/[^A-Za-z0-9]+/', '-', $camion->getNom())) : '').($statut ? '-'.$statut->value : '').($du ? '-du-'.$du->format('Y-m-d') : '').($au ? '-au-'.$au->format('Y-m-d') : '').'.pdf';
 
         return new Response($pdf, 200, [
             'Content-Type' => 'application/pdf',
@@ -70,8 +78,9 @@ class RamassageController extends AbstractController
     }
 
     #[Route('/evenements.json', name: 'ramassage_events', methods: ['GET'])]
-    public function events(Request $request, RamassageRepository $ramassages): JsonResponse
+    public function events(Request $request, RamassageRepository $ramassages, IdChiffreur $chiffreur): JsonResponse
     {
+        $camion = $chiffreur->decodeOptionnel($request->query->get('camion'));
         try {
             $debut = new \DateTimeImmutable($request->query->getString('start', 'first day of this month'));
             $fin = new \DateTimeImmutable($request->query->getString('end', 'last day of next month'));
@@ -80,14 +89,16 @@ class RamassageController extends AbstractController
         }
 
         return $this->json(array_map(fn (Ramassage $r) => [
-            'title' => $r->getClient()->getNomComplet(),
+            'title' => ($r->getCamion() ? '🚚 '.$r->getCamion()->getNom().' · ' : '').$r->getClient()->getNomComplet(),
             // Heures « locales » sans fuseau : affichées telles que saisies, quel que soit le pays de l'agent.
             'start' => $r->getDatePrevue()->format('Y-m-d\TH:i:s'),
             'end' => $r->getDatePrevue()->modify('+1 hour')->format('Y-m-d\TH:i:s'),
             'url' => $this->generateUrl('ramassage_edit', ['id' => $r->getId()]),
             'className' => 'bg-'.$r->getStatut()->badge(),
+            // Bordure à la couleur du camion : on voit d'un coup d'œil la tournée de chacun.
+            'borderColor' => $r->getCamion()?->getCouleur(),
             'extendedProps' => ['deplacer' => $this->generateUrl('ramassage_deplacer', ['id' => $r->getId()]), 'statut' => $r->getStatut()->label(), 'telephone' => $r->getClient()->getTelephone()],
-        ], $ramassages->entre($debut, $fin)));
+        ], array_values(array_filter($ramassages->entre($debut, $fin), fn (Ramassage $r) => !$camion || $r->getCamion()?->getId() === $camion))));
     }
 
     #[Route('/nouveau', name: 'ramassage_new', methods: ['GET', 'POST'])]
@@ -136,7 +147,7 @@ class RamassageController extends AbstractController
     }
 
     #[Route('/{id}/confirmer', name: 'ramassage_confirmer', requirements: ['id' => self::ID], methods: ['POST'])]
-    public function confirmer(Request $request, Ramassage $ramassage, EntityManagerInterface $em): Response
+    public function confirmer(Request $request, Ramassage $ramassage, EntityManagerInterface $em, RegistreAppels $registre): Response
     {
         if (!$this->isCsrfTokenValid('confirmer-ramassage-'.$ramassage->getId(), $request->getPayload()->getString('_token'))) {
             return $this->redirectToRoute('ramassage_edit', ['id' => $ramassage->getId()], Response::HTTP_SEE_OTHER);
@@ -144,10 +155,12 @@ class RamassageController extends AbstractController
         if (StatutRamassage::Demande === $ramassage->getStatut()) {
             // Demande du site vitrine validée après appel au client : elle entre dans le planning et les rappels.
             $ramassage->setStatut(StatutRamassage::Confirme)->setAgent($ramassage->getAgent() ?? $this->getUser());
+            $registre->ramassageConfirme($ramassage);
             $em->flush();
             $this->addFlash('success', 'Demande de '.$ramassage->getClient()->getNomComplet().' validée : le ramassage est planifié.');
         } elseif (StatutRamassage::EnAttente === $ramassage->getStatut()) {
             $ramassage->setStatut(StatutRamassage::Confirme);
+            $registre->ramassageConfirme($ramassage);
             $em->flush();
             $this->addFlash('success', 'Ramassage confirmé par '.$ramassage->getClient()->getNomComplet().'.');
         }
@@ -182,6 +195,10 @@ class RamassageController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            // Le registre des appels suit le camion choisi dans le planning.
+            if ($appel = $em->getRepository(\App\Entity\Appel::class)->findOneBy(['ramassage' => $ramassage])) {
+                $appel->setCamion($ramassage->getCamion());
+            }
             $em->persist($ramassage);
             $em->flush();
             $this->addFlash('success', 'Ramassage enregistré.');

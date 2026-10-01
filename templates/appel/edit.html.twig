@@ -1,0 +1,30 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Appel de {{ appel.nomComplet }}{% endblock %}
+
+{% block body %}
+<div class="card">
+    <div class="card-header flex-wrap gap-2">
+        <h4 class="card-title">{{ block('title') }} <small class="text-muted fs-14">— {{ appel.dateAppel|date('d/m/Y') }}{% if appel.source == 'site' %} · demande faite sur sotrama.net{% endif %}</small></h4>
+        <div class="d-flex flex-wrap gap-2">
+            {% set etat = appel.etat %}
+            <span class="badge badge-{{ etat[1] }} light align-self-center">{{ etat[0] }}</span>
+            {% if appel.ramassage %}<a href="{{ path('ramassage_edit', {id: appel.ramassage.id}) }}" class="btn btn-outline-primary btn-sm btn-rounded"><i class="fas fa-calendar-alt me-1"></i> Voir le ramassage</a>{% endif %}
+            <a href="{{ path('client_show', {id: appel.client.id}) }}" class="btn btn-outline-primary btn-sm btn-rounded"><i class="fas fa-user me-1"></i> Fiche client</a>
+            <a href="{{ path('colis_new', {client: hid(appel.client.id)}) }}" class="btn btn-primary btn-sm btn-rounded"><i class="fas fa-box-open me-1"></i> Enregistrer le colis</a>
+        </div>
+    </div>
+    <div class="card-body">
+        {% include 'appel/_form.html.twig' with {form: form, bouton: 'Enregistrer'} %}
+        <div class="d-flex justify-content-between flex-wrap gap-2 border-top pt-3">
+            <a href="{{ path('appel_index') }}" class="btn btn-light"><i class="fas fa-arrow-left me-1"></i> Retour au registre</a>
+            {% if is_granted('ROLE_ADMIN') or appel.utilisateur == app.user %}
+            <form method="post" action="{{ path('appel_delete', {id: appel.id}) }}" data-confirm="Supprimer l'appel de {{ appel.nomComplet }} ?{{ appel.ramassage and appel.ramassage.statut.estAFaire ? ' Le ramassage prévu sera retiré du planning.' }}" data-confirm-titre="Supprimer l'appel" data-confirm-bouton="Supprimer" data-confirm-type="danger">
+                <input type="hidden" name="_token" value="{{ csrf_token('supprimer-appel-' ~ appel.id) }}">
+                <button class="btn btn-outline-danger"><i class="fas fa-trash me-1"></i> Supprimer</button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

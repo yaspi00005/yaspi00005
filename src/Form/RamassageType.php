@@ -2,10 +2,12 @@
 
 namespace App\Form;
 
+use App\Entity\Camion;
 use App\Entity\Client;
 use App\Entity\Ramassage;
 use App\Entity\User;
 use App\Enum\StatutRamassage;
+use App\Repository\CamionRepository;
 use App\Repository\ClientRepository;
 use App\Repository\UserRepository;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
@@ -39,6 +41,15 @@ class RamassageType extends AbstractType
                 'query_builder' => fn (UserRepository $r) => $r->createQueryBuilder('u')->andWhere('u.actif = true')->orderBy('u.prenom'),
                 'choice_label' => 'nomComplet',
                 'placeholder' => 'Non attribué',
+            ])
+            ->add('camion', EntityType::class, [
+                'label' => 'Camion',
+                'class' => Camion::class,
+                'required' => false,
+                'query_builder' => fn (CamionRepository $r) => $r->createQueryBuilder('c')->andWhere('c.actif = true OR c.id = :actuel')
+                    ->setParameter('actuel', $options['data']?->getCamion()?->getId() ?? 0)->orderBy('c.nom'),
+                'choice_label' => 'nom',
+                'placeholder' => 'Non affecté',
             ])
             ->add('statut', EnumType::class, [
                 'label' => 'Statut',

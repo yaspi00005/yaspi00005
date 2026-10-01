@@ -1,0 +1,61 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Registre des appels{% endblock %}
+
+{% block body %}
+{% set ouvert = not form.vars.submitted or not form.vars.valid %}
+<div class="card">
+    <div class="card-header">
+        <h4 class="card-title"><i class="fas fa-phone-alt text-primary me-2"></i>Nouvel enregistrement</h4>
+        <button class="btn btn-light btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#nouvel-appel" aria-expanded="true" aria-controls="nouvel-appel"><i class="fas fa-chevron-down"></i></button>
+    </div>
+    <div class="collapse show" id="nouvel-appel">
+        <div class="card-body">
+            {% include 'appel/_form.html.twig' with {form: form, bouton: "Enregistrer l'appel"} %}
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header flex-wrap gap-2">
+        <h4 class="card-title">📊 Suivi logistique</h4>
+        <div class="d-flex flex-wrap gap-2">
+            {% if is_granted('ROLE_ADMIN') %}<a href="{{ path('admin_camion_index') }}" class="btn btn-outline-primary btn-sm btn-rounded"><i class="fas fa-truck me-1"></i> Camions</a>{% endif %}
+            <a href="{{ path('ramassage_index') }}" class="btn btn-outline-primary btn-sm btn-rounded"><i class="fas fa-calendar-alt me-1"></i> Planning</a>
+            <a href="?{{ app.request.query.all|merge({export: 'csv', page: null})|url_encode }}" class="btn btn-outline-primary btn-sm btn-rounded"><i class="fas fa-file-excel me-1"></i> Export Excel</a>
+        </div>
+    </div>
+    <div class="card-body">
+        {% set base = {q: filtres.q ?: null, expedition: filtres.expedition ? hid(filtres.expedition) : null} %}
+        <div class="registre-onglets mb-3" role="tablist" aria-label="Filtrer les appels">
+            {% for cle, libelle in vues %}
+                {% set actif = filtres.vue == cle and not filtres.camion and not filtres.chauffeur %}
+                <a href="?{{ base|merge({vue: cle == 'tous' ? null : cle})|filter(v => v is not null)|url_encode }}" class="btn btn-sm btn-rounded {{ actif ? 'btn-primary' : 'btn-outline-primary' }}" {{ actif ? 'aria-current="page"' }}>{{ libelle }}</a>
+            {% endfor %}
+            {% for c in camions %}
+                {% set actif = filtres.camion == c.id %}
+                <a href="?{{ base|merge({camion: hid(c.id)})|filter(v => v is not null)|url_encode }}" class="btn btn-sm btn-rounded {{ actif ? 'btn-primary' : 'btn-outline-primary' }}"><span class="pastille-camion" style="background: {{ c.couleur }}"></span>🚚 {{ c.nom }}</a>
+            {% endfor %}
+            {% for ch in chauffeurs %}
+                {% set actif = filtres.chauffeur == ch.id %}
+                <a href="?{{ base|merge({chauffeur: hid(ch.id)})|filter(v => v is not null)|url_encode }}" class="btn btn-sm btn-rounded {{ actif ? 'btn-primary' : 'btn-outline-secondary' }}">👤 {{ ch.prenom }}</a>
+            {% endfor %}
+        </div>
+        <form method="get" class="row g-2 mb-3">
+            {% if filtres.vue != 'tous' %}<input type="hidden" name="vue" value="{{ filtres.vue }}">{% endif %}
+            {% if filtres.camion %}<input type="hidden" name="camion" value="{{ hid(filtres.camion) }}">{% endif %}
+            {% if filtres.chauffeur %}<input type="hidden" name="chauffeur" value="{{ hid(filtres.chauffeur) }}">{% endif %}
+            <div class="col-md-7"><input type="search" name="q" value="{{ filtres.q }}" class="form-control" placeholder="Recherche (nom, ville, téléphone, code postal, commentaire…)" aria-label="Rechercher"></div>
+            <div class="col-md-5">
+                <select name="expedition" class="form-control form-select" aria-label="Conteneur" data-envoi-auto>
+                    <option value="">Tous les conteneurs</option>
+                    {% for e in expeditions %}<option value="{{ hid(e.id) }}" {{ filtres.expedition == e.id ? 'selected' }}>{{ e.destination.ville }} — départ le {{ e.dateDepart|date('d/m/Y') }}</option>{% endfor %}
+                </select>
+            </div>
+        </form>
+        <div id="registre-liste" data-rafraichir="30">
+            {% include 'appel/_liste.html.twig' %}
+        </div>
+    </div>
+</div>
+{% endblock %}

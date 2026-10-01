@@ -626,3 +626,55 @@
     const afficher = () => setTimeout(() => modal.show(), 350);
     if (document.readyState === 'complete') { afficher(); } else { window.addEventListener('load', afficher, { once: true }); }
 })();
+
+/* ---------- Registre des appels ---------- */
+(function () {
+    'use strict';
+    // Tableau rafraîchi automatiquement : chacun voit les appels notés par les autres.
+    const liste = document.querySelector('[data-rafraichir]');
+    if (liste) {
+        const delai = (parseInt(liste.dataset.rafraichir, 10) || 30) * 1000;
+        const rafraichir = function () {
+            // Pas pendant une saisie dans le tableau, ni quand l'onglet est caché.
+            if (document.hidden || liste.contains(document.activeElement)) { return; }
+            fetch(window.location.href, { headers: { 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' })
+                .then(r => r.ok && !r.redirected ? r.text() : Promise.reject())
+                .then(html => { liste.innerHTML = html; })
+                .catch(() => {});
+        };
+        setInterval(rafraichir, delai);
+        document.addEventListener('visibilitychange', function () { if (!document.hidden) { rafraichir(); } });
+    }
+
+    // Téléphone d'un client déjà connu : nom et adresse pré-remplis (sans écraser une saisie).
+    const form = document.querySelector('.js-form-appel');
+    const tel = form ? form.querySelector('.js-appel-telephone') : null;
+    if (!form || !tel || !form.dataset.clientUrl) { return; }
+    const info = form.querySelector('.js-client-connu');
+    const champ = nom => form.querySelector('[name$="[' + nom + ']"]');
+    let dernier = '';
+    const chercher = function () {
+        const chiffres = tel.value.replace(/\D/g, '');
+        if (chiffres.length < 8 || chiffres === dernier) { return; }
+        dernier = chiffres;
+        fetch(form.dataset.clientUrl + '?' + new URLSearchParams({ telephone: tel.value }), { credentials: 'same-origin' })
+            .then(r => r.ok ? r.json() : { client: null })
+            .then(function (d) {
+                if (!info) { return; }
+                if (!d.client) { info.classList.add('d-none'); return; }
+                ['nom', 'prenom', 'codePostal', 'ville', 'adresse'].forEach(function (k) {
+                    const c = champ(k);
+                    if (c && !c.value && d.client[k]) { c.value = d.client[k]; }
+                });
+                info.innerHTML = '';
+                const lien = document.createElement('a');
+                lien.href = d.client.fiche; lien.target = '_blank'; lien.className = 'text-success';
+                lien.textContent = '✔ Client connu : ' + [d.client.prenom, d.client.nom].filter(Boolean).join(' ') + ' (' + d.client.colis + ' colis)';
+                info.appendChild(lien);
+                info.classList.remove('d-none');
+            })
+            .catch(() => {});
+    };
+    tel.addEventListener('change', chercher);
+    tel.addEventListener('blur', chercher);
+})();

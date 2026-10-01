@@ -10,9 +10,18 @@
 <div class="row">
     <div class="col-xl-9">
         <div class="card">
-            <div class="card-header">
+            <div class="card-header flex-wrap gap-2">
                 <h4 class="card-title">Calendrier</h4>
-                <a href="{{ path('ramassage_new') }}" class="btn btn-primary btn-rounded btn-sm"><i class="fas fa-plus me-1"></i> Planifier un ramassage</a>
+                <div class="d-flex flex-wrap gap-2">
+                    {% if camions %}
+                    <select id="filtre-camion" class="form-select form-control form-control-sm w-auto" aria-label="Afficher un camion">
+                        <option value="">Tous les camions</option>
+                        {% for c in camions %}<option value="{{ hid(c.id) }}">🚚 {{ c.nom }}</option>{% endfor %}
+                    </select>
+                    {% endif %}
+                    <a href="{{ path('appel_index') }}" class="btn btn-outline-primary btn-rounded btn-sm"><i class="fas fa-phone-alt me-1"></i> Registre des appels</a>
+                    <a href="{{ path('ramassage_new') }}" class="btn btn-primary btn-rounded btn-sm"><i class="fas fa-plus me-1"></i> Planifier un ramassage</a>
+                </div>
             </div>
             <div class="card-body">
                 <div id="calendrier" data-events="{{ path('ramassage_events') }}" data-token="{{ csrf_token('ramassage') }}" data-nouveau="{{ path('ramassage_new') }}"></div>
@@ -32,6 +41,20 @@
                     </a>
                 {% endfor %}
                 <p class="fs-12 text-muted mt-2 mb-0">Appelez le client pour fixer l'heure, puis « Valider le rendez-vous ».</p>
+            </div>
+        </div>
+        {% endif %}
+        {% if aPlanifier %}
+        <div class="card border border-warning">
+            <div class="card-header"><h4 class="card-title"><i class="fas fa-calendar-plus text-warning me-2"></i>À planifier <span class="badge badge-warning ms-1">{{ aPlanifier|length }}</span></h4></div>
+            <div class="card-body">
+                {% for a in aPlanifier|slice(0, 15) %}
+                    <a href="{{ path('appel_edit', {id: a.id}) }}" class="d-block border-bottom py-2 text-decoration-none">
+                        <span class="d-flex justify-content-between"><strong class="text-black">{{ a.nomComplet }}</strong>{% if a.dateConteneurPrevue %}<span class="text-muted fs-12" title="Conteneur">📦 {{ a.dateConteneurPrevue|date('d/m') }}</span>{% endif %}</span>
+                        <small class="text-muted d-block">{{ a.codePostal }} {{ a.ville }}{% if a.camion %} · 🚚 {{ a.camion.nom }}{% endif %}</small>
+                    </a>
+                {% endfor %}
+                <p class="fs-12 text-muted mt-2 mb-0">Appels confirmés du registre sans date : ouvrez-les pour fixer le jour du ramassage.</p>
             </div>
         </div>
         {% endif %}
@@ -56,6 +79,13 @@
             <div class="card-header"><h4 class="card-title"><i class="fas fa-file-pdf text-primary me-2"></i>Export PDF</h4></div>
             <div class="card-body">
                 <form method="get" action="{{ path('ramassage_export') }}" target="_blank" data-multi-submit>
+                    {% if camions %}
+                    <label class="form-label" for="export-camion">Camion</label>
+                    <select name="camion" id="export-camion" class="form-select form-control mb-2">
+                        <option value="">Tous les camions</option>
+                        {% for c in camions %}<option value="{{ hid(c.id) }}">{{ c.nom }}{{ c.chauffeur ? ' — ' ~ c.chauffeur.prenom }}</option>{% endfor %}
+                    </select>
+                    {% endif %}
                     <label class="form-label" for="export-statut">Statut</label>
                     <select name="statut" id="export-statut" class="form-select form-control mb-2">
                         <option value="">Tous les statuts</option>
@@ -67,7 +97,7 @@
                     </div>
                     <button class="btn btn-primary w-100"><i class="fas fa-download me-1"></i> Exporter en PDF</button>
                 </form>
-                <p class="fs-12 text-muted mt-2 mb-0">Laissez les dates vides pour tout exporter.</p>
+                <p class="fs-12 text-muted mt-2 mb-0">Laissez les dates vides pour tout exporter. Avec un camion : feuille de route du chauffeur.</p>
             </div>
         </div>
         <div class="card">
@@ -94,7 +124,12 @@ document.addEventListener('DOMContentLoaded', function () {
         timeZone: 'UTC', // heures « flottantes » : pas de conversion selon le fuseau du navigateur
         initialView: window.innerWidth < 768 ? 'listWeek' : 'dayGridMonth',
         headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,listWeek' },
-        events: el.dataset.events,
+        events: function (info, succes, echec) {
+            const params = new URLSearchParams({ start: info.startStr, end: info.endStr });
+            const camion = document.getElementById('filtre-camion');
+            if (camion && camion.value) { params.set('camion', camion.value); }
+            fetch(el.dataset.events + '?' + params, { credentials: 'same-origin' }).then(r => r.json()).then(succes).catch(echec);
+        },
         editable: true,
         eventDurationEditable: false,
         dateClick: info => { window.location = el.dataset.nouveau + '?date=' + encodeURIComponent(info.dateStr); },
@@ -107,6 +142,8 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
     calendrier.render();
+    const filtre = document.getElementById('filtre-camion');
+    if (filtre) { filtre.addEventListener('change', () => calendrier.refetchEvents()); }
 });
 </script>
 {% endblock %}
