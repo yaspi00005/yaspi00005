@@ -22,8 +22,8 @@ class AgenceController extends AbstractController
     {
         $code = trim($request->query->getString('code'));
         if ($code) {
-            // Un scan du QR code renvoie l'URL de suivi : on en extrait le jeton.
-            if (preg_match('#/suivi/([a-f0-9]{40})#', $code, $m)) {
+            // Un scan du QR code (reçu ou étiquette) renvoie une URL : on en extrait le jeton.
+            if (preg_match('#/(?:c|suivi)/([a-f0-9]{40})#', $code, $m)) {
                 $colis = $colisRepository->findOneBy(['token' => $m[1]]);
             } else {
                 $colis = $colisRepository->findOneByCode($code);

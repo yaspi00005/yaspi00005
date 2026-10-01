@@ -47,6 +47,7 @@ security:
         - { route: '^vitrine_', roles: PUBLIC_ACCESS }   # site vitrine (sotrama.net)
         - { path: ^/connexion, roles: PUBLIC_ACCESS }
         - { path: ^/suivi, roles: PUBLIC_ACCESS }
+        - { path: ^/c/, roles: PUBLIC_ACCESS }   # QR code des étiquettes (fiche pour l'équipe, suivi public sinon)
         - { path: ^/application, roles: PUBLIC_ACCESS }
         - { path: ^/\.well-known, roles: PUBLIC_ACCESS }
         - { path: ^/admin, roles: ROLE_ADMIN }

@@ -53,6 +53,9 @@
                                     <span class="input-group-text"><button type="submit" class="btn p-0 border-0 bg-transparent" aria-label="Rechercher"><i class="flaticon-381-search-2"></i></button></span>
                                 </form>
                             </li>
+                            <li class="nav-item d-flex align-items-center me-2">
+                                <a href="{{ path('colis_scanner') }}" class="btn btn-outline-primary btn-rounded btn-sm" title="Scanner un colis" aria-label="Scanner un colis"><i class="fas fa-qrcode"></i><span class="d-none d-lg-inline ms-1">Scanner</span></a>
+                            </li>
                             {% if is_granted('ROLE_RAMASSAGE') %}
                             <li class="nav-item d-none d-md-flex align-items-center">
                                 <a href="{{ path('colis_new') }}" class="btn btn-primary btn-rounded btn-sm"><i class="fas fa-plus me-1"></i> Nouveau colis</a>

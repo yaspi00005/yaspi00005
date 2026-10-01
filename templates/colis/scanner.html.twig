@@ -1,0 +1,46 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Scanner un colis{% endblock %}
+
+{% block body %}
+<div class="row justify-content-center">
+    <div class="col-xl-6 col-lg-8">
+        <div class="card">
+            <div class="card-header"><h4 class="card-title"><i class="fas fa-qrcode text-primary me-2"></i>Scanner un colis</h4></div>
+            <div class="card-body">
+                <p class="text-muted">Scannez le QR code ou le code-barres de l'étiquette (ou du reçu) pour ouvrir la fiche du colis.</p>
+                <form method="get" id="form-scan">
+                    <label class="form-label" for="code">Code scanné ou n° de suivi</label>
+                    <div class="input-group mb-3">
+                        <input type="text" name="code" id="code" value="{{ code }}" class="form-control fs-18" autocomplete="off" autofocus placeholder="Ex. : ST2610-0001">
+                        <button class="btn btn-primary" type="submit">Ouvrir</button>
+                    </div>
+                </form>
+                <button type="button" class="btn btn-outline-primary w-100" id="btn-scanner"><i class="fas fa-camera me-1"></i> Scanner avec la caméra</button>
+                <div id="lecteur-qr" class="mt-3 d-none"></div>
+                <p class="fs-12 text-muted mt-3 mb-0"><i class="fas fa-barcode me-1"></i> Avec une douchette USB ou Bluetooth : cliquez dans le champ puis scannez, la fiche s'ouvre directement.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script src="{{ asset('js/vendor/html5-qrcode/html5-qrcode.min.js') }}"></script>
+<script nonce="{{ csp_nonce() }}">
+document.getElementById('btn-scanner').addEventListener('click', function () {
+    const zone = document.getElementById('lecteur-qr');
+    zone.classList.remove('d-none');
+    this.disabled = true;
+    const lecteur = new Html5Qrcode('lecteur-qr');
+    // QR codes et codes-barres (Code 128) des étiquettes.
+    lecteur.start({ facingMode: 'environment' }, { fps: 10, qrbox: { width: 260, height: 180 } }, function (texte) {
+        lecteur.stop();
+        document.getElementById('code').value = texte;
+        document.getElementById('form-scan').submit();
+    }).catch(function () {
+        zone.innerHTML = '<div class="alert alert-warning">Caméra indisponible. Saisissez ou scannez le code dans le champ.</div>';
+    });
+});
+</script>
+{% endblock %}

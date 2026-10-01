@@ -14,6 +14,7 @@
     </div>
     <div class="d-flex gap-2 flex-wrap">
         <a href="?export=csv" class="btn btn-outline-primary btn-rounded btn-sm"><i class="fas fa-file-excel me-1"></i> Manifeste</a>
+        {% if is_granted('ROLE_ADMIN') %}<button type="button" class="btn btn-outline-primary btn-rounded btn-sm" data-bs-toggle="modal" data-bs-target="#modal-etiquettes"><i class="fas fa-tags me-1"></i> Étiquettes</button>{% endif %}
         {% if is_granted('ROLE_ADMIN') %}
             {% if expedition.statut.value == 'en_preparation' %}
             <form method="post" action="{{ path('expedition_publier', {id: expedition.id}) }}">
@@ -217,4 +218,5 @@
         </div>
     </div>
 </div>
+{% if is_granted('ROLE_ADMIN') %}{% include 'partials/_modal_etiquettes.html.twig' with {action: path('expedition_etiquettes', {id: expedition.id}), nombre: null, titre: 'Étiquettes de tous les colis de ' ~ expedition.numero} %}{% endif %}
 {% endblock %}

@@ -1,0 +1,117 @@
+{# Étiquettes des colis. Dessinées pour 100 × 150 mm, mises à l'échelle (e) du format choisi ; noir et blanc
+   pour les imprimantes thermiques. Paramètres : pages (listes d'étiquettes, null = case laissée vide), format, e #}
+{% set lc = format.etiquette[0] %}{% set hc = format.etiquette[1] %}
+{% set k = min(lc / 100, hc / 150) %}
+{% macro mm(v, k) %}{{ (v * k)|round(2) }}mm{% endmacro %}
+{% import _self as m %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<style>
+    @page { margin: 0; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'DejaVu Sans', sans-serif; color: #000; }
+    .page { position: relative; width: {{ format.page[0] }}mm; height: {{ format.page[1] }}mm; page-break-after: always; overflow: hidden; }
+    .page.derniere { page-break-after: auto; }
+    .case { position: absolute; width: {{ lc }}mm; height: {{ hc }}mm; }
+    /* Zone utile : 92 × 142 mm à l'échelle 1, marges de 4 mm (le moteur PDF ajoute le padding à la largeur : pas de padding ici). */
+    .etiquette { position: absolute; left: {{ ((lc - 100 * k) / 2 + 4 * k)|round(2) }}mm; top: {{ ((hc - 150 * k) / 2 + 4 * k)|round(2) }}mm; width: {{ m.mm(92, k) }}; height: {{ m.mm(142, k) }}; overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; }
+    td { vertical-align: top; padding: 0; }
+    .entete td { vertical-align: middle; }
+    .logo { height: {{ m.mm(13, k) }}; }
+    .marque { font-size: {{ m.mm(5.6, k) }}; font-weight: bold; line-height: 1; }
+    .contact { font-size: {{ m.mm(2.5, k) }}; line-height: 1.3; }
+    .express { border: {{ m.mm(0.6, k) }} solid #000; font-size: {{ m.mm(3.4, k) }}; font-weight: bold; padding: {{ m.mm(1, k) }} {{ m.mm(1.6, k) }}; text-align: center; }
+    .destination { background: #000; color: #fff; margin-top: {{ m.mm(2.5, k) }}; }
+    .destination td { padding: {{ m.mm(1.8, k) }} {{ m.mm(3, k) }}; vertical-align: middle; }
+    .ville { font-size: {{ m.mm(10, k) }}; font-weight: bold; line-height: 1; letter-spacing: {{ m.mm(0.3, k) }}; }
+    .pays { font-size: {{ m.mm(2.8, k) }}; margin-top: {{ m.mm(0.8, k) }}; }
+    .rang { font-size: {{ m.mm(8, k) }}; font-weight: bold; text-align: right; white-space: nowrap; line-height: 1; }
+    .rang small { display: block; font-size: {{ m.mm(2.4, k) }}; font-weight: normal; margin-top: {{ m.mm(0.8, k) }}; }
+    .numero { font-size: {{ m.mm(8.4, k) }}; font-weight: bold; text-align: center; letter-spacing: {{ m.mm(0.4, k) }}; margin: {{ m.mm(2.5, k) }} 0 {{ m.mm(1.5, k) }}; line-height: 1; }
+    .milieu { border-top: {{ m.mm(0.4, k) }} solid #000; border-bottom: {{ m.mm(0.4, k) }} solid #000; }
+    .milieu td { padding-top: {{ m.mm(2, k) }}; padding-bottom: {{ m.mm(2, k) }}; }
+    .qr { width: {{ m.mm(40, k) }}; height: {{ m.mm(40, k) }}; display: block; }
+    .infos { padding-left: {{ m.mm(3, k) }} !important; }
+    .titre { font-size: {{ m.mm(2.2, k) }}; text-transform: uppercase; letter-spacing: {{ m.mm(0.2, k) }}; margin-top: {{ m.mm(1.4, k) }}; }
+    .titre.premier { margin-top: 0; }
+    .fort { font-size: {{ m.mm(4, k) }}; font-weight: bold; line-height: 1.15; }
+    .moyen { font-size: {{ m.mm(3.2, k) }}; line-height: 1.2; }
+    .contenu { margin-top: {{ m.mm(2, k) }}; height: {{ m.mm(15, k) }}; overflow: hidden; }
+    .code-barres { text-align: center; margin-top: {{ m.mm(1.5, k) }}; }
+    .code-barres img { width: {{ m.mm(84, k) }}; height: {{ m.mm(15, k) }}; }
+    .code-barres div { font-size: {{ m.mm(2.8, k) }}; letter-spacing: {{ m.mm(0.6, k) }}; }
+    .pied { margin-top: {{ m.mm(2, k) }}; font-size: {{ m.mm(2.2, k) }}; text-align: center; }
+</style>
+</head>
+<body>
+{% for cases in pages %}
+<div class="page{{ loop.last ? ' derniere' }}">
+    {% for et in cases %}
+        {% set col = (loop.index0 % format.colonnes) %}{% set lig = (loop.index0 // format.colonnes) %}
+        <div class="case" style="left: {{ col * lc }}mm; top: {{ lig * hc }}mm;">
+        {% if et %}
+            {% set c = et.colis %}
+            {% set dest = c.expedition ? c.expedition.destination : null %}
+            <div class="etiquette">
+                <table class="entete">
+                    <tr>
+                        {% if logo_data_uri() %}<td style="width: {{ m.mm(13, k) }}"><img src="{{ logo_data_uri() }}" class="logo" alt=""></td>{% endif %}
+                        <td style="padding-left: {{ m.mm(2.5, k) }}">
+                            <div class="marque">{{ app_nom }}</div>
+                            <div class="contact">Tél. / WhatsApp {{ societe.telephone }}{% if societe.site|default(null) %}<br>{{ societe.site }}{% endif %}</div>
+                        </td>
+                        {% if c.typeExpedition.value == 'express' %}<td style="width: {{ m.mm(20, k) }}"><div class="express">EXPRESS</div></td>{% endif %}
+                    </tr>
+                </table>
+
+                <table class="destination">
+                    <tr>
+                        <td>
+                            <div class="ville">{{ dest ? dest.ville|upper : 'DESTINATION' }}</div>
+                            <div class="pays">{% if dest %}{{ dest.label|upper }} · {{ c.expedition.modeTransport.label }}{% else %}à préciser : colis pas encore affecté à une expédition{% endif %}</div>
+                        </td>
+                        <td class="rang">{{ et.numero }} / {{ et.total }}<small>colis</small></td>
+                    </tr>
+                </table>
+
+                <div class="numero">{{ c.numeroSuivi }}</div>
+
+                <table class="milieu">
+                    <tr>
+                        <td style="width: {{ m.mm(40, k) }}"><img src="{{ et.qr }}" class="qr" alt=""></td>
+                        <td class="infos">
+                            <div class="titre premier">Destinataire</div>
+                            <div class="fort">{{ c.destinataireNom|u.truncate(40, '…') }}</div>
+                            <div class="fort">{{ c.destinataireTelephone|tel }}</div>
+                            <div class="titre">Expéditeur</div>
+                            <div class="moyen">{{ c.client.nomComplet|u.truncate(40, '…') }}</div>
+                            {% if c.expedition %}
+                            <div class="titre">Expédition</div>
+                            <div class="moyen">{{ c.expedition.numero }} · départ {{ c.expedition.dateDepart|date('d/m/Y') }}</div>
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+
+                <div class="contenu">
+                    <div class="titre premier">Contenu{{ et.total > 1 and et.parArticle ? ' de ce colis' }}</div>
+                    <div class="moyen">{{ et.contenu|u.truncate(110, '…') }}{% if et.poids %} — <strong>{{ et.total > 1 and not et.parArticle ? 'poids total ' }}{{ et.poids|number_format(1, ',', ' ') }} kg</strong>{% endif %}</div>
+                </div>
+
+                <div class="code-barres">
+                    <img src="{{ et.codeBarres }}" alt="">
+                    <div>{{ c.numeroSuivi }}</div>
+                </div>
+
+                <div class="pied">Scannez le QR code pour suivre ce colis · déposé le {{ c.dateReception|date('d/m/Y') }}</div>
+            </div>
+        {% endif %}
+        </div>
+    {% endfor %}
+</div>
+{% endfor %}
+</body>
+</html>

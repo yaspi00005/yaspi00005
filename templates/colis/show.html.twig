@@ -8,8 +8,9 @@
 
 {% if app.request.query.get('nouveau') %}
 <div class="alert alert-success solid-alert d-flex flex-wrap align-items-center justify-content-between gap-2">
-    <span><i class="fas fa-check-circle me-2"></i>Colis enregistré. Remettez le reçu au client : il contient le code de retrait <strong class="code-retrait">{{ colis.codeRetrait }}</strong>.</span>
+    <span><i class="fas fa-check-circle me-2"></i>Colis enregistré. Remettez le reçu au client : il contient le code de retrait <strong class="code-retrait">{{ colis.codeRetrait }}</strong>. Collez une étiquette sur chaque carton.</span>
     <span class="d-flex flex-wrap gap-2">
+        <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#modal-etiquettes"><i class="fas fa-tags me-1"></i> Imprimer les étiquettes</button>
         <a href="{{ path('colis_recu', {id: colis.id}) }}" target="_blank" class="btn btn-light btn-sm"><i class="fas fa-print me-1"></i> Imprimer le reçu</a>
         {% if whatsappExpediteur %}<a href="{{ whatsappExpediteur }}" target="_blank" rel="noopener" class="btn btn-light btn-sm"><i class="fab fa-whatsapp me-1"></i> Envoyer par WhatsApp</a>{% endif %}
     </span>
@@ -25,6 +26,7 @@
     </div>
     <div class="d-flex flex-wrap gap-2">
         <a href="{{ path('colis_recu', {id: colis.id}) }}" target="_blank" class="btn btn-outline-primary btn-rounded btn-sm"><i class="fas fa-file-pdf me-1"></i> Reçu PDF</a>
+        <button type="button" class="btn btn-outline-primary btn-rounded btn-sm" data-bs-toggle="modal" data-bs-target="#modal-etiquettes"><i class="fas fa-tags me-1"></i> Étiquettes</button>
         {% if is_granted('COLIS_MODIFIER', colis) %}
             <a href="{{ path('colis_edit', {id: colis.id}) }}" class="btn btn-primary btn-rounded btn-sm"><i class="fas fa-pen me-1"></i> Modifier</a>
             {% if colis.supprimable %}
@@ -305,6 +307,7 @@
     </div>
 </div>
 {% include 'partials/_journal_fiche.html.twig' %}
+{% include 'partials/_modal_etiquettes.html.twig' with {action: path('colis_etiquettes', {id: colis.id}), nombre: max(1, colis.nombreArticles), titre: 'Étiquettes du colis ' ~ colis.numeroSuivi} %}
 {% endblock %}
 
 {% block javascripts %}

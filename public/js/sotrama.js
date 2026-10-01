@@ -709,3 +709,22 @@
     tel.addEventListener('change', chercher);
     tel.addEventListener('blur', chercher);
 })();
+
+/* ---------- Étiquettes : format mémorisé, position sur planche A4 ---------- */
+(function () {
+    'use strict';
+    document.querySelectorAll('.js-form-etiquettes').forEach(function (form) {
+        const format = form.querySelector('.js-etiquettes-format');
+        const debut = form.querySelector('.js-etiquettes-debut');
+        try {
+            const memo = localStorage.getItem('sotrama_format_etiquettes');
+            if (memo && format.querySelector('option[value="' + memo + '"]')) { format.value = memo; }
+        } catch (e) { /* stockage indisponible */ }
+        const afficher = () => { if (debut) { debut.classList.toggle('d-none', format.value !== 'a6'); } };
+        format.addEventListener('change', function () {
+            afficher();
+            try { localStorage.setItem('sotrama_format_etiquettes', format.value); } catch (e) { /* ignoré */ }
+        });
+        afficher();
+    });
+})();
