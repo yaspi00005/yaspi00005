@@ -17,6 +17,13 @@ parameters:
             - { nom: 'Yacouba Traoré', role: 'Gérant', telephone: '+33 6 12 33 65 72', whatsapp: '33612336572' }
             - { nom: 'Daby', role: 'Associé', telephone: '+33 6 50 76 83 00', whatsapp: '33650768300' }
             - { nom: 'Mamadou', role: 'Associé', telephone: '+33 6 20 98 55 32', whatsapp: '33620985532' }
+        # Témoignages vidéo : déposez les vidéos dans public/images/vitrine/temoignages/ (voir LISEZMOI).
+        # Facultatif, pour afficher le nom et une phrase sous chaque vidéo :
+        #   - { fichier: '01-awa.mp4', nom: 'Awa, Montreuil', texte: 'Mes cartons sont arrivés à Bamako en parfait état.' }
+        temoignages: []
+        # Logos des enseignes : déposez-les dans public/images/vitrine/enseignes/. Facultatif, nom et lien :
+        #   - { fichier: 'boutique-dupont.png', nom: 'Boutique Dupont', url: 'https://…' }
+        enseignes: []
         reseaux:
             - { nom: 'TikTok', compte: '@@sotrama1', url: 'https://www.tiktok.com/@sotrama1', icone: 'fab fa-tiktok' }
             - { nom: 'Instagram', compte: '@@sotrama5', url: 'https://www.instagram.com/sotrama5/', icone: 'fab fa-instagram' }

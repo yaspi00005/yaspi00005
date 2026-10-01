@@ -1,0 +1,18 @@
+{# Logos des enseignes qui nous font confiance. Paramètre : enseignes #}
+<section class="section section-enseignes" id="enseignes">
+    <div class="conteneur">
+        <div class="titre-section">
+            <p class="surtitre">Ils nous font confiance</p>
+            <h2>Des enseignes et commerces nous confient leurs envois</h2>
+        </div>
+        <ul class="enseignes">
+            {% for e in enseignes %}
+                <li>
+                    {% if e.url %}<a href="{{ e.url }}" target="_blank" rel="noopener" title="{{ e.nom }}">{% endif %}
+                    <img src="{{ asset(e.logo) }}" alt="{{ e.nom }}" loading="lazy">
+                    {% if e.url %}</a>{% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+</section>

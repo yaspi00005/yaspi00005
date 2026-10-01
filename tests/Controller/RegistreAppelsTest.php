@@ -177,11 +177,10 @@ final class RegistreAppelsTest extends WebTestCase
         $crawler = $this->client->request('GET', '/ramassage', server: ['HTTP_HOST' => 'sotrama.net']);
         $form = $crawler->selectButton('Envoyer ma demande')->form();
         $form['consentement']->tick();
-        $jour = new \DateTimeImmutable('tomorrow');
         $this->client->submit($form, [
             'prenom' => 'Awa', 'nom' => 'Keita', 'telephone' => self::TELEPHONE, 'adresse' => '3 rue Jean Jaurès',
-            'code_postal' => '93200', 'ville' => 'Saint-Denis', 'destination' => 'mali', 'creneau' => 'matin',
-            'date' => ('7' === $jour->format('N') ? $jour->modify('+1 day') : $jour)->format('Y-m-d'), 'colis' => '3 cartons',
+            'code_postal' => '93200', 'ville' => 'Saint-Denis', 'destination' => 'mali',
+            'date' => $crawler->filter('input[name="date"]')->attr('value'), 'colis' => '3 cartons',
         ]);
         $this->assertResponseRedirects('/ramassage/merci');
 

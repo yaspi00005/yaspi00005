@@ -36,3 +36,8 @@
 
 # Généré par Symfony à chaque vidage du cache (autocomplétion de l'éditeur), varie selon la version de PHP
 /config/reference.php
+
+# Vidéos des témoignages : trop lourdes pour git, déposées directement sur le serveur (FTP).
+/public/images/vitrine/temoignages/*.mp4
+/public/images/vitrine/temoignages/*.webm
+/public/images/vitrine/temoignages/*.MP4

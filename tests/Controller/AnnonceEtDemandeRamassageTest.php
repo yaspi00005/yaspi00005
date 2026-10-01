@@ -101,14 +101,18 @@ final class AnnonceEtDemandeRamassageTest extends WebTestCase
         $form = $crawler->selectButton('Envoyer ma demande')->form();
         $this->assertSame($expedition->getDestination()->value, $form['destination']->getValue());
 
-        $jour = new \DateTimeImmutable('tomorrow');
-        if ('7' === $jour->format('N')) {
-            $jour = $jour->modify('+1 day');
+        // Seuls des mardis, jeudis et dimanches sont proposés, jusqu'à la date limite du départ.
+        $jours = $crawler->filter('input[name="date"]')->each(fn ($n) => $n->attr('value'));
+        $this->assertNotEmpty($jours);
+        foreach ($jours as $j) {
+            $this->assertContains((new \DateTimeImmutable($j))->format('N'), ['2', '4', '7']);
         }
+        $this->assertSelectorNotExists('[name="creneau"]');
+        $jour = new \DateTimeImmutable($jours[0]);
         $valeurs = [
             'prenom' => 'Fanta', 'nom' => 'Keita', 'telephone' => self::TELEPHONE, 'email' => '',
             'adresse' => '12 rue des Lilas', 'code_postal' => '69001', 'ville' => 'Lyon',
-            'date' => $jour->format('Y-m-d'), 'creneau' => 'matin', 'colis' => '2 valises',
+            'date' => $jour->format('Y-m-d'), 'colis' => '2 valises',
         ];
 
         // Hors Île-de-France et sans consentement : refusé.
@@ -129,7 +133,8 @@ final class AnnonceEtDemandeRamassageTest extends WebTestCase
         $this->assertNotNull($client, 'Nouvelle fiche client créée');
         $ramassage = static::getContainer()->get(RamassageRepository::class)->findOneBy(['client' => $client]);
         $this->assertSame(StatutRamassage::Demande, $ramassage->getStatut());
-        $this->assertSame($jour->format('Y-m-d').' 09:00', $ramassage->getDatePrevue()->format('Y-m-d H:i'));
+        $this->assertSame($jour->format('Y-m-d').' 10:00', $ramassage->getDatePrevue()->format('Y-m-d H:i'), 'Heure provisoire, confirmée au téléphone');
+        $this->assertStringContainsString('Heure à fixer', $ramassage->getCommentaire());
         $this->assertStringContainsString('2 valises', $ramassage->getCommentaire());
         $this->assertStringContainsString('départ du '.$expedition->getDateDepart()->format('d/m/Y'), $ramassage->getCommentaire());
 
@@ -160,11 +165,10 @@ final class AnnonceEtDemandeRamassageTest extends WebTestCase
         $crawler = $this->client->request('GET', '/ramassage', server: ['HTTP_HOST' => 'sotrama.net']);
         $form = $crawler->selectButton('Envoyer ma demande')->form();
         $form['consentement']->tick();
-        $jour = new \DateTimeImmutable('tomorrow');
         $this->client->submit($form, [
             'prenom' => 'Autre', 'nom' => 'Personne', 'telephone' => '+33 '.$existant->getTelephone(),
             'adresse' => '1 place de la Gare', 'code_postal' => '75010', 'ville' => 'Paris',
-            'date' => ('7' === $jour->format('N') ? $jour->modify('+1 day') : $jour)->format('Y-m-d'), 'creneau' => 'soir', 'destination' => 'mali',
+            'date' => $crawler->filter('input[name="date"]')->attr('value'), 'destination' => 'mali',
         ]);
         $this->assertResponseRedirects('/ramassage/merci');
 

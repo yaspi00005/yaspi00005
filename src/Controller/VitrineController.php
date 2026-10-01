@@ -47,6 +47,9 @@ class VitrineController extends AbstractController
             'bamako' => $this->photo('bamako') ?? 'images/vitrine/illustrations/bamako.svg',
             'dakar' => $this->photo('dakar') ?? 'images/vitrine/illustrations/dakar.svg',
             'galerie' => $this->galerie(),
+            'temoignages' => \array_slice($this->temoignages(), 0, 3),
+            'nbTemoignages' => \count($this->temoignages()),
+            'enseignes' => $this->enseignes(),
             'photosEquipe' => $this->photosEquipe(),
             'tailles' => array_map($this->taille(...), ['bamako' => $this->photo('bamako'), 'dakar' => $this->photo('dakar')]),
         ]);
@@ -116,7 +119,6 @@ class VitrineController extends AbstractController
                     $request->getSession()->set('demande_ramassage', [
                         'prenom' => $donnees['prenom'],
                         'date' => $ramassage->getDatePrevue()->format('Y-m-d'),
-                        'creneau' => DemandeRamassage::CRENEAUX[$donnees['creneau']][0],
                         'adresse' => $ramassage->getAdresse(),
                         'destination' => Destination::from($donnees['destination'])->ville(),
                     ]);
@@ -130,10 +132,8 @@ class VitrineController extends AbstractController
             'donnees' => $donnees,
             'erreurs' => $erreurs,
             'depart' => $depart,
-            'creneaux' => DemandeRamassage::CRENEAUX,
+            'jours' => $demandes->joursProposes($depart),
             'destinations' => Destination::cases(),
-            'premierJour' => $demandes->premierJour(),
-            'dernierJour' => $demandes->dernierJour($depart),
         ], new Response(null, $erreurs ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_OK));
     }
 
@@ -144,6 +144,12 @@ class VitrineController extends AbstractController
         $reponse->headers->set('X-Robots-Tag', 'noindex');
 
         return $reponse;
+    }
+
+    #[Route('/temoignages', name: 'vitrine_temoignages', condition: self::CONDITION, methods: ['GET'], priority: 10)]
+    public function temoignagesPage(): Response
+    {
+        return $this->page('vitrine/temoignages.html.twig', ['temoignages' => $this->temoignages(), 'enseignes' => $this->enseignes()]);
     }
 
     #[Route('/mentions-legales', name: 'vitrine_mentions', condition: self::CONDITION, methods: ['GET'], priority: 10)]
@@ -175,7 +181,7 @@ class VitrineController extends AbstractController
     #[Route('/sitemap.xml', name: 'vitrine_sitemap', condition: self::CONDITION, methods: ['GET'], priority: 10)]
     public function sitemap(): Response
     {
-        $urls = array_map(fn ($r) => $this->generateUrl($r, [], UrlGeneratorInterface::ABSOLUTE_URL), ['vitrine_accueil', 'vitrine_suivi', 'vitrine_ramassage', 'vitrine_mentions', 'vitrine_confidentialite', 'vitrine_conditions']);
+        $urls = array_map(fn ($r) => $this->generateUrl($r, [], UrlGeneratorInterface::ABSOLUTE_URL), ['vitrine_accueil', 'vitrine_suivi', 'vitrine_ramassage', 'vitrine_temoignages', 'vitrine_mentions', 'vitrine_confidentialite', 'vitrine_conditions']);
         $xml = '<?xml version="1.0" encoding="UTF-8"?>'."\n".'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
             .implode('', array_map(fn ($u) => '<url><loc>'.htmlspecialchars($u).'</loc></url>', $urls)).'</urlset>';
 
@@ -254,6 +260,58 @@ class VitrineController extends AbstractController
         }
 
         return $photos;
+    }
+
+    /**
+     * Témoignages vidéo des clients : public/images/vitrine/temoignages/*.mp4 (ou .webm), triés par nom, avec en option
+     * une image d'aperçu du même nom (.jpg/.png/.webp) et, dans config/vitrine.yaml, le nom du client et sa phrase.
+     *
+     * @return list<array{video: string, type: string, apercu: ?string, nom: string, texte: ?string}>
+     */
+    private function temoignages(): array
+    {
+        $legendes = array_column($this->infos['temoignages'] ?? [], null, 'fichier');
+        $fichiers = glob($this->public.'/images/vitrine/temoignages/*.{mp4,webm,MP4,WEBM}', \GLOB_BRACE) ?: [];
+        sort($fichiers);
+
+        return array_map(function (string $f) use ($legendes) {
+            $nom = basename($f);
+            $base = pathinfo($f, \PATHINFO_FILENAME);
+            $apercu = $this->photo('temoignages/'.$base);
+
+            return [
+                'video' => substr($f, \strlen($this->public) + 1),
+                'type' => 'webm' === strtolower(pathinfo($f, \PATHINFO_EXTENSION)) ? 'video/webm' : 'video/mp4',
+                'apercu' => $apercu,
+                'nom' => $legendes[$nom]['nom'] ?? self::nomDepuisFichier($base),
+                'texte' => $legendes[$nom]['texte'] ?? null,
+            ];
+        }, \array_slice($fichiers, 0, 30));
+    }
+
+    /**
+     * Logos des enseignes qui nous font confiance : public/images/vitrine/enseignes/*.(png|jpg|webp|svg), triés par nom ;
+     * nom et lien facultatifs dans config/vitrine.yaml.
+     *
+     * @return list<array{logo: string, nom: string, url: ?string}>
+     */
+    private function enseignes(): array
+    {
+        $infos = array_column($this->infos['enseignes'] ?? [], null, 'fichier');
+        $fichiers = glob($this->public.'/images/vitrine/enseignes/*.{png,jpg,jpeg,webp,svg,PNG,JPG,JPEG,WEBP,SVG}', \GLOB_BRACE) ?: [];
+        sort($fichiers);
+
+        return array_map(fn (string $f) => [
+            'logo' => substr($f, \strlen($this->public) + 1),
+            'nom' => $infos[basename($f)]['nom'] ?? self::nomDepuisFichier(pathinfo($f, \PATHINFO_FILENAME)),
+            'url' => $infos[basename($f)]['url'] ?? null,
+        ], \array_slice($fichiers, 0, 40));
+    }
+
+    /** « 02-awa-diallo » → « Awa Diallo » */
+    private static function nomDepuisFichier(string $base): string
+    {
+        return u(preg_replace('/^\d+[-_ ]*/', '', $base))->replace('-', ' ')->replace('_', ' ')->title(true)->trim()->toString();
     }
 
     /** @return list<string> photos de public/images/vitrine/galerie/, triées par nom */

@@ -1,0 +1,25 @@
+{% extends 'vitrine/base.html.twig' %}
+
+{% block title %}Témoignages de nos clients · SOTRAMA{% endblock %}
+{% block description %}Nos clients racontent en vidéo leurs envois de colis avec SOTRAMA vers Bamako et Dakar.{% endblock %}
+
+{% block body %}
+<section class="page-suivi">
+    <div class="conteneur">
+        <p class="surtitre">Témoignages</p>
+        <h1>Ils ont envoyé leurs colis avec SOTRAMA</h1>
+        <p class="chapeau">Ramassage, envoi, arrivée à Bamako ou à Dakar : nos clients vous racontent en vidéo.</p>
+
+        {% if temoignages %}
+        <div class="grille-temoignages">
+            {% for t in temoignages %}{% include 'vitrine/_temoignage.html.twig' %}{% endfor %}
+        </div>
+        {% else %}
+        <p class="alerte alerte-info">Les premières vidéos de nos clients arrivent bientôt.</p>
+        {% endif %}
+
+        <p class="aide aide-centre">Vous êtes client et souhaitez témoigner ? <a href="https://wa.me/{{ infos.whatsapp }}?text={{ 'Bonjour SOTRAMA, je souhaite envoyer mon témoignage vidéo.'|url_encode }}" target="_blank" rel="noopener">Envoyez-nous votre vidéo sur WhatsApp</a>.</p>
+    </div>
+</section>
+{% if enseignes %}{% include 'vitrine/_enseignes.html.twig' %}{% endif %}
+{% endblock %}
