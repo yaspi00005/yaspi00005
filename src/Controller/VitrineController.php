@@ -39,6 +39,7 @@ class VitrineController extends AbstractController
             'dakar' => $this->photo('dakar') ?? 'images/vitrine/illustrations/dakar.svg',
             'galerie' => $this->galerie(),
             'photosEquipe' => $this->photosEquipe(),
+            'tailles' => array_map($this->taille(...), ['bamako' => $this->photo('bamako'), 'dakar' => $this->photo('dakar')]),
         ]);
     }
 
@@ -105,6 +106,19 @@ class VitrineController extends AbstractController
         $reponse->setVary(['Host'], false);
 
         return $reponse;
+    }
+
+    /**
+     * Largeur et hauteur réelles d'une photo déposée : indiquées au navigateur pour qu'il réserve la bonne
+     * place (sinon Safari garde les proportions des dessins par défaut et ajoute des bandes blanches).
+     *
+     * @return array{0: int, 1: int}
+     */
+    private function taille(?string $photo): array
+    {
+        $dimensions = $photo ? @getimagesize($this->public.'/'.$photo) : false;
+
+        return $dimensions ? [$dimensions[0], $dimensions[1]] : [600, 220];
     }
 
     /** Photo facultative public/images/vitrine/<nom>.(jpg|png|webp), chemin relatif à public/. */
