@@ -8,6 +8,7 @@ use App\Repository\ColisRepository;
 use App\Repository\ExpeditionRepository;
 use App\Security\IdChiffreur;
 use App\Service\SuiviColis;
+use App\Vitrine\CompteurTrafic;
 use App\Vitrine\DemandeRamassage;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -51,7 +52,7 @@ class VitrineController extends AbstractController
     }
 
     #[Route('/suivi', name: 'vitrine_suivi', condition: self::CONDITION, methods: ['GET', 'POST'], priority: 10)]
-    public function suivi(Request $request, SuiviColis $suivi, RateLimiterFactory $suiviLimiter): Response
+    public function suivi(Request $request, SuiviColis $suivi, RateLimiterFactory $suiviLimiter, CompteurTrafic $trafic): Response
     {
         $numero = mb_strtoupper(trim($request->request->getString('numero', $request->query->getString('numero'))));
         $erreur = null;
@@ -62,6 +63,7 @@ class VitrineController extends AbstractController
             } elseif (!$this->isCsrfTokenValid('suivi', $request->request->getString('_token'))) {
                 $erreur = 'La page a expiré, réessayez.';
             } elseif ($colis = $suivi->trouver($numero, $request->request->getString('telephone'))) {
+                $trafic->action('colis_suivi');
                 return $this->redirectToRoute('vitrine_suivi_colis', ['token' => $colis->getToken()]);
             } else {
                 $erreur = 'Aucun colis ne correspond à ce numéro et à ce téléphone. Vérifiez le numéro inscrit sur votre reçu.';
@@ -84,7 +86,7 @@ class VitrineController extends AbstractController
     }
 
     #[Route('/ramassage', name: 'vitrine_ramassage', condition: self::CONDITION, methods: ['GET', 'POST'], priority: 10)]
-    public function ramassage(Request $request, DemandeRamassage $demandes, ExpeditionRepository $expeditions, IdChiffreur $chiffreur, RateLimiterFactory $demandeRamassageLimiter): Response
+    public function ramassage(Request $request, DemandeRamassage $demandes, ExpeditionRepository $expeditions, IdChiffreur $chiffreur, RateLimiterFactory $demandeRamassageLimiter, CompteurTrafic $trafic): Response
     {
         // Départ choisi depuis « Prochains départs » : uniquement s'il est encore annoncé sur le site.
         $departId = $chiffreur->decodeOptionnel($request->request->get('depart', $request->query->get('depart')));
@@ -109,6 +111,7 @@ class VitrineController extends AbstractController
                     $erreurs['general'] = 'Trop de demandes envoyées depuis votre connexion. Réessayez plus tard ou écrivez-nous sur WhatsApp.';
                 } else {
                     $ramassage = $demandes->enregistrer($donnees, $depart);
+                    $trafic->action('demande_ramassage');
                     $request->getSession()->set('demande_ramassage', [
                         'prenom' => $donnees['prenom'],
                         'date' => $ramassage->getDatePrevue()->format('Y-m-d'),

@@ -126,6 +126,46 @@
     </div>
     {% endif %}
 
+    {% if trafic %}
+    <div class="col-12">
+        <div class="card" id="trafic-site">
+            <div class="card-header border-0 pb-0 flex-wrap gap-2">
+                <h4 class="card-title"><i class="fas fa-globe-africa text-primary me-2"></i>Fréquentation du site <span class="text-lowercase">sotrama.net</span> <small class="text-muted fs-14">(30 derniers jours)</small></h4>
+                <span class="fs-12 text-muted" title="Mesure interne, anonyme et sans cookie : aucune adresse IP n'est conservée."><i class="fas fa-user-shield me-1"></i>Mesure anonyme</span>
+            </div>
+            <div class="card-body">
+                {% set evolution = trafic.precedent > 0 ? ((trafic.visiteurs - trafic.precedent) / trafic.precedent * 100)|round : null %}
+                <div class="row text-center mb-3">
+                    <div class="col-6 col-md-3 mb-2"><div class="stat-value">{{ trafic.visiteurs|number_format(0, ',', ' ') }}</div><span class="text-muted fs-14">visiteurs{% if evolution is not null %} <span class="{{ evolution >= 0 ? 'text-success' : 'text-danger' }}">{{ evolution >= 0 ? '+' }}{{ evolution }} %</span>{% endif %}</span></div>
+                    <div class="col-6 col-md-3 mb-2"><div class="stat-value">{{ trafic.pagesVues|number_format(0, ',', ' ') }}</div><span class="text-muted fs-14">pages vues</span></div>
+                    {% for cle, libelle in trafic.libellesActions %}
+                    <div class="col-6 col-md-3 mb-2"><div class="stat-value text-primary">{{ trafic.actions[cle]|default(0) }}</div><span class="text-muted fs-14">{{ libelle|lower }}</span></div>
+                    {% endfor %}
+                </div>
+                {% if trafic.visiteurs %}
+                <canvas id="chart-trafic" height="70" aria-label="Visiteurs par jour" role="img"></canvas>
+                <div class="row mt-4">
+                    {% for titre, liste in {'Pages les plus vues': trafic.pages, 'Provenance des visiteurs': trafic.sources, 'Appareils': trafic.appareils} %}
+                    {% set total = liste|reduce((t, n) => t + n, 0) %}
+                    <div class="col-md-4 mb-3">
+                        <h5 class="fs-15 mb-3">{{ titre }}</h5>
+                        {% for cle, n in liste|slice(0, 6, true) %}
+                            <div class="mb-2">
+                                <div class="d-flex justify-content-between fs-14"><span>{{ trafic.libellesPages[cle]|default(cle) }}</span><strong>{{ n|number_format(0, ',', ' ') }}</strong></div>
+                                <div class="progress" style="height:6px"><div class="progress-bar bg-primary" style="width: {{ total ? (n / total * 100)|round : 0 }}%"></div></div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">Aucune visite enregistrée pour l'instant : les chiffres apparaîtront dès les premières visites du site.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     {% if performanceAgents %}
     <div class="col-12">
         <div class="card">
@@ -273,6 +313,13 @@
         data: { labels: {{ chartEncaissements.labels|json_encode|raw }}, datasets: [{ label: 'Encaissé', data: {{ chartEncaissements.data|json_encode|raw }}, borderColor: vert, backgroundColor: 'rgba(0,161,93,.12)', pointRadius: 2, lineTension: .35, fill: true }] },
         options: options
     });
+    {% if trafic and trafic.visiteurs %}
+    new Chart(document.getElementById('chart-trafic'), {
+        type: 'line',
+        data: { labels: {{ trafic.chart.labels|json_encode|raw }}, datasets: [{ label: 'Visiteurs', data: {{ trafic.chart.data|json_encode|raw }}, borderColor: '#58bad7', backgroundColor: 'rgba(88,186,215,.15)', pointRadius: 2, lineTension: .35, fill: true }] },
+        options: options
+    });
+    {% endif %}
     new Chart(document.getElementById('chart-statuts'), {
         type: 'doughnut',
         data: {

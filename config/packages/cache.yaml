@@ -15,8 +15,9 @@ framework:
         #app: cache.adapter.apcu
 
         # Namespaced pools use the above "app" backend by default
-        #pools:
-            #my.dedicated.cache: null
+        pools:
+            # Empreintes du jour des visiteurs du site vitrine (App\Vitrine\CompteurTrafic), effacées le lendemain.
+            cache.visiteurs_vitrine: ~
 
 when@test:
     framework:
@@ -26,4 +27,6 @@ when@test:
                 # Compteurs d'essais (connexion, codes de retrait) : conservés entre les requêtes d'un test ;
                 # vidés au début de chaque lancement des tests (tests/bootstrap.php).
                 cache.rate_limiter:
+                    adapter: cache.adapter.filesystem
+                cache.visiteurs_vitrine:
                     adapter: cache.adapter.filesystem

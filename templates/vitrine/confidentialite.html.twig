@@ -20,6 +20,7 @@
         <ul>
             <li><strong>Suivi de colis</strong> : le numéro de suivi et le téléphone saisis servent uniquement à retrouver votre colis et à vous en montrer l'état ; ils ne sont pas enregistrés.</li>
             <li><strong>Demande de ramassage</strong> : nom, prénom, téléphone, e-mail (facultatif), adresse de ramassage, date et créneau souhaités, destination et description des colis. Ces informations servent uniquement à vous rappeler et à organiser le ramassage ; elles rejoignent ensuite votre fiche client.</li>
+            <li><strong>Mesure de fréquentation</strong> : nous comptons les visites de façon anonyme et sans cookie (nombre de visiteurs par jour, pages vues, site d'où vient la visite, type d'appareil). L'adresse IP sert seulement, le jour même, à ne pas compter deux fois le même visiteur : elle n'est jamais enregistrée et l'empreinte calculée est effacée le lendemain. Seuls des totaux par jour sont conservés.</li>
             <li><strong>Sécurité</strong> : l'adresse IP est utilisée quelques minutes pour limiter les recherches abusives, et figure dans les journaux techniques de l'hébergeur (conservés au plus 12 mois).</li>
             <li><strong>Liens WhatsApp, téléphone, réseaux sociaux</strong> : en cliquant, vous quittez notre site ; ces services appliquent leur propre politique de confidentialité.</li>
         </ul>
@@ -37,6 +38,7 @@
             <li><strong>Prévenir le destinataire</strong> (SMS, WhatsApp, e-mail) de l'arrivée et lui permettre de retirer son colis en toute sécurité grâce au code de retrait : exécution du contrat.</li>
             <li><strong>Tenir la comptabilité</strong> et répondre aux obligations légales et douanières : obligation légale.</li>
             <li><strong>Gérer le bonus fidélité</strong> et améliorer notre service : intérêt légitime de SOTRAMA.</li>
+            <li><strong>Mesurer la fréquentation du site</strong> de façon anonyme pour l'améliorer : intérêt légitime.</li>
             <li><strong>Sécuriser le site et l'application</strong> (prévention des fraudes et des abus) : intérêt légitime.</li>
         </ul>
         <p>Vos données ne sont jamais vendues ni utilisées à des fins publicitaires.</p>
@@ -60,7 +62,7 @@
         <p>Vous pouvez demander à accéder à vos données, à les faire rectifier ou effacer, à limiter leur utilisation, vous y opposer ou les récupérer (portabilité). Écrivez-nous {% if infos.email|default(null) %}à <a href="mailto:{{ infos.email }}">{{ infos.email }}</a> {% endif %}ou appelez le {{ infos.telephone }} : nous répondons dans un délai d'un mois. Certaines données doivent toutefois être conservées pour respecter nos obligations légales (comptabilité). Si vous estimez que vos droits ne sont pas respectés, vous pouvez saisir la CNIL (<a href="https://www.cnil.fr" target="_blank" rel="noopener">www.cnil.fr</a>).</p>
 
         <h2 id="cookies">8. Cookies</h2>
-        <p>Le site sotrama.net n'utilise <strong>aucun cookie publicitaire, aucun outil de mesure d'audience et aucun traceur de réseau social</strong>. Les polices de caractères sont hébergées sur notre propre serveur : aucune donnée n'est envoyée à des services tiers lors de votre visite.</p>
+        <p>Le site sotrama.net n'utilise <strong>aucun cookie publicitaire, aucun outil de mesure d'audience extérieur (type Google Analytics) et aucun traceur de réseau social</strong>. La fréquentation est mesurée par notre propre serveur, sans cookie et de façon anonyme (voir plus haut) : conformément aux recommandations de la CNIL, cette mesure ne nécessite pas votre consentement. Les polices de caractères sont hébergées sur notre propre serveur : aucune donnée n'est envoyée à des services tiers lors de votre visite.</p>
         <div class="tableau-defilant">
             <table class="tableau-cookies">
                 <thead><tr><th>Nom</th><th>Rôle</th><th>Durée</th><th>Type</th></tr></thead>

@@ -9,8 +9,10 @@ use App\Repository\ColisRepository;
 use App\Repository\ExpeditionRepository;
 use App\Repository\PaiementRepository;
 use App\Repository\RamassageRepository;
+use App\Repository\TraficVitrineRepository;
 use App\Security\Perimetre;
 use App\Util\DateFr;
+use App\Vitrine\CompteurTrafic;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -24,6 +26,7 @@ class DashboardController extends AbstractController
         ExpeditionRepository $expeditionRepository,
         PaiementRepository $paiementRepository,
         RamassageRepository $ramassageRepository,
+        TraficVitrineRepository $traficRepository,
     ): Response {
         /** @var User $user */
         $user = $this->getUser();
@@ -52,7 +55,30 @@ class DashboardController extends AbstractController
             $rentabilite['taux'] = $rentabilite['ca'] > 0 ? round($rentabilite['marge'] / $rentabilite['ca'] * 100, 1) : null;
         }
 
+        // Administrateur : fréquentation du site sotrama.net sur 30 jours (mesure anonyme, voir CompteurTrafic).
+        $trafic = null;
+        if ($this->isGranted(User::ROLE_ADMIN)) {
+            $frequentation = $traficRepository->totaux(new \DateTimeImmutable('today -29 days'));
+            $serie = $traficRepository->parJour('visiteurs', 'total', 30);
+            $trafic = [
+                'visiteurs' => $frequentation['visiteurs']['total'] ?? 0,
+                'precedent' => $traficRepository->totaux(new \DateTimeImmutable('today -59 days'), new \DateTimeImmutable('today -29 days'))['visiteurs']['total'] ?? 0,
+                'pagesVues' => array_sum($frequentation['page'] ?? []),
+                'pages' => $frequentation['page'] ?? [],
+                'sources' => $frequentation['source'] ?? [],
+                'appareils' => $frequentation['appareil'] ?? [],
+                'actions' => $frequentation['action'] ?? [],
+                'libellesPages' => CompteurTrafic::PAGES,
+                'libellesActions' => CompteurTrafic::ACTIONS,
+                'chart' => [
+                    'labels' => array_map(fn ($k) => (new \DateTimeImmutable($k))->format('d/m'), array_keys($serie)),
+                    'data' => array_values($serie),
+                ],
+            ];
+        }
+
         return $this->render('dashboard/index.html.twig', [
+            'trafic' => $trafic,
             'rentabilite' => $rentabilite,
             'parStatut' => $parStatut,
             'totalColis' => array_sum($parStatut),
