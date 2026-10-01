@@ -9,6 +9,7 @@ use App\Repository\HistoriqueStatutRepository;
 use App\Repository\PaiementRepository;
 use App\Security\Perimetre;
 use App\Service\DocumentService;
+use App\Service\ExportExcel;
 use App\Util\Csv;
 use App\Util\Pagination;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -22,7 +23,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 class EncaissementController extends AbstractController
 {
     #[Route('/encaissements', name: 'encaissement_index', methods: ['GET'])]
-    public function index(Request $request, PaiementRepository $paiements, HistoriqueStatutRepository $historiques, DocumentService $documents): Response
+    public function index(Request $request, PaiementRepository $paiements, HistoriqueStatutRepository $historiques, DocumentService $documents, ExportExcel $excel): Response
     {
         /** @var User $user */
         $user = $this->getUser();
@@ -35,7 +36,7 @@ class EncaissementController extends AbstractController
         $qb = $paiements->filtreQb(null, $filtres);
 
         if ('csv' === $request->query->get('export')) {
-            return Csv::reponse('mes-encaissements-'.date('Y-m-d').'.csv',
+            return $excel->reponse('mes-encaissements-'.date('Y-m-d').'.xlsx', 'Encaissements de '.$user->getNomComplet(),
                 ['Date', 'Colis', 'Client', 'Destinataire', 'Montant', 'Remise', 'Mode', 'Référence', 'Commentaire'],
                 (function () use ($qb) {
                     foreach ($qb->getQuery()->toIterable() as $p) {
@@ -47,6 +48,7 @@ class EncaissementController extends AbstractController
                         ];
                     }
                 })(),
+                ExportExcel::periode($filtres['du'], $filtres['au']),
             );
         }
 

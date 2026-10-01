@@ -47,7 +47,7 @@ final class SuiviBonusTest extends WebTestCase
 
         $client->request('GET', '/admin/bonus', ['export' => 'csv']);
         $this->assertResponseIsSuccessful();
-        $this->assertStringContainsString('text/csv', (string) $client->getResponse()->headers->get('Content-Type'));
+        $this->assertStringContainsString('spreadsheetml', (string) $client->getResponse()->headers->get('Content-Type'));
     }
 
     public function testReserveAuxAdministrateurs(): void

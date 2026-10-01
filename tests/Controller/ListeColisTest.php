@@ -34,7 +34,12 @@ final class ListeColisTest extends WebTestCase
         $client->request('GET', '/colis', ['tous' => 1]);
         $this->assertSelectorTextContains('body', 'Tous les colis sont affichés');
 
+        // L'export Excel reste complet.
         $client->request('GET', '/colis', ['export' => 'csv']);
-        $this->assertStringContainsString($numero, (string) $client->getInternalResponse()->getContent());
+        $fichier = tempnam(sys_get_temp_dir(), 'xlsx');
+        file_put_contents($fichier, (string) $client->getInternalResponse()->getContent());
+        $cellules = \PhpOffice\PhpSpreadsheet\IOFactory::load($fichier)->getActiveSheet()->toArray();
+        unlink($fichier);
+        $this->assertContains($numero, array_column($cellules, 0));
     }
 }

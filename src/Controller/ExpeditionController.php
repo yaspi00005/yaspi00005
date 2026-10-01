@@ -16,6 +16,7 @@ use App\Repository\PaiementRepository;
 use App\Security\IdChiffreur;
 use App\Service\Corbeille;
 use App\Service\ExpeditionService;
+use App\Service\ExportExcel;
 use App\Service\PaiementService;
 use App\Util\Csv;
 use App\Util\Pagination;
@@ -54,7 +55,7 @@ class ExpeditionController extends AbstractController
     /** Bénéfices : chiffre d'affaires, charges et marge de chaque expédition. */
     #[Route('/rentabilite', name: 'expedition_rentabilite', methods: ['GET'])]
     #[IsGranted(User::ROLE_ADMIN)]
-    public function rentabilite(Request $request, ExpeditionRepository $expeditions): Response
+    public function rentabilite(Request $request, ExpeditionRepository $expeditions, ExportExcel $excel): Response
     {
         $annee = $request->query->getInt('annee', (int) date('Y'));
         $lignes = $expeditions->rentabilite(new \DateTimeImmutable("$annee-01-01"), new \DateTimeImmutable("$annee-12-31"));
@@ -66,7 +67,7 @@ class ExpeditionController extends AbstractController
         }
 
         if ('csv' === $request->query->get('export')) {
-            return Csv::reponse('rentabilite-expeditions-'.$annee.'.csv',
+            return $excel->reponse('rentabilite-expeditions-'.$annee.'.xlsx', 'Rentabilité des expéditions '.$annee,
                 ['Expédition', 'Destination', 'Transport', 'Départ', 'Statut', 'Colis', "Chiffre d'affaires", 'Encaissé', 'Charges', 'Marge', 'Marge (%)'],
                 array_map(fn ($l) => [
                     $l['expedition']->getNumero(), $l['expedition']->getDestination()->label(), $l['expedition']->getModeTransport()->label(),
@@ -74,6 +75,7 @@ class ExpeditionController extends AbstractController
                     Csv::montant($l['ca']), Csv::montant($l['encaisse']), Csv::montant($l['depenses']), Csv::montant($l['marge']),
                     null !== $l['taux'] ? str_replace('.', ',', (string) $l['taux']) : '',
                 ], $lignes),
+                'Année '.$annee,
             );
         }
 
@@ -105,7 +107,7 @@ class ExpeditionController extends AbstractController
     }
 
     #[Route('/{id}', name: 'expedition_show', requirements: ['id' => self::ID], methods: ['GET'])]
-    public function show(Request $request, Expedition $expedition, ColisRepository $colisRepository, PaiementRepository $paiements): Response
+    public function show(Request $request, Expedition $expedition, ColisRepository $colisRepository, PaiementRepository $paiements, ExportExcel $excel): Response
     {
         $this->verifierAcces($expedition);
 
@@ -114,7 +116,7 @@ class ExpeditionController extends AbstractController
             // retrouve le colis avec le code présenté par le destinataire, il n'a pas à les connaître d'avance.
             $avecCodes = $this->isGranted(User::ROLE_ADMIN);
 
-            return Csv::reponse('manifeste-'.$expedition->getNumero().'.csv',
+            return $excel->reponse('manifeste-'.$expedition->getNumero().'.xlsx', 'Manifeste '.$expedition->getNumero(),
                 ['N° suivi', 'Client', 'Tél. client', 'Destinataire', 'Tél. destinataire', 'Articles', 'Poids (kg)', 'Tarif net', 'Payé', 'Reste', 'Statut', ...($avecCodes ? ['Code retrait'] : [])],
                 $expedition->getColis()->map(fn (Colis $c) => [
                     $c->getNumeroSuivi(), $c->getClient()->getNomComplet(), $c->getClient()->getTelephone(),
@@ -122,6 +124,7 @@ class ExpeditionController extends AbstractController
                     Csv::montant($c->getMontantNet()), Csv::montant($c->getMontantPaye()), Csv::montant($c->getMontantRestant()),
                     $c->getStatut()->label(), ...($avecCodes ? [$c->getCodeRetrait()] : []),
                 ])->toArray(),
+                $expedition->getDestination()->label().' · '.$expedition->getModeTransport()->label().' · départ le '.$expedition->getDateDepart()->format('d/m/Y'),
             );
         }
 

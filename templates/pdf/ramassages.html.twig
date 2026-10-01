@@ -23,7 +23,7 @@
 </style>
 </head>
 <body>
-<div class="pied">{{ app_nom }} — Planning des ramassages — édité le {{ genereLe|date('d/m/Y à H:i') }} · Tél. / WhatsApp {{ societe.telephone }}{% if societe.email|default(null) %} · {{ societe.email }}{% endif %}</div>
+<div class="pied">{{ app_nom }} — Planning des ramassages — édité le {{ genereLe|date('d/m/Y à H:i') }}{% if app.user %} par {{ app.user.nomComplet }}{% endif %} · Tél. / WhatsApp {{ societe.telephone }}{% if societe.email|default(null) %} · {{ societe.email }}{% endif %}</div>
 <table>
     <tr>
         <td>

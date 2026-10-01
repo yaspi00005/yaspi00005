@@ -9,6 +9,7 @@ use App\Repository\ExpeditionRepository;
 use App\Repository\PaiementRepository;
 use App\Repository\UserRepository;
 use App\Security\IdChiffreur;
+use App\Service\ExportExcel;
 use App\Service\PaiementService;
 use App\Util\Csv;
 use App\Util\Pagination;
@@ -25,7 +26,7 @@ class PaiementController extends AbstractController
     private const ID = '[A-Za-z0-9_-]{22}';
 
     #[Route('', name: 'paiement_index', methods: ['GET'])]
-    public function index(Request $request, PaiementRepository $paiements, UserRepository $users, ExpeditionRepository $expeditions, IdChiffreur $chiffreur): Response
+    public function index(Request $request, PaiementRepository $paiements, UserRepository $users, ExpeditionRepository $expeditions, IdChiffreur $chiffreur, ExportExcel $excel): Response
     {
         $filtres = [
             'du' => $request->query->getString('du', (new \DateTimeImmutable('first day of this month'))->format('Y-m-d')),
@@ -37,7 +38,7 @@ class PaiementController extends AbstractController
         $qb = $paiements->filtreQb($this->getUser(), $filtres);
 
         if ('csv' === $request->query->get('export')) {
-            return Csv::reponse('paiements-'.date('Y-m-d').'.csv',
+            return $excel->reponse('paiements-'.date('Y-m-d').'.xlsx', 'Paiements',
                 ['Date', 'Colis', 'Client', 'Montant', 'Remise', 'Mode', 'Référence', 'Caissier', 'Commentaire'],
                 (function () use ($qb) {
                     foreach ($qb->getQuery()->toIterable() as $p) {
@@ -49,6 +50,7 @@ class PaiementController extends AbstractController
                         ];
                     }
                 })(),
+                ExportExcel::periode($filtres['du'], $filtres['au']),
             );
         }
 

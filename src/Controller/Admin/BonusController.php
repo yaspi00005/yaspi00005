@@ -9,6 +9,7 @@ use App\Repository\ClientRepository;
 use App\Repository\MouvementBonusRepository;
 use App\Repository\PalierBonusRepository;
 use App\Service\BonusFidelite;
+use App\Service\ExportExcel;
 use App\Util\Csv;
 use App\Util\DateFr;
 use App\Util\Pagination;
@@ -90,7 +91,7 @@ class BonusController extends AbstractController
     }
 
     #[Route('', name: 'admin_bonus_index', methods: ['GET'])]
-    public function index(Request $request, MouvementBonusRepository $mouvements, ClientRepository $clients): Response
+    public function index(Request $request, MouvementBonusRepository $mouvements, ClientRepository $clients, ExportExcel $excel): Response
     {
         $filtres = [
             'du' => $request->query->getString('du'),
@@ -101,7 +102,7 @@ class BonusController extends AbstractController
         $qb = $mouvements->filtreQb($filtres);
 
         if ('csv' === $request->query->get('export')) {
-            return Csv::reponse('bonus-'.date('Y-m-d').'.csv',
+            return $excel->reponse('bonus-'.date('Y-m-d').'.xlsx', 'Mouvements du bonus fidélité',
                 ['Date', 'Client', 'Téléphone', 'Type', 'Libellé', 'Colis', 'Montant', 'Par'],
                 (function () use ($qb) {
                     foreach ($qb->getQuery()->toIterable() as $m) {
@@ -113,6 +114,7 @@ class BonusController extends AbstractController
                         ];
                     }
                 })(),
+                ExportExcel::periode($filtres['du'], $filtres['au']),
             );
         }
 

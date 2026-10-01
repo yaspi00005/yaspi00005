@@ -11,8 +11,8 @@ use App\Form\ColisType;
 use App\Form\EncaissementType;
 use App\Repository\ClientRepository;
 use App\Repository\ColisRepository;
-use App\Repository\JournalRepository;
 use App\Repository\ExpeditionRepository;
+use App\Repository\JournalRepository;
 use App\Repository\TypeMarchandiseRepository;
 use App\Security\ColisVoter;
 use App\Security\IdChiffreur;
@@ -21,6 +21,7 @@ use App\Service\BonusFidelite;
 use App\Service\ColisService;
 use App\Service\DocumentService;
 use App\Service\Doublons;
+use App\Service\ExportExcel;
 use App\Service\PaiementService;
 use App\Service\PhotoUploader;
 use App\Service\RecuPartage;
@@ -51,7 +52,7 @@ class ColisController extends AbstractController
     }
 
     #[Route('', name: 'colis_index', methods: ['GET'])]
-    public function index(Request $request, ColisRepository $colisRepository, ExpeditionRepository $expeditions): Response
+    public function index(Request $request, ColisRepository $colisRepository, ExpeditionRepository $expeditions, ExportExcel $excel): Response
     {
         $filtres = [
             'q' => $request->query->getString('q'),
@@ -68,7 +69,7 @@ class ColisController extends AbstractController
         $qb = $colisRepository->filtreQb($this->getUser(), $filtres + ['sansRecuperes' => $masquerRecuperes]);
 
         if ('csv' === $request->query->get('export')) {
-            return Csv::reponse('colis-'.date('Y-m-d').'.csv',
+            return $excel->reponse('colis-'.date('Y-m-d').'.xlsx', 'Liste des colis',
                 ['N° suivi', 'Date', 'Ajouté par', 'Client', 'Téléphone client', 'Destinataire', 'Tél. destinataire', 'Expédition', 'Articles', 'Poids (kg)', 'Tarif', 'Remise', 'Payé', 'Reste', 'Statut', 'Paiement'],
                 (function () use ($qb) {
                     foreach ($qb->getQuery()->toIterable() as $c) {
@@ -83,6 +84,7 @@ class ColisController extends AbstractController
                         ];
                     }
                 })(),
+                ExportExcel::periode($filtres['du'], $filtres['au']),
             );
         }
 
