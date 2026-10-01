@@ -15,8 +15,8 @@ parameters:
         mise_a_jour_confidentialite: '01/10/2026'
         equipe:
             - { nom: 'Yacouba Traoré', role: 'Gérant', telephone: '+33 6 12 33 65 72', whatsapp: '33612336572' }
-            - { nom: 'Daby', role: 'Associé', telephone: '+33 6 50 76 83 00', whatsapp: '33650768300' }
-            - { nom: 'Mamadou', role: 'Associé', telephone: '+33 6 20 98 55 32', whatsapp: '33620985532' }
+            - { nom: 'Daby Traoré', role: 'Gérant', telephone: '+33 6 50 76 83 00', whatsapp: '33650768300' }
+            - { nom: 'Mamadou Traoré', role: 'Gérant', telephone: '+33 6 20 98 55 32', whatsapp: '33620985532' }
         reseaux:
             - { nom: 'TikTok', compte: '@@sotrama1', url: 'https://www.tiktok.com/@sotrama1', icone: 'fab fa-tiktok' }
             - { nom: 'Instagram', compte: '@@sotrama5', url: 'https://www.instagram.com/sotrama5/', icone: 'fab fa-instagram' }
