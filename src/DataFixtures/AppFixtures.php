@@ -145,11 +145,12 @@ class AppFixtures extends Fixture
         $manager->persist($boxer = (new Camion())->setNom('Peugeot Boxer 2')->setVolume('13 m³')->setChauffeur($agent)->setCouleur('#F2994A'));
         $manager->persist((new Camion())->setNom('Sprinter')->setVolume('12 m³')->setChauffeur($admin)->setCouleur('#3A7BD5'));
         $manager->persist((new Camion())->setNom('20 m³')->setVolume('20 m³')->setCouleur('#8E44AD'));
+        $prochaine = current(array_filter(array_map(fn ($x) => StatutExpedition::EnPreparation === $x[1] ? $x[0] : null, $expeditions)));
         foreach ([[3, true, $boxer, 25000, 'Une télé'], [5, false, null, 100000, 'Tracteur'], [0, false, null, 230000, 'Mètres linéaires bazar']] as [$i, $confirme, $camion, $estimation, $objet]) {
             $c = $clients[$i];
             $manager->persist((new Appel())->setUtilisateur($agent)->setClient($c)->setNom($c->getNom())->setPrenom($c->getPrenom())
                 ->setTelephone($c->getTelephone())->setCodePostal($c->getCodePostal() ?? '93100')->setVille($c->getVille() ?? 'Montreuil')
-                ->setAdresse($c->getAdresse())->setDateConteneur(new \DateTimeImmutable('+16 days'))->setCamion($camion)
+                ->setAdresse($c->getAdresse())->setExpedition($prochaine)->setCamion($camion)
                 ->setEstimation($estimation)->setCommentaire($objet)->setConfirme($confirme)->setDateAppel(new \DateTimeImmutable('-'.($i + 1).' days')));
         }
         $manager->flush();

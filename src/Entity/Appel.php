@@ -64,7 +64,7 @@ class Appel
     #[Assert\Length(max: 255)]
     private ?string $adresse = null;
 
-    /** Conteneur prévu : l'expédition, ou une date libre si elle n'est pas encore créée. */
+    /** Conteneur prévu : l'expédition (sa date de départ). Ancienne date libre gardée pour l'historique. */
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(onDelete: 'SET NULL')]
     private ?Expedition $expedition = null;
@@ -254,7 +254,7 @@ class Appel
         return $this;
     }
 
-    /** Date du conteneur : départ de l'expédition choisie, sinon la date libre. */
+    /** Date du conteneur : départ de l'expédition choisie (date libre des anciens appels sinon). */
     public function getDateConteneurPrevue(): ?\DateTimeImmutable
     {
         return $this->expedition?->getDateDepart() ?? $this->dateConteneur;

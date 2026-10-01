@@ -53,7 +53,7 @@ class AppelType extends AbstractType
                 'placeholder' => '-- À affecter plus tard --',
             ])
             ->add('expedition', EntityType::class, [
-                'label' => 'Conteneur (expédition)',
+                'label' => 'Date du conteneur prévue',
                 'class' => Expedition::class,
                 'required' => false,
                 // Expéditions en préparation, plus celle déjà choisie si elle est partie depuis.
@@ -61,15 +61,10 @@ class AppelType extends AbstractType
                     ->andWhere('e.statut = :prep OR e.id = :actuelle')
                     ->setParameter('prep', StatutExpedition::EnPreparation)->setParameter('actuelle', $appel->getExpedition()?->getId() ?? 0)
                     ->orderBy('e.dateDepart', 'ASC'),
-                'choice_label' => fn (Expedition $e) => $e->getDestination()->ville().' — départ le '.$e->getDateDepart()->format('d/m/Y').' ('.$e->getNumero().')',
-                'placeholder' => '-- Pas encore créée : date libre ci-dessous --',
-            ])
-            ->add('dateConteneur', DateType::class, [
-                'label' => 'Date du conteneur prévue',
-                'widget' => 'single_text',
-                'input' => 'datetime_immutable',
-                'required' => false,
-                'help' => "Seulement si l'expédition n'existe pas encore.",
+                // La date du conteneur est celle du départ de l'expédition.
+                'choice_label' => fn (Expedition $e) => $e->getDateDepart()->format('d/m/Y').' — '.$e->getDestination()->ville().' · '.$e->getModeTransport()->label().' ('.$e->getNumero().')',
+                'placeholder' => '-- À définir plus tard --',
+                'help' => 'Dates de départ des expéditions en préparation.',
             ])
             ->add('nom', TextType::class, ['label' => 'Nom du client', 'attr' => ['placeholder' => 'Ex. : Dupont', 'autocomplete' => 'off']])
             ->add('prenom', TextType::class, ['label' => 'Prénom', 'required' => false, 'attr' => ['placeholder' => 'Ex. : Jean', 'autocomplete' => 'off']])
