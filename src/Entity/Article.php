@@ -23,9 +23,8 @@ class Article
     #[Assert\NotBlank(message: 'Choisissez le type de marchandise.')]
     private ?string $typeMarchandise = null;
 
-    /** Poids (kg) ou volume (m³) selon le mode de transport. */
-    #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
-    #[Assert\NotBlank(message: 'Indiquez le poids.')]
+    /** Poids (kg) ou volume (m³) selon le mode de transport ; facultatif (pesée faite plus tard, ou prix au forfait). */
+    #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2, nullable: true)]
     #[Assert\Positive(message: 'Le poids doit être supérieur à 0.')]
     private ?string $poidsVolume = null;
 

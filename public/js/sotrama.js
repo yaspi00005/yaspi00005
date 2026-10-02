@@ -169,8 +169,10 @@
             const $ligne = $(this).closest('.article-ligne');
             const tarif = tarifs[($ligne.find('.js-type-marchandise').val() || '').trim().toLowerCase()];
             const $prix = $ligne.find('.js-prix');
-            if (tarif && !$prix.data('manuel')) {
-                const poids = parseFloat($ligne.find('.js-poids').val().replace(',', '.')) || 0;
+            const saisi = $ligne.find('.js-poids').val().trim();
+            // Poids facultatif : sans poids, le prix saisi n'est pas écrasé.
+            if (tarif && saisi !== '' && !$prix.data('manuel')) {
+                const poids = parseFloat(saisi.replace(',', '.')) || 0;
                 $prix.val((poids * tarif / 100).toFixed(2));
                 recalculer();
             }

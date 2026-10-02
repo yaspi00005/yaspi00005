@@ -31,6 +31,7 @@ class ArticleType extends AbstractType
             ->add('poidsVolume', NumberType::class, [
                 'invalid_message' => 'Saisissez un nombre valide (ex. : 2,5).',
                 'label' => 'Poids (kg)',
+                'required' => false,
                 'scale' => 2,
                 'html5' => true,
                 'attr' => ['step' => '0.01', 'min' => '0.01', 'class' => 'js-poids'],

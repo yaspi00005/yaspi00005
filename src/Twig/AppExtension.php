@@ -48,7 +48,8 @@ final class AppExtension extends AbstractExtension
             new TwigFilter('fcfa', $this->fcfa(...)),
             // Montant en euros suivi de son équivalent en francs CFA pour les représentants (Mali, Sénégal).
             new TwigFilter('money_local', $this->moneyLocal(...)),
-            new TwigFilter('poids', fn ($kg) => number_format((float) $kg, 2, ',', ' ').' kg'),
+            // Poids non renseigné (facultatif à l'enregistrement) : « — ».
+            new TwigFilter('poids', fn ($kg) => null === $kg || '' === $kg ? '—' : number_format((float) $kg, 2, ',', ' ').' kg'),
             new TwigFilter('jour_fr', fn (\DateTimeInterface $d) => \App\Util\DateFr::jour($d)),
             new TwigFilter('jour_heure_fr', fn (\DateTimeInterface $d) => \App\Util\DateFr::jourHeure($d)),
             new TwigFilter('tel', fn (?string $t) => $t ? \App\Util\Telephone::affichage($t) : ''),

@@ -39,8 +39,17 @@ final class MessagesErreurTest extends WebTestCase
 
         $this->assertResponseStatusCodeSame(422);
         $this->assertSelectorTextContains('body', "Indiquez le prix de l'article.");
-        $this->assertSelectorTextContains('body', 'Indiquez le poids.');
+        $this->assertSelectorTextNotContains('body', 'Indiquez le poids', 'Poids facultatif');
         $this->assertPasDeMessageTechnique($client);
+
+        // Avec un prix mais sans poids : le colis est enregistré (destinataire propre à ce test, sinon « doublon »).
+        $valeurs['colis']['destinataireTelephone'] = '76 91 82 73';
+        $valeurs['colis']['articles'] = [['typeMarchandise' => 'Vêtements', 'poidsVolume' => '', 'prix' => '45']];
+        $client->request('POST', '/colis/nouveau', $valeurs);
+        $this->assertResponseRedirects();
+        $client->followRedirect();
+        $this->assertSelectorTextContains('body', '—');
+        $this->assertSelectorTextContains('body', '45');
     }
 
     public function testPrixMalSaisi(): void
