@@ -7,6 +7,7 @@ use App\Entity\DepenseExpedition;
 use App\Entity\Expedition;
 use App\Entity\User;
 use App\Enum\Destination;
+use App\Enum\StatutColis;
 use App\Enum\StatutExpedition;
 use App\Form\DepenseExpeditionType;
 use App\Form\ExpeditionType;
@@ -88,6 +89,57 @@ class ExpeditionController extends AbstractController
         ]);
     }
 
+    /**
+     * Colis de l'expédition visibles par l'utilisateur, filtrés et triés (liste et manifeste Excel).
+     *
+     * @return array{0: list<Colis>, 1: array{q: string, statut: string, paiement: string, tri: string, sens: string}}
+     */
+    private function colisFiltres(Request $request, Expedition $expedition): array
+    {
+        $f = [
+            'q' => trim($request->query->getString('q')),
+            'statut' => StatutColis::tryFrom($request->query->getString('statut'))?->value ?? '',
+            'paiement' => \in_array($p = $request->query->getString('paiement'), ['solde', 'reste'], true) ? $p : '',
+            'tri' => \in_array($t = $request->query->getString('tri'), self::TRIS, true) ? $t : 'numero',
+            'sens' => 'desc' === $request->query->getString('sens') ? 'desc' : 'asc',
+        ];
+        $q = mb_strtolower($f['q']);
+        $chiffres = preg_replace('/\D/', '', $f['q']);
+
+        $liste = array_values(array_filter($expedition->getColis()->toArray(), function (Colis $c) use ($f, $q, $chiffres) {
+            if (!$this->isGranted('COLIS_VOIR', $c)) {
+                return false;
+            }
+            if ($f['statut'] && $c->getStatut()->value !== $f['statut']) {
+                return false;
+            }
+            if (('solde' === $f['paiement'] && !$c->isSolde()) || ('reste' === $f['paiement'] && $c->isSolde())) {
+                return false;
+            }
+            if ('' === $q) {
+                return true;
+            }
+            $texte = mb_strtolower($c->getNumeroSuivi().' '.$c->getClient()->getNomComplet().' '.$c->getDestinataireNom());
+            $tels = preg_replace('/\D/', '', $c->getClient()->getTelephone().' '.$c->getDestinataireTelephone());
+
+            return str_contains($texte, $q) || (\strlen($chiffres) >= 4 && str_contains($tels, $chiffres));
+        }));
+
+        $valeur = fn (Colis $c) => match ($f['tri']) {
+            'client' => mb_strtolower($c->getClient()->getNomComplet()),
+            'destinataire' => mb_strtolower((string) $c->getDestinataireNom()),
+            'poids' => $c->getPoidsTotal(),
+            'montant' => $c->getMontantNet(),
+            'reste' => $c->getMontantRestant(),
+            'statut' => array_search($c->getStatut(), StatutColis::cases(), true),
+            'date' => $c->getDateReception()->getTimestamp(),
+            default => $c->getNumeroSuivi(),
+        };
+        usort($liste, fn (Colis $a, Colis $b) => ('desc' === $f['sens'] ? -1 : 1) * ($valeur($a) <=> $valeur($b) ?: strcmp($a->getNumeroSuivi(), $b->getNumeroSuivi())));
+
+        return [$liste, $f];
+    }
+
     #[Route('/nouvelle', name: 'expedition_new', methods: ['GET', 'POST'])]
     #[IsGranted(User::ROLE_ADMIN)]
     public function new(Request $request, ExpeditionService $service): Response
@@ -106,10 +158,14 @@ class ExpeditionController extends AbstractController
         return $this->render('expedition/form.html.twig', ['form' => $form, 'expedition' => $expedition]);
     }
 
+    /** Tris proposés sur la liste des colis de l'expédition : clé → valeur comparée. */
+    private const TRIS = ['numero', 'client', 'destinataire', 'poids', 'montant', 'reste', 'statut', 'date'];
+
     #[Route('/{id}', name: 'expedition_show', requirements: ['id' => self::ID], methods: ['GET'])]
     public function show(Request $request, Expedition $expedition, ColisRepository $colisRepository, PaiementRepository $paiements, ExportExcel $excel): Response
     {
         $this->verifierAcces($expedition);
+        [$liste, $filtres] = $this->colisFiltres($request, $expedition);
 
         if ('csv' === $request->query->get('export')) {
             // Les codes de retrait ne sortent que pour les administrateurs : au guichet, le représentant
@@ -118,12 +174,12 @@ class ExpeditionController extends AbstractController
 
             return $excel->reponse('manifeste-'.$expedition->getNumero().'.xlsx', 'Manifeste '.$expedition->getNumero(),
                 ['N° suivi', 'Client', 'Tél. client', 'Destinataire', 'Tél. destinataire', 'Articles', 'Poids (kg)', 'Tarif net', 'Payé', 'Reste', 'Statut', ...($avecCodes ? ['Code retrait'] : [])],
-                $expedition->getColis()->map(fn (Colis $c) => [
+                array_map(fn (Colis $c) => [
                     $c->getNumeroSuivi(), $c->getClient()->getNomComplet(), $c->getClient()->getTelephone(),
                     $c->getDestinataireNom(), $c->getDestinataireTelephone(), $c->getNombreArticles(), $c->getPoidsTotal(),
                     Csv::montant($c->getMontantNet()), Csv::montant($c->getMontantPaye()), Csv::montant($c->getMontantRestant()),
                     $c->getStatut()->label(), ...($avecCodes ? [$c->getCodeRetrait()] : []),
-                ])->toArray(),
+                ], $liste),
                 $expedition->getDestination()->label().' · '.$expedition->getModeTransport()->label().' · départ le '.$expedition->getDateDepart()->format('d/m/Y'),
             );
         }
@@ -141,6 +197,9 @@ class ExpeditionController extends AbstractController
 
         return $this->render('expedition/show.html.twig', [
             'expedition' => $expedition,
+            'colisListe' => $liste,
+            'filtres' => $filtres,
+            'statutsColis' => StatutColis::cases(),
             'parStatut' => $colisRepository->compterParStatut(null, $expedition),
             'clients' => \count(array_unique($expedition->getColis()->map(fn (Colis $c) => $c->getClient()->getId())->toArray())),
             'parCaissier' => $paiements->totauxParCaissier($filtrePaiements),

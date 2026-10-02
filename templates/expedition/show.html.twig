@@ -13,7 +13,7 @@
         {% include 'partials/_badge.html.twig' with {statut: expedition.statut} %}
     </div>
     <div class="d-flex gap-2 flex-wrap">
-        <a href="?export=csv" class="btn btn-outline-primary btn-rounded btn-sm"><i class="fas fa-file-excel me-1"></i> Manifeste</a>
+        <a href="?{{ {q: filtres.q ?: null, statut: filtres.statut ?: null, paiement: filtres.paiement ?: null, tri: filtres.tri, sens: filtres.sens, export: 'csv'}|filter(v => v is not null)|url_encode }}" class="btn btn-outline-primary btn-rounded btn-sm" title="Manifeste Excel (colis filtrés et triés comme la liste)"><i class="fas fa-file-excel me-1"></i> Manifeste</a>
         {% if is_granted('ROLE_ADMIN') %}<button type="button" class="btn btn-outline-primary btn-rounded btn-sm" data-bs-toggle="modal" data-bs-target="#modal-etiquettes"><i class="fas fa-tags me-1"></i> Étiquettes</button>{% endif %}
         {% if is_granted('ROLE_ADMIN') %}
             {% if expedition.statut.value == 'en_preparation' %}
@@ -119,13 +119,46 @@
 
     <div class="col-xl-9">
         <div class="card">
-            <div class="card-header"><h4 class="card-title">Colis de l'expédition</h4></div>
+            {% set filtre = filtres.q or filtres.statut or filtres.paiement %}
+            <div class="card-header flex-wrap gap-2" id="colis">
+                <h4 class="card-title">Colis de l'expédition <small class="text-muted fs-14">({{ colisListe|length }}{{ filtre ? ' sur ' ~ expedition.colis|filter(c => is_granted('COLIS_VOIR', c))|length }})</small></h4>
+                {% if filtre %}<a href="{{ path('expedition_show', {id: expedition.id}) }}#colis" class="btn btn-light btn-sm btn-rounded"><i class="fas fa-times me-1"></i> Effacer les filtres</a>{% endif %}
+            </div>
             <div class="card-body pt-0">
+                {# Filtres et tri : aussi appliqués au manifeste Excel. #}
+                <form method="get" action="#colis" class="row g-2 mb-3">
+                    <input type="hidden" name="tri" value="{{ filtres.tri }}"><input type="hidden" name="sens" value="{{ filtres.sens }}">
+                    <div class="col-md-5"><input type="search" name="q" value="{{ filtres.q }}" class="form-control" placeholder="N° de suivi, client, destinataire, téléphone…" aria-label="Rechercher un colis"></div>
+                    <div class="col-6 col-md-3">
+                        <select name="statut" class="form-control form-select" aria-label="Statut" data-envoi-auto>
+                            <option value="">Tous les statuts</option>
+                            {% for st in statutsColis %}<option value="{{ st.value }}" {{ filtres.statut == st.value ? 'selected' }}>{{ st.label }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <select name="paiement" class="form-control form-select" aria-label="Paiement" data-envoi-auto>
+                            <option value="">Tous les paiements</option>
+                            <option value="reste" {{ filtres.paiement == 'reste' ? 'selected' }}>Reste à payer</option>
+                            <option value="solde" {{ filtres.paiement == 'solde' ? 'selected' }}>Soldés</option>
+                        </select>
+                    </div>
+                    <div class="col-md-1 d-grid"><button class="btn btn-primary" aria-label="Filtrer"><i class="fas fa-search"></i></button></div>
+                </form>
+                {% macro tri(libelle, cle, filtres, expedition, classe = '') %}
+                    {% set actif = filtres.tri == cle %}
+                    {% set sens = actif and filtres.sens == 'asc' ? 'desc' : 'asc' %}
+                    <th class="{{ classe }}"><a href="{{ path('expedition_show', {id: expedition.id, q: filtres.q ?: null, statut: filtres.statut ?: null, paiement: filtres.paiement ?: null, tri: cle, sens: sens}) }}#colis" class="lien-tri{{ actif ? ' actif' }}" title="Trier par {{ libelle|lower }}">{{ libelle }} <i class="fas fa-{{ actif ? (filtres.sens == 'asc' ? 'sort-up' : 'sort-down') : 'sort' }}"></i></a></th>
+                {% endmacro %}
+                {% import _self as t %}
                 <div class="table-responsive">
                     <table class="table table-hover">
-                        <thead><tr><th>N° suivi</th><th>Client</th><th>Destinataire</th><th class="num">Poids</th><th class="num">Montant</th><th class="num">Reste</th><th>Statut</th><th></th></tr></thead>
+                        <thead><tr>
+                            {{ t.tri('N° suivi', 'numero', filtres, expedition) }}{{ t.tri('Client', 'client', filtres, expedition) }}{{ t.tri('Destinataire', 'destinataire', filtres, expedition) }}
+                            {{ t.tri('Poids', 'poids', filtres, expedition, 'num') }}{{ t.tri('Montant', 'montant', filtres, expedition, 'num') }}{{ t.tri('Reste', 'reste', filtres, expedition, 'num') }}
+                            {{ t.tri('Statut', 'statut', filtres, expedition) }}<th></th>
+                        </tr></thead>
                         <tbody>
-                        {% for c in expedition.colis|filter(c => is_granted('COLIS_VOIR', c)) %}
+                        {% for c in colisListe %}
                             <tr>
                                 <td><a href="{{ path('colis_show', {id: c.id}) }}" class="text-primary font-w600">{{ c.numeroSuivi }}</a></td>
                                 <td>{{ c.client.nomComplet }}</td>
@@ -144,7 +177,7 @@
                                 </td>
                             </tr>
                         {% else %}
-                            <tr><td colspan="8"><div class="empty-state"><i class="fas fa-box-open"></i>Aucun colis dans cette expédition.</div></td></tr>
+                            <tr><td colspan="8"><div class="empty-state"><i class="fas fa-box-open"></i>{{ filtre ? 'Aucun colis pour ces critères.' : 'Aucun colis dans cette expédition.' }}</div></td></tr>
                         {% endfor %}
                         </tbody>
                     </table>

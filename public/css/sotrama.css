@@ -132,3 +132,7 @@ ol.etapes li { margin-bottom: .35rem; }
 .registre-table thead th { font-size: .8rem; font-weight: 600; text-transform: none; }
 .registre-fiche { padding: .75rem .25rem .75rem .75rem; border-bottom: 1px solid #eee; }
 .registre-fiche.non-confirme { box-shadow: inset 3px 0 0 #FF5E4B; }
+.lien-tri { color: inherit; white-space: nowrap; text-decoration: none; }
+.lien-tri i { opacity: .35; font-size: .8em; margin-left: .2rem; }
+.lien-tri.actif, .lien-tri:hover { color: var(--bs-primary, #00A15D); }
+.lien-tri.actif i { opacity: 1; }
