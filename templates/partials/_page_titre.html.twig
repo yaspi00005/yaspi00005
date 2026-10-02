@@ -1,8 +1,8 @@
 {# Paramètres : liens (liste {label, url}) #}
 <div class="row page-titles">
-    <ol class="breadcrumb">
+    <ol class="breadcrumb" aria-label="Fil d'Ariane">
         {% for lien in liens %}
-            <li class="breadcrumb-item {{ loop.last ? 'active' }}">{% if lien.url is defined and lien.url %}<a href="{{ lien.url }}">{{ lien.label }}</a>{% else %}<span>{{ lien.label }}</span>{% endif %}</li>
+            <li class="breadcrumb-item {{ loop.last ? 'active' }}"{{ loop.last ? ' aria-current="page"' }}>{% if lien.url is defined and lien.url %}<a href="{{ lien.url }}">{{ lien.label }}</a>{% else %}<span>{{ lien.label }}</span>{% endif %}</li>
         {% endfor %}
     </ol>
 </div>

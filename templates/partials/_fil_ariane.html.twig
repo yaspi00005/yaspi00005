@@ -1,0 +1,40 @@
+{# Fil d'Ariane automatique : Tableau de bord › rubrique (d'après la route) › titre de la page.
+   Paramètre : titre (contenu du bloc title de la page). #}
+{% set route = app.request.attributes.get('_route') %}
+{# préfixe de route → [rubrique, route de la liste, sous Administration ?] — le plus précis d'abord #}
+{% set rubriques = {
+    'admin_bonus_bareme': ['Barème des bonus', 'admin_bonus_bareme', true],
+    'admin_bonus': ['Suivi des bonus', 'admin_bonus_index', true],
+    'admin_user': ['Utilisateurs', 'admin_user_index', true],
+    'admin_site': ['Site internet', 'admin_site_index', true],
+    'admin_camion': ['Camions', 'admin_camion_index', true],
+    'admin_type': ['Types de marchandises', 'admin_type_index', true],
+    'admin_notification': ['SMS & e-mails envoyés', 'admin_notification_index', true],
+    'admin_journal': ["Journal d'activité", 'admin_journal_index', true],
+    'colis_scanner': ['Colis', 'colis_index', false],
+    'colis_': ['Colis', 'colis_index', false],
+    'expedition_': ['Expéditions', 'expedition_index', false],
+    'client_': ['Clients', 'client_index', false],
+    'appel_': ['Registre des appels', 'appel_index', false],
+    'ramassage_': ['Ramassages', 'ramassage_index', false],
+    'corbeille_': ['Corbeille', 'corbeille_index', false],
+    'paiement_': ['Paiements', 'paiement_index', false],
+    'encaissement_': ['Mes encaissements', 'encaissement_index', false],
+    'agence_': ['Guichet agence', 'agence_guichet', false],
+    'app_aide': ["Besoin d'aide ?", 'app_aide', false],
+    'app_profil': ['Mon profil', 'app_profil', false],
+    'app_application': ['Application mobile', 'app_application', false],
+} %}
+{% set rubrique = null %}
+{% for prefixe, r in rubriques %}{% if rubrique is null and route starts with prefixe %}{% set rubrique = r %}{% endif %}{% endfor %}
+{% set titre = titre|striptags|trim %}
+{% set liens = [{label: 'Tableau de bord', url: route != 'app_accueil' ? path('app_accueil') : null}] %}
+{% if rubrique %}
+    {% if rubrique[2] %}{% set liens = liens|merge([{label: 'Administration'}]) %}{% endif %}
+    {% set liens = liens|merge([{label: rubrique[0], url: route != rubrique[1] ? path(rubrique[1]) : null}]) %}
+    {# Titre de la page, s'il ne répète pas simplement la rubrique. #}
+    {% if route != rubrique[1] and titre and titre|lower != rubrique[0]|lower %}{% set liens = liens|merge([{label: titre}]) %}{% endif %}
+{% elseif route != 'app_accueil' and titre %}
+    {% set liens = liens|merge([{label: titre}]) %}
+{% endif %}
+{% include 'partials/_page_titre.html.twig' with {liens: liens} %}

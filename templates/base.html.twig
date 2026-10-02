@@ -54,7 +54,7 @@
                                 </form>
                             </li>
                             <li class="nav-item d-flex align-items-center me-2">
-                                <a href="{{ path('colis_scanner') }}" class="btn btn-outline-primary btn-rounded btn-sm" title="Scanner un colis" aria-label="Scanner un colis"><i class="fas fa-qrcode"></i><span class="d-none d-lg-inline ms-1">Scanner</span></a>
+                                <a href="{{ path('colis_scanner') }}" class="btn btn-outline-primary btn-rounded btn-sm" title="Scanner un colis" aria-label="Scanner un colis"><i class="fas fa-qrcode"></i><span class="d-none d-xxl-inline ms-1">Scanner</span></a>
                             </li>
                             {% if is_granted('ROLE_RAMASSAGE') %}
                             <li class="nav-item d-none d-md-flex align-items-center">
@@ -97,7 +97,7 @@
         {# ---------- Contenu ---------- #}
         <div class="content-body">
             <div class="container-fluid">
-                {% block breadcrumb %}{% endblock %}
+                {% block breadcrumb %}{% include 'partials/_fil_ariane.html.twig' with {titre: block('title')} %}{% endblock %}
                 {% include 'partials/_flash.html.twig' %}
                 {% block body %}{% endblock %}
             </div>
