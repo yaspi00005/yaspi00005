@@ -5,7 +5,7 @@ parameters:
     app.vitrine:
         whatsapp: '33612336572'            # numéro WhatsApp principal, format international sans « + »
         telephone: '06 12 33 65 72'
-        email: 'contact@sotrama.net'
+        email: 'sotrama@live.fr'
         site: 'sotrama.net'
         experience: 10                     # années d'activité
         # Mentions légales (obligatoires) : forme et identifiant de l'entreprise, hébergeur du site.
