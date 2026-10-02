@@ -138,6 +138,12 @@ ol.etapes li { margin-bottom: .35rem; }
 .lien-tri.actif i { opacity: 1; }
 .logo-partenaire-admin { max-height: 40px; max-width: 110px; object-fit: contain; }
 .logo-partenaire-admin.grand { max-height: 90px; max-width: 260px; display: block; }
+.galerie-admin { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: .75rem; }
+.galerie-admin a { position: relative; display: block; color: inherit; }
+.galerie-admin img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: .6rem; }
+.galerie-admin a.masquee img { opacity: .4; }
+.galerie-admin .badge { position: absolute; top: .4rem; left: .4rem; }
+.galerie-admin small { display: block; margin-top: .25rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .apercu-video-admin, .apercu-image-admin { width: 100%; max-height: 360px; border-radius: .75rem; background: #000; object-fit: contain; }
 /* En-tête : boutons sur une seule ligne. */
 .header .navbar-nav .btn { white-space: nowrap; }

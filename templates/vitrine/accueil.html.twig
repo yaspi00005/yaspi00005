@@ -269,7 +269,7 @@
 {# ---------- Enseignes partenaires (public/images/vitrine/enseignes/) ---------- #}
 {% if enseignes %}{% include 'vitrine/_enseignes.html.twig' %}{% endif %}
 
-{# ---------- Galerie (photos déposées dans public/images/vitrine/galerie/) ---------- #}
+{# ---------- Galerie (Administration → Site internet, ou photos déposées dans public/images/vitrine/galerie/) ---------- #}
 {% if galerie %}
 <section class="section" id="galerie">
     <div class="conteneur">
@@ -279,7 +279,10 @@
         </div>
         <div class="galerie">
             {% for photo in galerie %}
-                <a href="{{ asset(photo) }}" target="_blank"><img src="{{ asset(photo) }}" alt="Photo SOTRAMA {{ loop.index }}" loading="lazy"></a>
+                <figure>
+                    <a href="{{ asset(photo.src) }}" target="_blank"><img src="{{ asset(photo.src) }}" alt="{{ photo.legende ?? (photo.categorie ? photo.categorie ~ ' SOTRAMA' : 'Photo SOTRAMA ' ~ loop.index) }}" loading="lazy"></a>
+                    {% if photo.categorie or photo.legende %}<figcaption>{% if photo.categorie %}<span class="galerie-categorie">{{ photo.categorie }}</span>{% endif %}{{ photo.legende }}</figcaption>{% endif %}
+                </figure>
             {% endfor %}
         </div>
     </div>

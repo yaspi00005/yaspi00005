@@ -9,7 +9,7 @@ Déposez ici vos photos (JPEG, PNG ou WebP), elles apparaissent automatiquement 
 | Fichier | Où il apparaît |
 |---|---|
 | `hero.jpg` | Grande photo de fond en haut de la page d'accueil (camion, conteneur, équipe…). Format paysage, 1600 px de large conseillé. |
-| `galerie/*.jpg` | Section « En images » (jusqu'à 12 photos, triées par nom : `01-chargement.jpg`, `02-depart.jpg`…). |
+| `galerie/*.jpg` | Section « En images » : plus simple depuis l’application (Administration → Site internet → « Ajouter des photos »). Les photos déposées ici, triées par nom (`01-chargement.jpg`…), s’affichent après celles de l’application (24 au total). |
 | `bamako.jpg`, `dakar.jpg` | Cartes des destinations Mali et Sénégal (sinon dessins par défaut). |
 | `equipe/yacouba.jpg`, `equipe/daby.jpg`, `equipe/mamadou.jpg` | Photo de chaque membre de l'équipe (sinon ses initiales). Format carré. |
 | `temoignages/*.mp4` | Onglet « Témoignages » et section de l'accueil : vidéos des clients (MP4, triées par nom : `01-awa.mp4`…). Image d'aperçu facultative du même nom : `01-awa.jpg`. Nom et phrase du client dans `config/vitrine.yaml` (sinon le nom du fichier). |

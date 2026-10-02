@@ -216,7 +216,10 @@ code { background: var(--vert-clair); color: var(--vert-fonce); padding: .05em .
 
 /* Galerie */
 .galerie { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
-.galerie img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 14px; }
+.galerie figure { margin: 0; }
+.galerie img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 14px; display: block; }
+.galerie figcaption { margin-top: .45rem; font-size: .92rem; color: var(--gris); line-height: 1.35; }
+.galerie-categorie { display: inline-block; background: var(--jaune-clair); color: var(--vert-fonce); font-weight: 700; font-size: .78rem; border-radius: 999px; padding: .1rem .55rem; margin-right: .4rem; }
 
 /* Équipe */
 .grille-equipe { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }

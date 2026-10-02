@@ -4,13 +4,16 @@ namespace App\Controller\Admin;
 
 use App\Entity\Nouveaute;
 use App\Entity\Partenaire;
+use App\Entity\PhotoSite;
 use App\Entity\TemoignageClient;
 use App\Entity\User;
 use App\Form\NouveauteType;
 use App\Form\PartenaireType;
+use App\Form\PhotoSiteType;
 use App\Form\TemoignageClientType;
 use App\Repository\NouveauteRepository;
 use App\Repository\PartenaireRepository;
+use App\Repository\PhotoSiteRepository;
 use App\Repository\TemoignageClientRepository;
 use App\Service\FichiersVitrine;
 use Doctrine\ORM\EntityManagerInterface;
@@ -22,7 +25,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-/** Administration du site sotrama.net : nouveautés, témoignages des clients, partenaires (logos). */
+/** Administration du site sotrama.net : nouveautés, témoignages des clients, partenaires (logos), photos « En images ». */
 #[Route('/admin/site')]
 #[IsGranted(User::ROLE_ADMIN)]
 class SiteController extends AbstractController
@@ -37,10 +40,12 @@ class SiteController extends AbstractController
     }
 
     #[Route('', name: 'admin_site_index', methods: ['GET'])]
-    public function index(NouveauteRepository $nouveautes, TemoignageClientRepository $temoignages, PartenaireRepository $partenaires): Response
+    public function index(NouveauteRepository $nouveautes, TemoignageClientRepository $temoignages, PartenaireRepository $partenaires, PhotoSiteRepository $photos): Response
     {
         return $this->render('admin/site/index.html.twig', [
             'nouveautes' => $nouveautes->ordonnes(),
+            'photos' => $photos->ordonnees(),
+            'max_galerie' => PhotoSiteRepository::MAX_SITE,
             'temoignages' => $temoignages->ordonnes(),
             'partenaires' => $partenaires->ordonnes(),
         ]);
@@ -160,6 +165,56 @@ class SiteController extends AbstractController
         }
 
         return $this->render('admin/site/form.html.twig', ['form' => $form, 'titre' => $partenaire->getId() ? 'Modifier le partenaire' : 'Nouveau partenaire', 'element' => $partenaire, 'suppression' => $partenaire->getId() ? 'admin_site_partenaire_delete' : null]);
+    }
+
+    // ---------- Photos « En images » ----------
+
+    #[Route('/photos/nouvelles', name: 'admin_site_photo_new', methods: ['GET', 'POST'])]
+    public function nouvellesPhotos(Request $request): Response
+    {
+        $modele = new PhotoSite();
+        $form = $this->createForm(PhotoSiteType::class, $modele)->handleRequest($request);
+        if ($form->isSubmitted() && $form->isValid()) {
+            // Une photo par fichier, avec la catégorie, la légende et l'ordre choisis.
+            $fichiers = array_filter((array) $form->get('photosFichiers')->getData(), fn ($f) => $f instanceof UploadedFile);
+            foreach ($fichiers as $fichier) {
+                $photo = (new PhotoSite())->setCategorie($modele->getCategorie())->setLegende($modele->getLegende())
+                    ->setOrdre($modele->getOrdre())->setPublie($modele->isPublie())
+                    ->setPhoto($this->fichiers->enregistrer($fichier, 'galerie', FichiersVitrine::IMAGES));
+                $this->em->persist($photo);
+            }
+            $this->em->flush();
+            $this->addFlash('success', 1 === \count($fichiers) ? 'Photo ajoutée.' : \count($fichiers).' photos ajoutées.');
+
+            return $this->redirectToRoute('admin_site_index', ['_fragment' => 'photos'], Response::HTTP_SEE_OTHER);
+        }
+
+        return $this->render('admin/site/form.html.twig', ['form' => $form, 'titre' => 'Ajouter des photos', 'element' => $modele, 'suppression' => null]);
+    }
+
+    #[Route('/photos/{id}', name: 'admin_site_photo_edit', requirements: ['id' => self::ID], methods: ['GET', 'POST'])]
+    public function modifierPhoto(Request $request, PhotoSite $photo): Response
+    {
+        $form = $this->createForm(PhotoSiteType::class, $photo)->handleRequest($request);
+        if ($form->isSubmitted() && $form->isValid()) {
+            $this->remplacer($form, 'photoFichier', 'galerie', FichiersVitrine::IMAGES, $photo->getPhoto(), $photo->setPhoto(...));
+
+            return $this->enregistrer($photo, 'Photo enregistrée.');
+        }
+
+        return $this->render('admin/site/form.html.twig', ['form' => $form, 'titre' => 'Modifier la photo', 'element' => $photo, 'suppression' => 'admin_site_photo_delete']);
+    }
+
+    #[Route('/photos/{id}/supprimer', name: 'admin_site_photo_delete', requirements: ['id' => self::ID], methods: ['POST'])]
+    public function supprimerPhoto(Request $request, PhotoSite $photo): Response
+    {
+        $fichier = $photo->getPhoto();
+        $reponse = $this->supprimer($request, $photo, 'Photo supprimée.');
+        if (!$this->em->contains($photo)) {
+            $this->fichiers->supprimer($fichier);
+        }
+
+        return $reponse;
     }
 
     // ---------- Commun ----------

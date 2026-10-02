@@ -6,7 +6,7 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 /**
- * Fichiers du site vitrine envoyés depuis l'administration (vidéos des témoignages, aperçus, logos des partenaires) :
+ * Fichiers du site vitrine envoyés depuis l'administration (vidéos des témoignages, aperçus, logos des partenaires, photos de la galerie) :
  * public/uploads/vitrine/<dossier>/, noms aléatoires. Pas de SVG : un SVG peut contenir du script et serait servi
  * depuis le même domaine que l'application.
  */

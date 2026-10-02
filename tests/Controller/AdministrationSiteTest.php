@@ -4,6 +4,7 @@ namespace App\Tests\Controller;
 
 use App\Repository\NouveauteRepository;
 use App\Repository\PartenaireRepository;
+use App\Repository\PhotoSiteRepository;
 use App\Repository\TemoignageClientRepository;
 use App\Repository\UserRepository;
 use App\Security\IdChiffreur;
@@ -30,7 +31,7 @@ final class AdministrationSiteTest extends WebTestCase
     {
         $db = static::getContainer()->get(Connection::class);
         $public = static::getContainer()->getParameter('kernel.project_dir').'/public/';
-        foreach ($db->fetchFirstColumn('SELECT video FROM temoignage_client UNION SELECT apercu FROM temoignage_client UNION SELECT logo FROM partenaire') as $f) {
+        foreach ($db->fetchFirstColumn('SELECT video FROM temoignage_client UNION SELECT apercu FROM temoignage_client UNION SELECT logo FROM partenaire UNION SELECT photo FROM photo_site') as $f) {
             if ($f && is_file($public.$f)) {
                 unlink($public.$f);
             }
@@ -38,6 +39,7 @@ final class AdministrationSiteTest extends WebTestCase
         $db->executeStatement('DELETE FROM nouveaute');
         $db->executeStatement('DELETE FROM temoignage_client');
         $db->executeStatement('DELETE FROM partenaire');
+        $db->executeStatement('DELETE FROM photo_site');
         array_map('unlink', array_filter($this->temporaires, 'is_file'));
         parent::tearDown();
     }
@@ -112,6 +114,46 @@ final class AdministrationSiteTest extends WebTestCase
         $this->client->submit($crawler->filter('form[action$="/supprimer"]')->form());
         $this->assertFileDoesNotExist($chemin);
         $this->assertNull(static::getContainer()->get(PartenaireRepository::class)->findOneBy(['nom' => 'inexistant']));
+    }
+
+    public function testPhotosEnImages(): void
+    {
+        // Plusieurs photos d'un coup, même catégorie et même légende.
+        $crawler = $this->client->request('GET', self::APP.'/admin/site/photos/nouvelles');
+        $form = $crawler->selectButton('Enregistrer')->form(['photo_site[categorie]' => 'depart', 'photo_site[legende]' => 'Départ du conteneur pour Bamako', 'photo_site[publie]' => '1']);
+        $valeurs = $form->getPhpValues();
+        $fichiers = $form->getPhpFiles();
+        $fichiers['photo_site']['photosFichiers'] = [$this->png(), $this->png()];
+        $this->client->request('POST', self::APP.'/admin/site/photos/nouvelles', $valeurs, $fichiers);
+        $this->assertResponseRedirects('/admin/site#photos');
+        $photos = static::getContainer()->get(PhotoSiteRepository::class)->findAll();
+        $this->assertCount(2, $photos);
+        $this->assertMatchesRegularExpression('#^uploads/vitrine/galerie/[a-f0-9]{20}\.png$#', $photos[0]->getPhoto());
+
+        // Un SVG est refusé.
+        $fichiers['photo_site']['photosFichiers'] = [$this->fichier('<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>', 'photo.svg')];
+        $this->client->request('POST', self::APP.'/admin/site/photos/nouvelles', $valeurs, $fichiers);
+        $this->assertResponseStatusCodeSame(422);
+        $this->assertCount(2, static::getContainer()->get(PhotoSiteRepository::class)->findAll());
+
+        $this->client->request('GET', '/', server: ['HTTP_HOST' => 'sotrama.net']);
+        $this->assertCount(2, $this->client->getCrawler()->filter('#galerie img[src*="uploads/vitrine/galerie/"]'));
+        $this->assertSelectorTextContains('#galerie figcaption', 'Départ du conteneur pour Bamako');
+        $this->assertSelectorTextContains('#galerie .galerie-categorie', 'Départ');
+
+        // Masquée puis supprimée (le fichier est retiré du serveur).
+        $crawler = $this->client->request('GET', self::APP.'/admin/site/photos/'.$this->hid($photos[0]->getId()));
+        $form = $crawler->selectButton('Enregistrer')->form(['photo_site[categorie]' => 'chargement']);
+        $form['photo_site[publie]']->untick();
+        $this->client->submit($form);
+        $this->client->request('GET', '/', server: ['HTTP_HOST' => 'sotrama.net']);
+        $this->assertCount(1, $this->client->getCrawler()->filter('#galerie img[src*="uploads/vitrine/galerie/"]'));
+
+        $chemin = static::getContainer()->getParameter('kernel.project_dir').'/public/'.$photos[1]->getPhoto();
+        $this->assertFileExists($chemin);
+        $crawler = $this->client->request('GET', self::APP.'/admin/site/photos/'.$this->hid($photos[1]->getId()));
+        $this->client->submit($crawler->filter('form[action$="/supprimer"]')->form());
+        $this->assertFileDoesNotExist($chemin);
     }
 
     public function testReserveAuxAdministrateurs(): void

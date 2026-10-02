@@ -8,6 +8,7 @@ use App\Repository\ColisRepository;
 use App\Repository\ExpeditionRepository;
 use App\Repository\NouveauteRepository;
 use App\Repository\PartenaireRepository;
+use App\Repository\PhotoSiteRepository;
 use App\Repository\TemoignageClientRepository;
 use App\Security\IdChiffreur;
 use App\Service\SuiviColis;
@@ -39,6 +40,7 @@ class VitrineController extends AbstractController
         private readonly TemoignageClientRepository $temoignagesClients,
         private readonly PartenaireRepository $partenaires,
         private readonly NouveauteRepository $nouveautes,
+        private readonly PhotoSiteRepository $photosSite,
     ) {
     }
 
@@ -341,12 +343,20 @@ class VitrineController extends AbstractController
         return u(preg_replace('/^\d+[-_ ]*/', '', $base))->replace('-', ' ')->replace('_', ' ')->title(true)->trim()->toString();
     }
 
-    /** @return list<string> photos de public/images/vitrine/galerie/, triées par nom */
+    /**
+     * Photos « En images » : celles ajoutées dans Administration → Site internet, puis celles déposées par FTP
+     * dans public/images/vitrine/galerie/ (triées par nom).
+     *
+     * @return list<array{src: string, legende: ?string, categorie: ?string}>
+     */
     private function galerie(): array
     {
+        $gerees = array_map(fn ($p) => ['src' => $p->getPhoto(), 'legende' => $p->getLegende(), 'categorie' => $p->getLibelleCategorie()],
+            $this->photosSite->publiees());
         $fichiers = glob($this->public.'/images/vitrine/galerie/*.'.self::PHOTOS, \GLOB_BRACE) ?: [];
         sort($fichiers);
+        $deposees = array_map(fn ($f) => ['src' => substr($f, \strlen($this->public) + 1), 'legende' => null, 'categorie' => null], $fichiers);
 
-        return array_map(fn ($f) => substr($f, \strlen($this->public) + 1), \array_slice($fichiers, 0, 12));
+        return \array_slice(array_merge($gerees, $deposees), 0, PhotoSiteRepository::MAX_SITE);
     }
 }

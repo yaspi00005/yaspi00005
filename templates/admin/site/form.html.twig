@@ -14,6 +14,9 @@
                 {% elseif element.apercu is defined and element.apercu %}
                 <img src="{{ asset(element.apercu) }}" alt="" class="apercu-image-admin mb-3">
                 {% endif %}
+                {% if element.photo is defined and element.photo %}
+                <img src="{{ asset(element.photo) }}" alt="" class="apercu-image-admin mb-3">
+                {% endif %}
                 {% if element.logo is defined and element.logo %}
                 <img src="{{ asset(element.logo) }}" alt="" class="logo-partenaire-admin grand mb-3">
                 {% endif %}

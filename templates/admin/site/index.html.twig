@@ -91,4 +91,26 @@
         </div>
     </div>
 </div>
+<div class="card" id="photos">
+    <div class="card-header flex-wrap gap-2">
+        <h4 class="card-title"><i class="fas fa-images text-primary me-2"></i>En images <small class="text-muted fs-14">(chargements, départs et arrivées)</small></h4>
+        <a href="{{ path('admin_site_photo_new') }}" class="btn btn-primary btn-sm btn-rounded"><i class="fas fa-plus me-1"></i> Ajouter des photos</a>
+    </div>
+    <div class="card-body pt-0">
+        {% if photos %}
+        <p class="text-muted small">Le site affiche les {{ max_galerie }} premières photos affichées, dans cet ordre. Cliquez sur une photo pour la modifier, la masquer ou la supprimer.</p>
+        <div class="galerie-admin">
+            {% for p in photos %}
+                <a href="{{ path('admin_site_photo_edit', {id: p.id}) }}" class="{{ p.publie ? '' : 'masquee' }}" title="Modifier">
+                    <img src="{{ asset(p.photo) }}" alt="{{ p.legende ?? p.libelleCategorie }}" loading="lazy">
+                    <span class="badge badge-{{ p.publie ? 'primary' : 'dark' }}">{{ p.libelleCategorie }}{{ p.publie ? '' : ' · masquée' }}</span>
+                    <small class="text-muted">{{ p.legende ?? '—' }}</small>
+                </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state"><i class="fas fa-images"></i>Aucune photo pour l'instant. Ajoutez des photos de chargement, de départ ou d'arrivée des conteneurs.</div>
+        {% endif %}
+    </div>
+</div>
 {% endblock %}
