@@ -6,6 +6,9 @@ use App\Entity\Expedition;
 use App\Enum\Destination;
 use App\Repository\ColisRepository;
 use App\Repository\ExpeditionRepository;
+use App\Repository\NouveauteRepository;
+use App\Repository\PartenaireRepository;
+use App\Repository\TemoignageClientRepository;
 use App\Security\IdChiffreur;
 use App\Service\SuiviColis;
 use App\Vitrine\CompteurTrafic;
@@ -33,6 +36,9 @@ class VitrineController extends AbstractController
         #[Autowire('%app.vitrine%')] private readonly array $infos,
         #[Autowire('%kernel.project_dir%/public')] private readonly string $public,
         private readonly ExpeditionRepository $expeditions,
+        private readonly TemoignageClientRepository $temoignagesClients,
+        private readonly PartenaireRepository $partenaires,
+        private readonly NouveauteRepository $nouveautes,
     ) {
     }
 
@@ -42,6 +48,8 @@ class VitrineController extends AbstractController
         return $this->page('vitrine/accueil.html.twig', [
             // Départs annoncés par l'administrateur (bouton « Publier sur le site » de l'expédition).
             'departs' => $expeditions->annoncesPubliees(),
+            // Annonces gérées dans Administration → Site internet (nouvelles destinations…).
+            'nouveautes' => $this->nouveautes->visibles(),
             'hero' => $this->photo('hero'),
             // Illustrations par défaut, remplacées par bamako.jpg / dakar.jpg si déposées.
             'bamako' => $this->photo('bamako') ?? 'images/vitrine/illustrations/bamako.svg',
@@ -263,12 +271,22 @@ class VitrineController extends AbstractController
     }
 
     /**
-     * Témoignages vidéo des clients : public/images/vitrine/temoignages/*.mp4 (ou .webm), triés par nom, avec en option
-     * une image d'aperçu du même nom (.jpg/.png/.webp) et, dans config/vitrine.yaml, le nom du client et sa phrase.
+     * Témoignages des clients : ceux de l'administration (Site internet), puis les vidéos déposées par FTP dans
+     * public/images/vitrine/temoignages/ (aperçu du même nom, légende dans config/vitrine.yaml).
      *
-     * @return list<array{video: string, type: string, apercu: ?string, nom: string, texte: ?string}>
+     * @return list<array{video: ?string, type: string, apercu: ?string, nom: string, texte: ?string}>
      */
     private function temoignages(): array
+    {
+        $geres = array_map(fn ($t) => [
+            'video' => $t->getVideo(), 'type' => $t->getTypeVideo(), 'apercu' => $t->getApercu(), 'nom' => $t->getNom(), 'texte' => $t->getTexte(),
+        ], $this->temoignagesClients->findBy(['publie' => true], ['ordre' => 'ASC', 'id' => 'DESC']));
+
+        return array_merge($geres, $this->temoignagesDeposes());
+    }
+
+    /** @return list<array{video: string, type: string, apercu: ?string, nom: string, texte: ?string}> */
+    private function temoignagesDeposes(): array
     {
         $legendes = array_column($this->infos['temoignages'] ?? [], null, 'fichier');
         $fichiers = glob($this->public.'/images/vitrine/temoignages/*.{mp4,webm,MP4,WEBM}', \GLOB_BRACE) ?: [];
@@ -290,12 +308,21 @@ class VitrineController extends AbstractController
     }
 
     /**
-     * Logos des enseignes qui nous font confiance : public/images/vitrine/enseignes/*.(png|jpg|webp|svg), triés par nom ;
-     * nom et lien facultatifs dans config/vitrine.yaml.
+     * Partenaires qui nous font confiance : ceux de l'administration (Site internet), puis les logos déposés par FTP
+     * dans public/images/vitrine/enseignes/ (nom et lien facultatifs dans config/vitrine.yaml).
      *
      * @return list<array{logo: string, nom: string, url: ?string}>
      */
     private function enseignes(): array
+    {
+        $geres = array_map(fn ($p) => ['logo' => $p->getLogo(), 'nom' => $p->getNom(), 'url' => $p->getUrl()],
+            array_filter($this->partenaires->findBy(['publie' => true], ['ordre' => 'ASC', 'id' => 'ASC']), fn ($p) => $p->getLogo()));
+
+        return array_merge(array_values($geres), $this->enseignesDeposees());
+    }
+
+    /** @return list<array{logo: string, nom: string, url: ?string}> */
+    private function enseignesDeposees(): array
     {
         $infos = array_column($this->infos['enseignes'] ?? [], null, 'fichier');
         $fichiers = glob($this->public.'/images/vitrine/enseignes/*.{png,jpg,jpeg,webp,svg,PNG,JPG,JPEG,WEBP,SVG}', \GLOB_BRACE) ?: [];

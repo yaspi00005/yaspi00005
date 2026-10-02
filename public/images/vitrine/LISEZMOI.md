@@ -1,5 +1,9 @@
 # Photos du site vitrine (sotrama.net)
 
+**Témoignages, logos des partenaires et annonces (nouvelles destinations…) se gèrent désormais dans
+l'application : Administration → Site internet** (envoi des vidéos et logos depuis le navigateur).
+Les dossiers `temoignages/` et `enseignes/` ci-dessous restent acceptés (dépôt par FTP).
+
 Déposez ici vos photos (JPEG, PNG ou WebP), elles apparaissent automatiquement sur le site :
 
 | Fichier | Où il apparaît |

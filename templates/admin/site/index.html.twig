@@ -1,0 +1,94 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Site internet{% endblock %}
+
+{% macro etat(visible, libelle_oui, libelle_non) %}<span class="badge light badge-{{ visible ? 'success' : 'dark' }}">{{ visible ? libelle_oui : libelle_non }}</span>{% endmacro %}
+
+{% block body %}
+{% import _self as m %}
+<p class="text-muted">Ce que vous ajoutez ici apparaît aussitôt sur <a href="https://{{ societe.site|default('sotrama.net') }}" target="_blank" rel="noopener">{{ societe.site|default('sotrama.net') }}</a>. Les départs se publient depuis chaque expédition (bouton « Publier sur le site »).</p>
+
+<div class="card">
+    <div class="card-header flex-wrap gap-2">
+        <h4 class="card-title"><i class="fas fa-bullhorn text-primary me-2"></i>Nouveautés et annonces <small class="text-muted fs-14">(ex. : Kayes, Abidjan bientôt desservies)</small></h4>
+        <a href="{{ path('admin_site_nouveaute_new') }}" class="btn btn-primary btn-sm btn-rounded"><i class="fas fa-plus me-1"></i> Nouvelle annonce</a>
+    </div>
+    <div class="card-body pt-0">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead><tr><th>Annonce</th><th>Étiquette</th><th>Jusqu'au</th><th>Sur le site</th><th></th></tr></thead>
+                <tbody>
+                {% for n in nouveautes %}
+                    <tr>
+                        <td><i class="fas {{ n.icone }} text-primary me-2"></i><strong>{{ n.titre }}</strong>{% if n.texte %}<br><small class="text-muted">{{ n.texte|u.truncate(90, '…') }}</small>{% endif %}</td>
+                        <td>{{ n.libelleEtiquette }}</td>
+                        <td>{{ n.dateFin ? n.dateFin|date('d/m/Y') : '—' }}</td>
+                        <td>{{ m.etat(n.visible, 'Affichée', n.publiee ? 'Expirée' : 'Masquée') }}</td>
+                        <td class="text-end"><a href="{{ path('admin_site_nouveaute_edit', {id: n.id}) }}" class="btn btn-primary shadow btn-xs sharp" title="Modifier" aria-label="Modifier {{ n.titre }}"><i class="fas fa-pencil-alt"></i></a></td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="5"><div class="empty-state"><i class="fas fa-bullhorn"></i>Aucune annonce. Exemple : « Bientôt : Kayes » ou « Nouveau : envois vers Abidjan ».</div></td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-xl-7">
+        <div class="card">
+            <div class="card-header flex-wrap gap-2">
+                <h4 class="card-title"><i class="fas fa-video text-primary me-2"></i>Témoignages des clients</h4>
+                <a href="{{ path('admin_site_temoignage_new') }}" class="btn btn-primary btn-sm btn-rounded"><i class="fas fa-plus me-1"></i> Ajouter</a>
+            </div>
+            <div class="card-body pt-0">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead><tr><th>Client</th><th>Vidéo</th><th>Sur le site</th><th></th></tr></thead>
+                        <tbody>
+                        {% for t in temoignages %}
+                            <tr>
+                                <td><strong>{{ t.nom }}</strong>{% if t.texte %}<br><small class="text-muted">« {{ t.texte|u.truncate(70, '…') }} »</small>{% endif %}</td>
+                                <td>{% if t.video %}<i class="fas fa-check text-success" aria-label="Oui"></i>{% else %}—{% endif %}</td>
+                                <td>{{ m.etat(t.publie, 'Affiché', 'Masqué') }}</td>
+                                <td class="text-end"><a href="{{ path('admin_site_temoignage_edit', {id: t.id}) }}" class="btn btn-primary shadow btn-xs sharp" title="Modifier" aria-label="Modifier le témoignage de {{ t.nom }}"><i class="fas fa-pencil-alt"></i></a></td>
+                            </tr>
+                        {% else %}
+                            <tr><td colspan="4"><div class="empty-state"><i class="fas fa-video"></i>Aucun témoignage pour l'instant.</div></td></tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-5">
+        <div class="card">
+            <div class="card-header flex-wrap gap-2">
+                <h4 class="card-title"><i class="fas fa-handshake text-primary me-2"></i>Ils nous font confiance</h4>
+                <a href="{{ path('admin_site_partenaire_new') }}" class="btn btn-primary btn-sm btn-rounded"><i class="fas fa-plus me-1"></i> Ajouter</a>
+            </div>
+            <div class="card-body pt-0">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead><tr><th>Logo</th><th>Enseigne</th><th>Sur le site</th><th></th></tr></thead>
+                        <tbody>
+                        {% for p in partenaires %}
+                            <tr>
+                                <td>{% if p.logo %}<img src="{{ asset(p.logo) }}" alt="" class="logo-partenaire-admin">{% endif %}</td>
+                                <td><strong>{{ p.nom }}</strong>{% if p.url %}<br><small class="text-muted">{{ p.url|u.truncate(40, '…') }}</small>{% endif %}</td>
+                                <td>{{ m.etat(p.publie, 'Affiché', 'Masqué') }}</td>
+                                <td class="text-end"><a href="{{ path('admin_site_partenaire_edit', {id: p.id}) }}" class="btn btn-primary shadow btn-xs sharp" title="Modifier" aria-label="Modifier {{ p.nom }}"><i class="fas fa-pencil-alt"></i></a></td>
+                            </tr>
+                        {% else %}
+                            <tr><td colspan="4"><div class="empty-state"><i class="fas fa-handshake"></i>Aucun partenaire pour l'instant.</div></td></tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

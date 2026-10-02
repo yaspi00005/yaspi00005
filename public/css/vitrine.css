@@ -459,3 +459,19 @@ body.choix-contact-ouvert { overflow: hidden; }
     .choix-contact-boite li > div { flex-basis: 100%; }
     .choix-contact-boite li .bouton { flex: 1; }
 }
+
+/* Nouveautés */
+.section-nouveautes { padding: 64px 0; }
+.grille-nouveautes { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 20px; }
+.nouveaute { display: flex; gap: 1rem; align-items: flex-start; background: var(--blanc); border: 1px solid var(--bord); border-radius: var(--rayon); padding: 22px; box-shadow: var(--ombre); }
+.nouveaute h3 { font-size: 1.2rem; margin: .35rem 0 .3rem; }
+.nouveaute p { margin: 0 0 .5rem; color: var(--texte); font-size: .96rem; }
+.nouveaute .lien-fleche { color: var(--vert); }
+.nouveaute-icone { flex: none; display: inline-grid; place-items: center; width: 52px; height: 52px; border-radius: 16px; font-size: 1.35rem; background: var(--vert-clair); color: var(--vert); }
+.nouveaute-etiquette { display: inline-block; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; padding: .22rem .6rem; border-radius: 999px; background: var(--vert-clair); color: var(--vert-fonce); }
+.nouveaute-bientot .nouveaute-etiquette, .nouveaute-bientot .nouveaute-icone { background: var(--jaune-clair); color: #8a6500; }
+.nouveaute-promo .nouveaute-etiquette, .nouveaute-promo .nouveaute-icone { background: var(--rouge-clair); color: var(--rouge); }
+
+/* Témoignage sans vidéo : citation */
+.temoignage-texte blockquote { margin: 0; padding: 22px 20px 6px; font-size: 1.05rem; line-height: 1.5; color: var(--encre); font-style: italic; }
+.temoignage-texte blockquote i { color: var(--vert); margin-right: .3rem; }

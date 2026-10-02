@@ -104,6 +104,31 @@
     </div>
 </section>
 
+{# ---------- Nouveautés (Administration → Site internet) ---------- #}
+{% if nouveautes %}
+<section class="section section-nouveautes" id="nouveautes">
+    <div class="conteneur">
+        <div class="titre-section">
+            <p class="surtitre">Les nouveautés SOTRAMA</p>
+            <h2>Ça bouge chez SOTRAMA</h2>
+        </div>
+        <div class="grille-nouveautes">
+            {% for n in nouveautes %}
+            <article class="nouveaute nouveaute-{{ n.etiquette }}">
+                <span class="nouveaute-icone" aria-hidden="true"><i class="fas {{ n.icone }}"></i></span>
+                <div>
+                    <span class="nouveaute-etiquette">{{ n.libelleEtiquette }}</span>
+                    <h3>{{ n.titre }}</h3>
+                    {% if n.texte %}<p>{{ n.texte|nl2br }}</p>{% endif %}
+                    {% if n.lien %}<a href="{{ n.lien }}" class="lien-fleche"{% if n.lien starts with 'http' %} target="_blank" rel="noopener"{% endif %}>En savoir plus <i class="fas fa-arrow-right"></i></a>{% endif %}
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
 {# ---------- Prochains départs (expéditions publiées par l'administrateur) ---------- #}
 {% if departs %}
 <section class="section" id="departs">

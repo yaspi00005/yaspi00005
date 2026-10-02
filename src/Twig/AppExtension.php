@@ -60,16 +60,14 @@ final class AppExtension extends AbstractExtension
      * Lien de navigation (Google Maps ouvre l'application GPS du téléphone) vers le client :
      * position GPS si elle est connue, sinon l'adresse. $adresse remplace celle du client (adresse du ramassage).
      */
-    public function itineraire(?Client $client, ?string $adresse = null, string $appli = 'google'): ?string
+    public function itineraire(?Client $client, ?string $adresse = null): ?string
     {
         $adresse = trim((string) $adresse);
         if ('' === $adresse && $client?->hasPosition()) {
             $lat = $client->getLatitude();
             $lng = $client->getLongitude();
 
-            return 'waze' === $appli
-                ? 'https://waze.com/ul?ll='.$lat.','.$lng.'&navigate=yes'
-                : 'https://www.google.com/maps/dir/?api=1&destination='.$lat.','.$lng;
+            return 'https://www.google.com/maps/dir/?api=1&destination='.$lat.','.$lng;
         }
         if ('' === $adresse) {
             $adresse = (string) $client?->getAdresseComplete();
@@ -80,9 +78,7 @@ final class AppExtension extends AbstractExtension
             return null;
         }
 
-        return 'waze' === $appli
-            ? 'https://waze.com/ul?q='.rawurlencode($adresse).'&navigate=yes'
-            : 'https://www.google.com/maps/dir/?api=1&destination='.rawurlencode($adresse);
+        return 'https://www.google.com/maps/dir/?api=1&destination='.rawurlencode($adresse);
     }
 
     /** Carte OpenStreetMap intégrable (iframe) centrée sur un point. */

@@ -1,11 +1,15 @@
-{# Un témoignage vidéo. Paramètre : t (voir VitrineController::temoignages) #}
-<figure class="temoignage">
+{# Un témoignage : vidéo et/ou phrase du client. Paramètre : t (voir VitrineController::temoignages) #}
+<figure class="temoignage{{ t.video ? '' : ' temoignage-texte' }}">
+    {% if t.video %}
     <video controls playsinline preload="{{ t.apercu ? 'none' : 'metadata' }}"{% if t.apercu %} poster="{{ asset(t.apercu) }}"{% endif %}>
         <source src="{{ asset(t.video) }}" type="{{ t.type }}">
         Votre navigateur ne lit pas cette vidéo : <a href="{{ asset(t.video) }}">téléchargez-la</a>.
     </video>
+    {% elseif t.texte %}
+    <blockquote><i class="fas fa-quote-left"></i> {{ t.texte }}</blockquote>
+    {% endif %}
     <figcaption>
-        <strong><i class="fas fa-quote-left"></i> {{ t.nom }}</strong>
-        {% if t.texte %}<span>{{ t.texte }}</span>{% endif %}
+        <strong>{% if t.video %}<i class="fas fa-quote-left"></i> {% endif %}{{ t.nom }}</strong>
+        {% if t.texte and t.video %}<span>{{ t.texte }}</span>{% endif %}
     </figcaption>
 </figure>

@@ -41,3 +41,6 @@
 /public/images/vitrine/temoignages/*.mp4
 /public/images/vitrine/temoignages/*.webm
 /public/images/vitrine/temoignages/*.MP4
+
+# Fichiers envoyés depuis Administration → Site internet (témoignages, logos des partenaires).
+/public/uploads/
