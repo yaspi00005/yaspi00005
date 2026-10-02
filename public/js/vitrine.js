@@ -79,15 +79,16 @@
         document.body.classList.remove('choix-contact-ouvert');
         if (retour) { retour.focus(); }
     };
-    const ouvrir = function (lien, appel) {
+    const ouvrir = function (lien, appel, contact) {
         retour = lien;
         // Le message déjà préparé (« Bonjour SOTRAMA, je souhaite… ») est gardé pour chaque membre.
         const texte = appel ? null : new URL(lien.href).searchParams.get('text');
         fenetre.querySelectorAll('[data-choix-whatsapp]').forEach(function (a) {
             a.href = 'https://wa.me/' + a.dataset.choixWhatsapp + (texte ? '?text=' + encodeURIComponent(texte) : '');
         });
-        fenetre.querySelector('.js-choix-whatsapp').hidden = appel;
-        fenetre.querySelector('.js-choix-appel').hidden = !appel;
+        fenetre.querySelector('.js-choix-whatsapp').hidden = appel || contact;
+        fenetre.querySelector('.js-choix-appel').hidden = !appel || contact;
+        fenetre.querySelector('.js-choix-contact').hidden = !contact;
         fenetre.hidden = false;
         document.body.classList.add('choix-contact-ouvert');
         const premier = fenetre.querySelector(appel ? 'a[href^="tel:"]' : '[data-choix-whatsapp]');
@@ -97,7 +98,7 @@
         const lien = e.target.closest('a[href^="https://wa.me/"], a[href^="tel:"]');
         if (!lien || lien.hasAttribute('data-direct') || fenetre.contains(lien)) { return; }
         e.preventDefault();
-        ouvrir(lien, lien.getAttribute('href').startsWith('tel:'));
+        ouvrir(lien, lien.getAttribute('href').startsWith('tel:'), 'contact' === lien.dataset.choix);
     });
     fenetre.addEventListener('click', function (e) {
         if (e.target === fenetre || e.target.closest('[data-choix-fermer]')) { fermer(); }

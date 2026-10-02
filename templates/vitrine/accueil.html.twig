@@ -28,8 +28,8 @@
             <h1>Vos colis de France jusqu'à <em>Bamako</em> et <em>Dakar</em></h1>
             <p class="chapeau">Envoi en conteneur vers le Mali et le Sénégal, GP avion pour Bamako, et <strong>ramassage gratuit dans toute l'Île-de-France</strong>. Vous suivez votre colis en ligne jusqu'à sa remise.</p>
             <div class="actions">
-                <a href="{{ wa }}?text={{ 'Bonjour SOTRAMA, je souhaite envoyer un colis.'|url_encode }}" class="bouton bouton-wa" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> Écrire sur WhatsApp</a>
-                <a href="tel:+{{ infos.whatsapp }}" class="bouton bouton-contour"><i class="fas fa-phone"></i> Nous appeler</a>
+                {# Un seul bouton : la fenêtre propose WhatsApp ou appel, pour chaque membre de l'équipe. #}
+                <a href="{{ wa }}?text={{ 'Bonjour SOTRAMA, je souhaite envoyer un colis.'|url_encode }}" class="bouton bouton-wa" target="_blank" rel="noopener" data-choix="contact"><i class="fas fa-comments"></i> Nous contacter</a>
                 <a href="{{ path('vitrine_ramassage') }}" class="bouton bouton-contour"><i class="fas fa-truck"></i> Programmer un ramassage</a>
             </div>
             <ul class="atouts">
