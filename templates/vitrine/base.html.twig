@@ -89,10 +89,10 @@
                 <div>
                     <h3>Contact</h3>
                     <ul class="pied-liste">
-                        <li><a href="{{ wa }}?text={{ message_wa|url_encode }}" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> WhatsApp {{ infos.telephone }}</a></li>
+                        <li><a href="{{ wa }}?text={{ message_wa|url_encode }}" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> Écrire sur WhatsApp</a></li>
                         {% if infos.email|default(null) %}<li><a href="mailto:{{ infos.email }}"><i class="fas fa-envelope"></i> {{ infos.email }}</a></li>{% endif %}
                         {% for p in infos.equipe %}
-                            <li><a href="tel:{{ p.telephone|replace({' ': ''}) }}"><i class="fas fa-phone"></i> {{ p.nom }} · {{ p.telephone }}</a></li>
+                            <li><a href="tel:{{ p.telephone|replace({' ': ''}) }}" data-direct><i class="fas fa-phone"></i> {{ p.nom }} · {{ p.telephone }}</a></li>
                         {% endfor %}
                     </ul>
                 </div>
@@ -113,6 +113,25 @@
             <div class="conteneur pied-bas">© {{ 'now'|date('Y') }} SOTRAMA · France → Bamako (BKO) · Dakar (DKR)</div>
         </footer>
 
+        {# Choix du contact : tout bouton WhatsApp ou « Appeler » du site propose les trois membres de l'équipe
+           (sans JavaScript, le lien mène au numéro principal). #}
+        {% if infos.equipe|length > 1 %}
+        <div class="choix-contact" id="choix-contact" role="dialog" aria-modal="true" aria-labelledby="choix-contact-titre" hidden>
+            <div class="choix-contact-boite">
+                <button type="button" class="choix-contact-fermer" aria-label="Fermer" data-choix-fermer>&times;</button>
+                <h2 id="choix-contact-titre"><span class="js-choix-whatsapp">Écrire sur WhatsApp à…</span><span class="js-choix-appel" hidden>Appeler…</span></h2>
+                <ul>
+                    {% for p in infos.equipe %}
+                    <li>
+                        <div><strong>{{ p.nom }}</strong><small>{{ p.role }} · {{ p.telephone }}</small></div>
+                        <a href="https://wa.me/{{ p.whatsapp }}" data-direct data-choix-whatsapp="{{ p.whatsapp }}" target="_blank" rel="noopener" class="bouton bouton-wa bouton-petit"><i class="fab fa-whatsapp"></i> WhatsApp</a>
+                        <a href="tel:{{ p.telephone|replace({' ': ''}) }}" data-direct class="bouton bouton-contour bouton-petit"><i class="fas fa-phone"></i> Appeler</a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endif %}
         <a href="{{ wa }}?text={{ message_wa|url_encode }}" class="wa-flottant" target="_blank" rel="noopener" aria-label="Écrire à SOTRAMA sur WhatsApp"><i class="fab fa-whatsapp"></i></a>
 
         {# Bandeau d'information à la première visite (affiché par vitrine.js, choix mémorisé 6 mois). #}

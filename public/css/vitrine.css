@@ -442,3 +442,20 @@ code { background: var(--vert-clair); color: var(--vert-fonce); padding: .05em .
     .enseignes { grid-template-columns: repeat(2, 1fr); gap: 12px; }
     .enseignes li { height: 80px; }
 }
+
+/* Choix du contact */
+.choix-contact { position: fixed; inset: 0; z-index: 200; background: rgba(16, 36, 25, .55); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.choix-contact[hidden] { display: none; }
+.choix-contact-boite { position: relative; background: var(--blanc); border-radius: 20px; padding: 26px 22px 18px; width: min(460px, 100%); box-shadow: var(--ombre); }
+.choix-contact-boite h2 { font-size: 1.25rem; margin: 0 0 1rem; padding-right: 2rem; }
+.choix-contact-boite ul { list-style: none; margin: 0; padding: 0; }
+.choix-contact-boite li { display: flex; align-items: center; gap: .5rem; padding: .7rem 0; border-top: 1px solid var(--bord); }
+.choix-contact-boite li > div { flex: 1; display: flex; flex-direction: column; line-height: 1.3; min-width: 0; }
+.choix-contact-boite li small { color: var(--gris); font-size: .82rem; }
+.choix-contact-fermer { position: absolute; top: 10px; right: 12px; border: 0; background: none; font-size: 1.8rem; line-height: 1; cursor: pointer; color: var(--gris); }
+body.choix-contact-ouvert { overflow: hidden; }
+@media (max-width: 420px) {
+    .choix-contact-boite li { flex-wrap: wrap; }
+    .choix-contact-boite li > div { flex-basis: 100%; }
+    .choix-contact-boite li .bouton { flex: 1; }
+}

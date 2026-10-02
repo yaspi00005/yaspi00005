@@ -29,7 +29,7 @@
             <p class="chapeau">Envoi en conteneur vers le Mali et le Sénégal, GP avion pour Bamako, et <strong>ramassage gratuit dans toute l'Île-de-France</strong>. Vous suivez votre colis en ligne jusqu'à sa remise.</p>
             <div class="actions">
                 <a href="{{ wa }}?text={{ 'Bonjour SOTRAMA, je souhaite envoyer un colis.'|url_encode }}" class="bouton bouton-wa" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> Écrire sur WhatsApp</a>
-                <a href="tel:+{{ infos.whatsapp }}" class="bouton bouton-contour"><i class="fas fa-phone"></i> {{ infos.telephone }}</a>
+                <a href="tel:+{{ infos.whatsapp }}" class="bouton bouton-contour"><i class="fas fa-phone"></i> Nous appeler</a>
                 <a href="{{ path('vitrine_ramassage') }}" class="bouton bouton-contour"><i class="fas fa-truck"></i> Programmer un ramassage</a>
             </div>
             <ul class="atouts">
@@ -190,7 +190,7 @@
             <li>
                 <span class="etape-numero">1</span>
                 <h3>Contactez-nous</h3>
-                <p>Sur WhatsApp au {{ infos.telephone }} : dites-nous ce que vous envoyez et vers quelle ville.</p>
+                <p>Sur WhatsApp ou par téléphone, auprès de {{ infos.equipe|map(p => p.nom|split(' ')|first)|join(', ', ' ou ') }} : dites-nous ce que vous envoyez et vers quelle ville.</p>
             </li>
             <li>
                 <span class="etape-numero">2</span>
@@ -280,10 +280,10 @@
                 {% endif %}
                 <h3>{{ p.nom }}</h3>
                 <p class="membre-role">{{ p.role }}</p>
-                <a href="tel:{{ p.telephone|replace({' ': ''}) }}" class="membre-tel">{{ p.telephone }}</a>
+                <a href="tel:{{ p.telephone|replace({' ': ''}) }}" class="membre-tel" data-direct>{{ p.telephone }}</a>
                 <div class="membre-actions">
-                    <a href="tel:{{ p.telephone|replace({' ': ''}) }}" class="bouton bouton-contour bouton-petit" aria-label="Appeler {{ p.nom }}"><i class="fas fa-phone"></i> Appeler</a>
-                    <a href="https://wa.me/{{ p.whatsapp }}?text={{ 'Bonjour, je vous contacte depuis le site SOTRAMA.'|url_encode }}" class="bouton bouton-wa bouton-petit" target="_blank" rel="noopener" aria-label="WhatsApp {{ p.nom }}"><i class="fab fa-whatsapp"></i> WhatsApp</a>
+                    <a href="tel:{{ p.telephone|replace({' ': ''}) }}" data-direct class="bouton bouton-contour bouton-petit" aria-label="Appeler {{ p.nom }}"><i class="fas fa-phone"></i> Appeler</a>
+                    <a href="https://wa.me/{{ p.whatsapp }}?text={{ 'Bonjour, je vous contacte depuis le site SOTRAMA.'|url_encode }}" data-direct class="bouton bouton-wa bouton-petit" target="_blank" rel="noopener" aria-label="WhatsApp {{ p.nom }}"><i class="fab fa-whatsapp"></i> WhatsApp</a>
                 </div>
             </article>
             {% endfor %}

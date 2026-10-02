@@ -67,3 +67,41 @@
     afficher();
     minuterie = setInterval(afficher, 1000);
 })();
+
+/* Choix du contact (Yacouba, Daby, Mamadou) pour les boutons WhatsApp et « Appeler » du site. */
+(function () {
+    'use strict';
+    const fenetre = document.getElementById('choix-contact');
+    if (!fenetre) { return; }
+    let retour = null;
+    const fermer = function () {
+        fenetre.hidden = true;
+        document.body.classList.remove('choix-contact-ouvert');
+        if (retour) { retour.focus(); }
+    };
+    const ouvrir = function (lien, appel) {
+        retour = lien;
+        // Le message déjà préparé (« Bonjour SOTRAMA, je souhaite… ») est gardé pour chaque membre.
+        const texte = appel ? null : new URL(lien.href).searchParams.get('text');
+        fenetre.querySelectorAll('[data-choix-whatsapp]').forEach(function (a) {
+            a.href = 'https://wa.me/' + a.dataset.choixWhatsapp + (texte ? '?text=' + encodeURIComponent(texte) : '');
+        });
+        fenetre.querySelector('.js-choix-whatsapp').hidden = appel;
+        fenetre.querySelector('.js-choix-appel').hidden = !appel;
+        fenetre.hidden = false;
+        document.body.classList.add('choix-contact-ouvert');
+        const premier = fenetre.querySelector(appel ? 'a[href^="tel:"]' : '[data-choix-whatsapp]');
+        if (premier) { premier.focus(); }
+    };
+    document.addEventListener('click', function (e) {
+        const lien = e.target.closest('a[href^="https://wa.me/"], a[href^="tel:"]');
+        if (!lien || lien.hasAttribute('data-direct') || fenetre.contains(lien)) { return; }
+        e.preventDefault();
+        ouvrir(lien, lien.getAttribute('href').startsWith('tel:'));
+    });
+    fenetre.addEventListener('click', function (e) {
+        if (e.target === fenetre || e.target.closest('[data-choix-fermer]')) { fermer(); }
+        else if (e.target.closest('a')) { setTimeout(fermer, 300); }
+    });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !fenetre.hidden) { fermer(); } });
+})();
