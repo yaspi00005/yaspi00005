@@ -3,10 +3,9 @@
 <input type="hidden" class="js-cp-pays" value="France">
 <datalist id="villes-cp"></datalist>
 <div class="row">
-    <div class="col-md-6 col-xl-3">{{ form_row(form.utilisateur) }}</div>
-    <div class="col-md-6 col-xl-3">{{ form_row(form.dateAppel) }}</div>
-    <div class="col-md-6 col-xl-3">{{ form_row(form.camion) }}</div>
-    <div class="col-md-6 col-xl-3">{{ form_row(form.expedition) }}</div>
+    <div class="col-md-4">{{ form_row(form.dateAppel) }}</div>
+    <div class="col-md-4">{{ form_row(form.camion) }}</div>
+    <div class="col-md-4">{{ form_row(form.expedition) }}</div>
 </div>
 <div class="row align-items-start">
     <div class="col-12 mb-2">{{ form_row(form.modeClient) }}</div>

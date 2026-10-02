@@ -5,7 +5,7 @@
 {% block body %}
 <div class="card">
     <div class="card-header flex-wrap gap-2">
-        <h4 class="card-title">{{ block('title') }} <small class="text-muted fs-14">— {{ appel.dateAppel|date('d/m/Y') }}{% if appel.source == 'site' %} · demande faite sur sotrama.net{% endif %}</small></h4>
+        <h4 class="card-title">{{ block('title') }} <small class="text-muted fs-14">— {{ appel.dateAppel|date('d/m/Y') }}{% if appel.utilisateur %} · pris par {{ appel.utilisateur.prenom }}{% endif %}{% if appel.source == 'site' %} · demande faite sur sotrama.net{% endif %}</small></h4>
         <div class="d-flex flex-wrap gap-2">
             {% set etat = appel.etat %}
             <span class="badge badge-{{ etat[1] }} light align-self-center">{{ etat[0] }}</span>

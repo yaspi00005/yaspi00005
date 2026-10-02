@@ -6,12 +6,10 @@ use App\Entity\Appel;
 use App\Entity\Camion;
 use App\Entity\Client;
 use App\Entity\Expedition;
-use App\Entity\User;
 use App\Enum\StatutExpedition;
 use App\Repository\CamionRepository;
 use App\Repository\ClientRepository;
 use App\Repository\ExpeditionRepository;
-use App\Repository\UserRepository;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
@@ -35,17 +33,8 @@ class AppelType extends AbstractType
     {
         /** @var Appel $appel */
         $appel = $options['data'];
+        // L'utilisateur n'est pas saisi : c'est la personne connectée qui enregistre l'appel (voir AppelController).
         $builder
-            ->add('utilisateur', EntityType::class, [
-                'label' => 'Utilisateur',
-                'class' => User::class,
-                // Administrateurs et agents de ramassage en service.
-                'query_builder' => fn (UserRepository $r) => $r->createQueryBuilder('u')->andWhere('u.actif = true')
-                    ->andWhere('u.roles LIKE :admin OR u.roles LIKE :ramassage')
-                    ->setParameter('admin', '%'.User::ROLE_ADMIN.'%')->setParameter('ramassage', '%'.User::ROLE_RAMASSAGE.'%')
-                    ->orderBy('u.prenom'),
-                'choice_label' => 'nomComplet',
-            ])
             ->add('dateAppel', DateType::class, ['label' => "Date d'appel", 'widget' => 'single_text', 'input' => 'datetime_immutable'])
             ->add('camion', EntityType::class, [
                 'label' => 'Affectation camion',

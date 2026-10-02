@@ -46,6 +46,7 @@ final class RegistreAppelsTest extends WebTestCase
         $this->assertResponseIsSuccessful();
         $this->assertSelectorTextContains('.registre-onglets', 'Peugeot Boxer 2');
         $this->assertSelectorTextContains('.registre-onglets', '👤 Moussa');
+        $this->assertSelectorNotExists('[name="appel[utilisateur]"]');
         $jour = (new \DateTimeImmutable('+3 days'))->format('Y-m-d');
         $this->client->submit($crawler->selectButton("Enregistrer l'appel")->form(), [
             'appel[nom]' => 'Traoré', 'appel[prenom]' => 'Mamadou', 'appel[telephone]' => self::TELEPHONE,
@@ -60,6 +61,7 @@ final class RegistreAppelsTest extends WebTestCase
 
         $appel = $this->appel();
         $this->assertSame(25000, $appel->getEstimation());
+        $this->assertSame('ramassage', $appel->getUtilisateur()->getUserIdentifier(), 'Personne connectée, sans champ à choisir');
         $this->assertNotNull($appel->getClient()->getId(), 'Fiche client créée');
         $this->assertSame('Émerainville', $appel->getClient()->getVille());
         $ramassage = $appel->getRamassage();
