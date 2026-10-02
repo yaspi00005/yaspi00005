@@ -6,6 +6,15 @@
 {% set peutEncaisser = is_granted('COLIS_ENCAISSER', colis) %}
 {% set peutLivrer = is_granted('COLIS_LIVRER', colis) %}
 
+{# Venu d'une liste (paiements filtrés, expédition, guichet…) : lien pour y revenir, filtres compris. #}
+{% set champRetour %}{% if retour %}<input type="hidden" name="retour" value="{{ retour.url }}">{% endif %}{% endset %}
+{% if retour and app.request.query.get('paye') %}
+<div class="alert alert-info solid-alert d-flex flex-wrap align-items-center justify-content-between gap-2">
+    <span><i class="fas fa-check-circle me-2"></i>Paiement enregistré. Revenir à la page d'où vous venez ?</span>
+    <a href="{{ retour.url }}" class="btn btn-light btn-sm"><i class="fas fa-arrow-left me-1"></i> {{ retour.libelle }}</a>
+</div>
+{% endif %}
+
 {% if app.request.query.get('nouveau') %}
 <div class="alert alert-success solid-alert d-flex flex-wrap align-items-center justify-content-between gap-2">
     <span><i class="fas fa-check-circle me-2"></i>Colis enregistré. Remettez le reçu au client : il contient le code de retrait <strong class="code-retrait">{{ colis.codeRetrait }}</strong>. Collez une étiquette sur chaque carton.</span>
@@ -19,6 +28,7 @@
 
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
     <div>
+        {% if retour %}<a href="{{ retour.url }}" class="d-inline-block small mb-1"><i class="fas fa-arrow-left me-1"></i>{{ retour.libelle }}</a>{% endif %}
         <h3 class="mb-1">{{ colis.numeroSuivi }}</h3>
         {% include 'partials/_badge.html.twig' with {statut: colis.statut} %}
         {% include 'partials/_badge.html.twig' with {statut: colis.statutPaiement} %}
@@ -136,6 +146,7 @@
                                 <td class="text-end">
                                     {% if is_granted('ROLE_ADMIN') %}
                                     <form method="post" action="{{ path('paiement_annuler', {id: p.id}) }}" data-confirm="Le montant sera retiré du total payé de ce colis. L'annulation est enregistrée dans le journal." data-confirm-titre="Annuler ce paiement ?" data-confirm-type="warning" data-confirm-bouton="Oui, annuler le paiement">
+                                        {{ champRetour }}
                                         <input type="hidden" name="_token" value="{{ csrf_token('annuler-paiement-' ~ p.id) }}">
                                         <button class="btn btn-danger light btn-xs sharp" title="Annuler ce paiement" aria-label="Annuler ce paiement"><i class="fas fa-undo"></i></button>
                                     </form>
@@ -169,6 +180,7 @@
                     <button type="button" class="btn btn-light d-none js-partager-recu" data-url="{{ path('colis_recu', {id: colis.id}) }}" data-nom="recu-{{ colis.numeroSuivi }}.pdf" data-titre="Reçu SOTRAMA {{ colis.numeroSuivi }}"><i class="fas fa-share-alt me-1"></i> Partager le fichier PDF…</button>
                     {% if colis.client.email %}
                         <form method="post" action="{{ path('colis_recu_email', {id: colis.id}) }}" class="d-grid">
+                            {{ champRetour }}
                             <input type="hidden" name="_token" value="{{ csrf_token('recu-email-' ~ colis.id) }}">
                             <button class="btn btn-outline-primary"><i class="fas fa-envelope me-1"></i> Par e-mail à {{ colis.client.email }}</button>
                         </form>
@@ -199,6 +211,7 @@
                 <details class="mt-3">
                     <summary class="text-primary">Corriger le tarif</summary>
                     <form method="post" action="{{ path('colis_tarif', {id: colis.id}) }}" class="d-flex gap-2 mt-2">
+                        {{ champRetour }}
                         <input type="hidden" name="_token" value="{{ csrf_token('tarif-colis-' ~ colis.id) }}">
                         <input type="number" step="0.01" min="0" name="frais" class="form-control" value="{{ (colis.frais / 100)|number_format(2, '.', '') }}" aria-label="Nouveau tarif">
                         <button class="btn btn-primary">OK</button>
@@ -212,7 +225,7 @@
         <div class="card border-primary">
             <div class="card-header"><h4 class="card-title"><i class="fas fa-cash-register text-primary me-2"></i>Encaisser</h4></div>
             <div class="card-body">
-                {{ form_start(encaissement) }}
+                {{ form_start(encaissement) }}{{ champRetour }}
                     <div class="row g-2">
                         <div class="col-7">
                             {{ form_row(encaissement.montant) }}
@@ -230,6 +243,7 @@
                 {{ form_end(encaissement) }}
                 {% if bonusDisponible > 0 %}
                 <form method="post" action="{{ path('colis_bonus', {id: colis.id}) }}" class="mt-2" data-confirm="Le bonus disponible du client sera déduit du reste à payer de ce colis." data-confirm-titre="Utiliser le bonus fidélité ?" data-confirm-type="primary" data-confirm-bouton="Oui, utiliser le bonus">
+                    {{ champRetour }}
                     <input type="hidden" name="_token" value="{{ csrf_token('bonus-colis-' ~ colis.id) }}">
                     <button class="btn btn-outline-info w-100"><i class="fas fa-gift me-1"></i> Utiliser le bonus ({{ bonusDisponible|money }})</button>
                 </form>
@@ -244,6 +258,7 @@
             <div class="card-body">
                 {% if colis.statut.value == 'arrive' %}
                     <form method="post" action="{{ path('colis_remettre', {id: colis.id}) }}" data-confirm="Le colis sera marqué comme récupéré par le destinataire." data-confirm-titre="Remettre le colis ?" data-confirm-type="primary" data-confirm-bouton="Oui, remettre le colis">
+                        {{ champRetour }}
                         <input type="hidden" name="_token" value="{{ csrf_token('remettre-colis-' ~ colis.id) }}">
                         <label class="form-label" for="code-retrait">Code de retrait présenté par le destinataire</label>
                         <input type="text" id="code-retrait" name="code" class="form-control mb-2 code-retrait text-uppercase" value="{{ app.request.query.get('code') }}" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="12" placeholder="Code reçu par SMS ou inscrit sur le reçu">
@@ -263,6 +278,7 @@
                     <hr>
                 {% endif %}
                 <form method="post" action="{{ path('colis_statut', {id: colis.id}) }}">
+                    {{ champRetour }}
                     <input type="hidden" name="_token" value="{{ csrf_token('statut-colis-' ~ colis.id) }}">
                     <label class="form-label" for="statut">Changer le statut</label>
                     <div class="d-flex gap-2">

@@ -170,7 +170,7 @@
                         <tbody>
                         {% for c in colisListe %}
                             <tr>
-                                <td><a href="{{ path('colis_show', {id: c.id}) }}" class="text-primary font-w600">{{ c.numeroSuivi }}</a></td>
+                                <td><a href="{{ path('colis_show', {id: c.id, retour: app.request.requestUri}) }}" class="text-primary font-w600">{{ c.numeroSuivi }}</a></td>
                                 <td>{{ c.client.nomComplet }}</td>
                                 <td>{{ c.destinataireNom }}<br><small class="text-muted">{{ c.destinataireTelephone|tel }}</small></td>
                                 <td class="num">{{ c.poidsTotal|poids }}</td>

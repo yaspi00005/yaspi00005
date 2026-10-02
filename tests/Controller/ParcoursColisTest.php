@@ -159,6 +159,35 @@ final class ParcoursColisTest extends WebTestCase
         $this->assertSelectorTextNotContains('body', $colis->getCodeRetrait());
     }
 
+    public function testRetourALaListeDOrigineApresPaiement(): void
+    {
+        $colis = $this->creerColis();
+        $id = static::getContainer()->get(IdChiffreur::class)->encode($colis->getId());
+        $this->connecte('admin');
+        $origine = '/paiements?mode=especes&du=2020-01-01';
+
+        $crawler = $this->client->request('GET', "/colis/$id?retour=".rawurlencode($origine));
+        $this->assertSame($origine, $crawler->filter('a:contains("Retour aux paiements")')->attr('href'));
+        $this->client->submit($crawler->selectButton('Enregistrer le paiement')->form(['encaissement[montant]' => '10']));
+        $this->assertResponseRedirects();
+        $this->assertStringContainsString('paye=1', $this->client->getResponse()->headers->get('Location'));
+        $crawler = $this->client->followRedirect();
+        $this->assertSelectorTextContains('.alert-info', 'Paiement enregistré');
+        $this->assertSame($origine, $crawler->filter('.alert-info a')->attr('href'));
+
+        // La liste des paiements emporte son adresse (filtres compris) vers la fiche.
+        $crawler = $this->client->request('GET', 'http://localhost/paiements?mode=especes');
+        $lien = $crawler->filter('a:contains("'.$colis->getNumeroSuivi().'")')->first()->attr('href');
+        parse_str((string) parse_url($lien, \PHP_URL_QUERY), $parametres);
+        $this->assertSame('/paiements?mode=especes', $parametres['retour']);
+
+        // Jamais vers un autre site.
+        foreach (['//evil.example', 'https://evil.example', '/\\evil.example'] as $externe) {
+            $this->client->request('GET', "http://localhost/colis/$id?retour=".rawurlencode($externe));
+            $this->assertSelectorTextNotContains('body', 'evil.example');
+        }
+    }
+
     public function testRecuPdf(): void
     {
         $colis = $this->creerColis();

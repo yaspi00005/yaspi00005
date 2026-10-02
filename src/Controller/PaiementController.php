@@ -13,6 +13,7 @@ use App\Service\ExportExcel;
 use App\Service\PaiementService;
 use App\Util\Csv;
 use App\Util\Pagination;
+use App\Util\Retour;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -79,6 +80,6 @@ class PaiementController extends AbstractController
         $service->annuler($paiement, $this->getUser());
         $this->addFlash('success', 'Paiement annulé.');
 
-        return $this->redirectToRoute('colis_show', ['id' => $colis->getId()], Response::HTTP_SEE_OTHER);
+        return $this->redirectToRoute('colis_show', ['id' => $colis->getId(), 'retour' => Retour::depuis($request)], Response::HTTP_SEE_OTHER);
     }
 }

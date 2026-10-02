@@ -36,7 +36,7 @@
                         <tbody>
                         {% for c in aRetirer %}
                             <tr>
-                                <td><a href="{{ path('colis_show', {id: c.id}) }}" class="text-primary font-w600">{{ c.numeroSuivi }}</a></td>
+                                <td><a href="{{ path('colis_show', {id: c.id, retour: app.request.requestUri}) }}" class="text-primary font-w600">{{ c.numeroSuivi }}</a></td>
                                 <td>{{ c.destinataireNom }}<br><small class="text-muted"><a href="tel:{{ c.destinataireTelephone }}">{{ c.destinataireTelephone|tel }}</a></small></td>
                                 <td class="num {{ c.montantRestant ? 'text-danger font-w600' : 'text-success' }}">{{ c.montantRestant ? c.montantRestant|money_local(true) : 'Soldé' }}</td>
                                 <td>{{ c.updatedAt|date('d/m/Y') }}</td>

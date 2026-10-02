@@ -222,7 +222,7 @@
                         <tbody>
                         {% for c in derniersColis %}
                             <tr>
-                                <td><a href="{{ path('colis_show', {id: c.id}) }}" class="text-primary font-w600">{{ c.numeroSuivi }}</a><br><small class="text-muted">{{ c.dateReception|date('d/m/Y') }}</small></td>
+                                <td><a href="{{ path('colis_show', {id: c.id, retour: app.request.requestUri}) }}" class="text-primary font-w600">{{ c.numeroSuivi }}</a><br><small class="text-muted">{{ c.dateReception|date('d/m/Y') }}</small></td>
                                 <td>{{ c.client.nomComplet }}</td>
                                 <td>{{ c.destinataireNom }}</td>
                                 <td class="num">{{ c.montantRestant|money }}</td>

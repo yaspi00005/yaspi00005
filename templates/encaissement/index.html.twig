@@ -54,7 +54,7 @@
                         {% for p in paiements %}
                             <tr>
                                 <td>{{ p.date|date('d/m/Y H:i') }}</td>
-                                <td>{% if is_granted('COLIS_VOIR', p.colis) %}<a href="{{ path('colis_show', {id: p.colis.id}) }}" class="text-primary">{{ p.colis.numeroSuivi }}</a>{% else %}{{ p.colis.numeroSuivi }}{% endif %}</td>
+                                <td>{% if is_granted('COLIS_VOIR', p.colis) %}<a href="{{ path('colis_show', {id: p.colis.id, retour: app.request.requestUri}) }}" class="text-primary">{{ p.colis.numeroSuivi }}</a>{% else %}{{ p.colis.numeroSuivi }}{% endif %}</td>
                                 <td>{{ p.colis.destinataireNom }}</td>
                                 <td>{{ p.mode.label }}{% if p.reference %}<br><small class="text-muted">{{ p.reference }}</small>{% endif %}</td>
                                 <td class="num font-w600">{{ p.montant|money_local }}</td>

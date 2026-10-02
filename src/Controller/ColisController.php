@@ -27,6 +27,7 @@ use App\Service\PhotoUploader;
 use App\Service\RecuPartage;
 use App\Util\Csv;
 use App\Util\Pagination;
+use App\Util\Retour;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormInterface;
@@ -167,7 +168,7 @@ class ColisController extends AbstractController
     }
 
     #[Route('/{id}', name: 'colis_show', requirements: ['id' => self::ID], methods: ['GET'])]
-    public function show(Colis $colis, DocumentService $documents, BonusFidelite $bonus, RecuPartage $partage, JournalRepository $journal): Response
+    public function show(Request $request, Colis $colis, DocumentService $documents, BonusFidelite $bonus, RecuPartage $partage, JournalRepository $journal): Response
     {
         $this->denyAccessUnlessGranted(ColisVoter::VOIR, $colis);
 
@@ -189,6 +190,7 @@ class ColisController extends AbstractController
             'whatsappDestinataire' => $partage->whatsappDestinataire($colis),
             'lienRecuPublic' => $partage->lienPdf($colis),
             'journal' => $this->isGranted(User::ROLE_ADMIN) ? $journal->pourColis($colis->getId()) : null,
+            'retour' => ($r = Retour::depuis($request)) ? ['url' => $r, 'libelle' => Retour::libelle($r)] : null,
         ]);
     }
 
@@ -264,7 +266,7 @@ class ColisController extends AbstractController
             $this->addFlash('danger', $e->getMessage());
         }
 
-        return $this->redirectToRoute('colis_show', ['id' => $colis->getId()], Response::HTTP_SEE_OTHER);
+        return $this->versFiche($colis, $request);
     }
 
     #[Route('/{id}/encaisser', name: 'colis_encaisser', requirements: ['id' => self::ID], methods: ['POST'])]
@@ -279,6 +281,8 @@ class ColisController extends AbstractController
             try {
                 $this->paiementService->encaisser($colis, (int) $d['montant'], $d['mode'], $this->getUser(), (int) ($d['remise'] ?? 0), $d['reference'], $d['commentaire']);
                 $this->addFlash('success', 'Paiement enregistré. '.($colis->isSolde() ? 'Le colis est soldé.' : 'Reste à payer : '.PaiementService::format($colis->getMontantRestant())));
+
+                return $this->versFiche($colis, $request, ['paye' => 1]);
             } catch (\DomainException $e) {
                 $this->addFlash('danger', $e->getMessage());
             }
@@ -288,7 +292,7 @@ class ColisController extends AbstractController
             }
         }
 
-        return $this->redirectToRoute('colis_show', ['id' => $colis->getId()], Response::HTTP_SEE_OTHER);
+        return $this->versFiche($colis, $request);
     }
 
     #[Route('/{id}/bonus', name: 'colis_bonus', requirements: ['id' => self::ID], methods: ['POST'])]
@@ -303,7 +307,7 @@ class ColisController extends AbstractController
             $this->addFlash('danger', $e->getMessage());
         }
 
-        return $this->redirectToRoute('colis_show', ['id' => $colis->getId()], Response::HTTP_SEE_OTHER);
+        return $this->versFiche($colis, $request);
     }
 
     #[Route('/{id}/statut', name: 'colis_statut', requirements: ['id' => self::ID], methods: ['POST'])]
@@ -325,7 +329,7 @@ class ColisController extends AbstractController
             }
         }
 
-        return $this->redirectToRoute('colis_show', ['id' => $colis->getId()], Response::HTTP_SEE_OTHER);
+        return $this->versFiche($colis, $request);
     }
 
     #[Route('/{id}/remettre', name: 'colis_remettre', requirements: ['id' => self::ID], methods: ['POST'])]
@@ -341,7 +345,7 @@ class ColisController extends AbstractController
         if (!$sansCode && 0 === $essais->consume(0)->getRemainingTokens()) {
             $this->addFlash('danger', 'Trop de codes erronés pour ce colis : réessayez dans 15 minutes.');
 
-            return $this->redirectToRoute('colis_show', ['id' => $colis->getId()], Response::HTTP_SEE_OTHER);
+            return $this->versFiche($colis, $request);
         }
         try {
             $this->colisService->remettre($colis, $this->getUser(), $request->getPayload()->getString('recuperePar'),
@@ -355,7 +359,7 @@ class ColisController extends AbstractController
             $this->addFlash('danger', $e->getMessage());
         }
 
-        return $this->redirectToRoute('colis_show', ['id' => $colis->getId()], Response::HTTP_SEE_OTHER);
+        return $this->versFiche($colis, $request);
     }
 
     #[Route('/{id}/tarif', name: 'colis_tarif', requirements: ['id' => self::ID], methods: ['POST'])]
@@ -375,7 +379,7 @@ class ColisController extends AbstractController
             }
         }
 
-        return $this->redirectToRoute('colis_show', ['id' => $colis->getId()], Response::HTTP_SEE_OTHER);
+        return $this->versFiche($colis, $request);
     }
 
     /** @param list<Colis> $semblables */
@@ -414,5 +418,11 @@ class ColisController extends AbstractController
         if (!$this->isCsrfTokenValid($id, $request->getPayload()->getString('_token'))) {
             throw $this->createAccessDeniedException('Jeton de sécurité invalide, rechargez la page.');
         }
+    }
+
+    /** Retour sur la fiche du colis en gardant la page d'origine (?retour=…). */
+    private function versFiche(Colis $colis, Request $request, array $parametres = []): Response
+    {
+        return $this->redirectToRoute('colis_show', ['id' => $colis->getId(), 'retour' => Retour::depuis($request)] + $parametres, Response::HTTP_SEE_OTHER);
     }
 }
