@@ -122,7 +122,17 @@
             {% set filtre = filtres.q or filtres.statut or filtres.paiement %}
             <div class="card-header flex-wrap gap-2" id="colis">
                 <h4 class="card-title">Colis de l'expédition <small class="text-muted fs-14">({{ colisListe|length }}{{ filtre ? ' sur ' ~ expedition.colis|filter(c => is_granted('COLIS_VOIR', c))|length }})</small></h4>
-                {% if filtre %}<a href="{{ path('expedition_show', {id: expedition.id}) }}#colis" class="btn btn-light btn-sm btn-rounded"><i class="fas fa-times me-1"></i> Effacer les filtres</a>{% endif %}
+                <div class="d-flex flex-wrap gap-2">
+                    {% if filtre %}<a href="{{ path('expedition_show', {id: expedition.id}) }}#colis" class="btn btn-light btn-sm btn-rounded"><i class="fas fa-times me-1"></i> Effacer les filtres</a>{% endif %}
+                    {% set parametres = {q: filtres.q ?: null, statut: filtres.statut ?: null, paiement: filtres.paiement ?: null, tri: filtres.tri, sens: filtres.sens}|filter(v => v is not null) %}
+                    <div class="dropdown">
+                        <button class="btn btn-primary btn-sm btn-rounded dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="fas fa-download me-1"></i> Exporter{{ filtre ? ' la sélection' }}</button>
+                        <div class="dropdown-menu dropdown-menu-end">
+                            <a class="dropdown-item" href="?{{ parametres|merge({export: 'csv'})|url_encode }}"><i class="fas fa-file-excel text-success me-2"></i>Excel (manifeste complet)</a>
+                            <a class="dropdown-item" href="?{{ parametres|merge({export: 'pdf'})|url_encode }}" target="_blank"><i class="fas fa-file-pdf text-danger me-2"></i>PDF (liste à imprimer)</a>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="card-body pt-0">
                 {# Filtres et tri : aussi appliqués au manifeste Excel. #}

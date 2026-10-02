@@ -16,7 +16,7 @@ final class ExportListener
         'client_index' => 'Export Excel des clients',
         'appel_index' => 'Export Excel du registre des appels',
         'paiement_index' => 'Export Excel des paiements',
-        'expedition_show' => "Export Excel du manifeste d'une expédition",
+        'expedition_show' => "Export des colis d'une expédition (manifeste)",
         'ramassage_export' => 'Export PDF du planning des ramassages',
     ];
 
@@ -34,7 +34,7 @@ final class ExportListener
         if (!$event->isMainRequest() || !isset(self::EXPORTS[$route]) || !$event->getResponse()->isSuccessful()) {
             return;
         }
-        if ('ramassage_export' !== $route && 'csv' !== $request->query->get('export')) {
+        if ('ramassage_export' !== $route && !\in_array($request->query->get('export'), ['csv', 'pdf'], true)) {
             return;
         }
         $filtres = array_filter($request->query->all(), fn ($v, $k) => 'export' !== $k && '' !== $v && \is_scalar($v), \ARRAY_FILTER_USE_BOTH);

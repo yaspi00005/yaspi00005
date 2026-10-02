@@ -16,6 +16,7 @@ use App\Repository\ExpeditionRepository;
 use App\Repository\PaiementRepository;
 use App\Security\IdChiffreur;
 use App\Service\Corbeille;
+use App\Service\DocumentService;
 use App\Service\ExpeditionService;
 use App\Service\ExportExcel;
 use App\Service\PaiementService;
@@ -162,10 +163,29 @@ class ExpeditionController extends AbstractController
     private const TRIS = ['numero', 'client', 'destinataire', 'poids', 'montant', 'reste', 'statut', 'date'];
 
     #[Route('/{id}', name: 'expedition_show', requirements: ['id' => self::ID], methods: ['GET'])]
-    public function show(Request $request, Expedition $expedition, ColisRepository $colisRepository, PaiementRepository $paiements, ExportExcel $excel): Response
+    public function show(Request $request, Expedition $expedition, ColisRepository $colisRepository, PaiementRepository $paiements, ExportExcel $excel, DocumentService $documents): Response
     {
         $this->verifierAcces($expedition);
         [$liste, $filtres] = $this->colisFiltres($request, $expedition);
+
+        if ('pdf' === $request->query->get('export')) {
+            // Liste imprimable des colis (filtres et tri de la page).
+            $criteres = array_filter([
+                $filtres['q'] ? 'recherche « '.$filtres['q'].' »' : null,
+                $filtres['statut'] ? StatutColis::from($filtres['statut'])->label() : null,
+                ['solde' => 'soldés', 'reste' => 'reste à payer'][$filtres['paiement']] ?? null,
+            ]);
+
+            return new Response($documents->pdf('pdf/colis_expedition.html.twig', [
+                'expedition' => $expedition,
+                'colis' => $liste,
+                'criteres' => implode(' · ', $criteres),
+                'genereLe' => new \DateTimeImmutable(),
+            ], 'landscape'), 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="colis-'.$expedition->getNumero().'.pdf"',
+            ]);
+        }
 
         if ('csv' === $request->query->get('export')) {
             // Les codes de retrait ne sortent que pour les administrateurs : au guichet, le représentant

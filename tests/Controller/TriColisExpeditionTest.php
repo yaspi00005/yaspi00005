@@ -47,6 +47,15 @@ final class TriColisExpeditionTest extends WebTestCase
         $client->request('GET', $url, ['paiement' => 'reste']);
         $this->assertSame(\count($tous), \count($soldes) + \count($numeros()));
 
+        // Bouton « Exporter » sur la liste : Excel et PDF.
+        $client->request('GET', $url);
+        $this->assertSelectorExists('#colis .dropdown-menu a[href*="export=csv"]');
+        $this->assertSelectorExists('#colis .dropdown-menu a[href*="export=pdf"]');
+        $client->request('GET', $url, ['paiement' => 'reste', 'export' => 'pdf']);
+        $this->assertResponseIsSuccessful();
+        $this->assertSame('application/pdf', $client->getResponse()->headers->get('Content-Type'));
+        $this->assertStringStartsWith('%PDF', (string) $client->getResponse()->getContent());
+
         // Le manifeste Excel suit la sélection.
         $client->request('GET', $url, ['q' => $tous[0], 'export' => 'csv']);
         $fichier = tempnam(sys_get_temp_dir(), 'xlsx');

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<style>
+    @page { margin: 26px 30px 40px; }
+    body { font-family: 'DejaVu Sans', sans-serif; font-size: 9.5px; color: #222; }
+    .vert { color: #00A15D; }
+    h1 { font-size: 18px; margin: 0; }
+    .petit { font-size: 8.5px; color: #777; }
+    table { width: 100%; border-collapse: collapse; }
+    .liste th { background: #00A15D; color: #fff; padding: 6px; text-align: left; font-size: 8.5px; }
+    .liste td { border-bottom: 1px solid #e5e5e5; padding: 5px 6px; vertical-align: top; }
+    .liste tr:nth-child(even) td { background: #f6faf8; }
+    .liste tr.total td { font-weight: bold; border-top: 2px solid #00A15D; border-bottom: none; background: #fff; }
+    .num { text-align: right; white-space: nowrap; }
+    .rouge { color: #c62828; font-weight: bold; }
+    .pied { position: fixed; bottom: -26px; left: 0; right: 0; font-size: 8px; color: #999; }
+</style>
+</head>
+<body>
+<div class="pied">{{ app_nom }} — Colis de l'expédition {{ expedition.numero }} — exporté le {{ genereLe|date('d/m/Y à H:i') }}{% if app.user %} par {{ app.user.nomComplet }}{% endif %}</div>
+<table>
+    <tr>
+        <td>
+            {% if logo_data_uri() %}<img src="{{ logo_data_uri() }}" alt="" style="height:58px;float:left;margin-right:12px">{% endif %}
+            <h1 class="vert">{{ app_nom }}</h1>
+            <div style="font-size:14px;font-weight:bold;margin-top:4px">Colis de l'expédition {{ expedition.numero }}</div>
+            <div class="petit">{{ expedition.modeTransport.label }} → {{ expedition.destination.label }} · départ le {{ expedition.dateDepart|date('d/m/Y') }}{% if criteres %} · {{ criteres }}{% endif %}</div>
+        </td>
+        <td style="text-align:right;vertical-align:top">
+            <strong style="font-size:14px">{{ colis|length }}</strong> colis<br>
+            <span class="petit">{{ colis|reduce((t, c) => t + c.poidsTotal, 0)|number_format(2, ',', ' ') }} kg</span>
+        </td>
+    </tr>
+</table>
+<br>
+<table class="liste">
+    <thead>
+        <tr>
+            <th style="width:11%">N° suivi</th><th style="width:15%">Client</th><th style="width:10%">Tél. client</th>
+            <th style="width:15%">Destinataire</th><th style="width:10%">Tél. destinataire</th><th class="num" style="width:5%">Art.</th>
+            <th class="num" style="width:7%">Poids</th><th class="num" style="width:8%">Montant</th><th class="num" style="width:8%">Reste</th><th style="width:11%">Statut</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for c in colis %}
+        <tr>
+            <td><strong>{{ c.numeroSuivi }}</strong></td>
+            <td>{{ c.client.nomComplet }}</td>
+            <td>{{ c.client.telephone|tel }}</td>
+            <td>{{ c.destinataireNom }}</td>
+            <td>{{ c.destinataireTelephone|tel }}</td>
+            <td class="num">{{ c.nombreArticles }}</td>
+            <td class="num">{{ c.poidsTotal ? c.poidsTotal|poids : '—' }}</td>
+            <td class="num">{{ c.montantNet|money }}</td>
+            <td class="num {{ c.montantRestant ? 'rouge' }}">{{ c.montantRestant|money }}</td>
+            <td>{{ c.statut.label }}</td>
+        </tr>
+    {% else %}
+        <tr><td colspan="10" style="text-align:center;padding:30px;color:#999">Aucun colis pour ces critères.</td></tr>
+    {% endfor %}
+    {% if colis %}
+        <tr class="total">
+            <td colspan="5">Total</td>
+            <td class="num">{{ colis|reduce((t, c) => t + c.nombreArticles, 0) }}</td>
+            <td class="num">{{ colis|reduce((t, c) => t + c.poidsTotal, 0)|poids }}</td>
+            <td class="num">{{ colis|reduce((t, c) => t + c.montantNet, 0)|money }}</td>
+            <td class="num">{{ colis|reduce((t, c) => t + c.montantRestant, 0)|money }}</td>
+            <td></td>
+        </tr>
+    {% endif %}
+    </tbody>
+</table>
+</body>
+</html>
