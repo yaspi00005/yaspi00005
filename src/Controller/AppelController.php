@@ -74,7 +74,7 @@ class AppelController extends AbstractController
         }
 
         $donnees = [
-            'appels' => Pagination::depuis($qb, $request->query->get('page', 1), 50),
+            'appels' => Pagination::depuisRequete($qb, $request, 50),
             'compteurs' => $appels->compteurs($appels->filtreQb(['camion' => $filtres['camion'], 'chauffeur' => $filtres['chauffeur'], 'expedition' => $filtres['expedition'], 'q' => $filtres['q']])),
             'filtres' => $filtres,
             'synchro' => new \DateTimeImmutable(),

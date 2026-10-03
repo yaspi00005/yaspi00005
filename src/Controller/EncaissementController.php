@@ -75,7 +75,7 @@ class EncaissementController extends AbstractController
         $debutMois = new \DateTimeImmutable('first day of this month 00:00');
 
         return $this->render('encaissement/index.html.twig', [
-            'paiements' => Pagination::depuis($qb, $request->query->get('page', 1), 30),
+            'paiements' => Pagination::depuisRequete($qb, $request, 30),
             'filtres' => $filtres,
             'parMode' => $parMode,
             'total' => array_sum($parMode),

@@ -152,3 +152,8 @@ ol.etapes li { margin-bottom: .35rem; }
 .barre-groupe { position: sticky; top: 0; z-index: 5; background: var(--bs-body-bg, #fff); border: 1px solid rgba(0, 0, 0, .08); border-radius: .75rem; padding: .6rem .9rem; }
 .col-case { width: 2.25rem; }
 .col-case .form-check-input { width: 1.2rem; height: 1.2rem; cursor: pointer; }
+
+/* Nombre de lignes par page (listes) */
+.lignes-par-page { display: inline-flex; flex-wrap: wrap; align-items: center; gap: .35rem; }
+.lignes-par-page a, .lignes-par-page .active { display: inline-block; min-width: 2rem; padding: .1rem .45rem; border-radius: 1rem; text-align: center; border: 1px solid rgba(0, 0, 0, .1); }
+.lignes-par-page .active { background: var(--primary, #0d6efd); border-color: transparent; color: #fff; }

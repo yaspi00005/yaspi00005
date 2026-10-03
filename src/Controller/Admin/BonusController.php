@@ -121,7 +121,7 @@ class BonusController extends AbstractController
         $parMois = $mouvements->parMois(12);
 
         return $this->render('admin/bonus/index.html.twig', [
-            'mouvements' => Pagination::depuis($qb, $request->query->get('page', 1), 30),
+            'mouvements' => Pagination::depuisRequete($qb, $request, 30),
             'filtres' => $filtres,
             'types' => MouvementBonusRepository::TYPES,
             'totaux' => $mouvements->totaux($qb),

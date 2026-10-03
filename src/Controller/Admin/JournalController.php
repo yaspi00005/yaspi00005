@@ -33,7 +33,7 @@ class JournalController extends AbstractController
         ];
 
         return $this->render('admin/journal/index.html.twig', [
-            'entrees' => Pagination::depuis($journal->rechercheQb($filtres), $q->get('page', 1), 50),
+            'entrees' => Pagination::depuisRequete($journal->rechercheQb($filtres), $request, 50),
             'filtres' => $filtres,
             'utilisateurs' => $utilisateurs->findBy([], ['nom' => 'ASC', 'prenom' => 'ASC']),
             'entites' => $journal->entites(),

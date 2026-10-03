@@ -4,6 +4,7 @@ namespace App\Util;
 
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\ORM\Tools\Pagination\Paginator;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
  * @template T
@@ -11,6 +12,9 @@ use Doctrine\ORM\Tools\Pagination\Paginator;
  */
 final class Pagination implements \IteratorAggregate, \Countable
 {
+    /** Nombres de lignes par page proposés (paramètre « par »). */
+    public const CHOIX = [10, 25, 50, 100, 500];
+
     /** @var Paginator<T> */
     private Paginator $paginator;
 
@@ -23,6 +27,25 @@ final class Pagination implements \IteratorAggregate, \Countable
     public static function depuis(QueryBuilder $qb, mixed $page, int $parPage = 25): self
     {
         return new self($qb, max(1, (int) $page), $parPage);
+    }
+
+    /**
+     * Page et nombre de lignes lus dans la requête (?page=2&par=50). Le nombre choisi est retenu pour cette liste
+     * pendant la session : il reste appliqué après un filtre ou en revenant sur la page.
+     */
+    public static function depuisRequete(QueryBuilder $qb, Request $request, int $defaut = 25): self
+    {
+        $cle = 'lignes_par_page.'.$request->attributes->getString('_route');
+        $session = $request->hasSession() ? $request->getSession() : null;
+        $par = $request->query->getInt('par');
+        if (\in_array($par, self::CHOIX, true)) {
+            $session?->set($cle, $par);
+        } else {
+            $memo = $session?->get($cle);
+            $par = \in_array($memo, self::CHOIX, true) ? $memo : $defaut;
+        }
+
+        return self::depuis($qb, $request->query->get('page', 1), $par);
     }
 
     public function getIterator(): \Traversable

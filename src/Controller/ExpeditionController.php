@@ -47,7 +47,7 @@ class ExpeditionController extends AbstractController
         ];
 
         return $this->render('expedition/index.html.twig', [
-            'expeditions' => Pagination::depuis($expeditions->filtreQb($this->getUser(), $filtres), $request->query->get('page', 1), 20),
+            'expeditions' => Pagination::depuisRequete($expeditions->filtreQb($this->getUser(), $filtres), $request, 20),
             'filtres' => $filtres,
             'statuts' => StatutExpedition::cases(),
             'destinations' => Destination::cases(),

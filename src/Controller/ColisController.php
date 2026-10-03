@@ -90,7 +90,7 @@ class ColisController extends AbstractController
         }
 
         return $this->render('colis/index.html.twig', [
-            'colis' => Pagination::depuis($qb, $request->query->get('page', 1)),
+            'colis' => Pagination::depuisRequete($qb, $request),
             'filtres' => $filtres,
             // Un agent de ramassage ne voit que ses propres colis : la colonne « Ajouté par » serait toujours lui.
             'agentSeul' => Perimetre::estRamassage($this->getUser()),

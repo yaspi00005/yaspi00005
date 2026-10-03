@@ -24,7 +24,7 @@ class NotificationController extends AbstractController
         }
 
         return $this->render('admin/notification/index.html.twig', [
-            'notifications' => Pagination::depuis($qb, $request->query->get('page', 1), 40),
+            'notifications' => Pagination::depuisRequete($qb, $request, 40),
             'filtre' => $request->query->get('filtre'),
         ]);
     }

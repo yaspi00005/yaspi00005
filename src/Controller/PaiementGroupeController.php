@@ -22,7 +22,7 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/colis/paiement-groupe')]
 class PaiementGroupeController extends AbstractController
 {
-    public const MAX = 100;
+    public const MAX = 500;
 
     public function __construct(
         private readonly ColisRepository $colis,

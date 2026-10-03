@@ -112,4 +112,21 @@ final class PaiementGroupeTest extends WebTestCase
         $this->assertSelectorTextContains('.alert-warning', 'Cochez au moins un colis');
         $this->assertSame(StatutPaiement::NonPaye, static::getContainer()->get(ColisRepository::class)->find($c->getId())->getStatutPaiement());
     }
+
+    public function testNombreDeLignesParPageRetenu(): void
+    {
+        $this->connecte('admin');
+        $crawler = $this->client->request('GET', self::APP.'/colis?tous=1&par=10');
+        $this->assertLessThanOrEqual(10, $crawler->filter('tbody tr')->count());
+        $this->assertSelectorTextContains('.lignes-par-page .active', '10');
+        // Retenu pour cette liste, même après un filtre.
+        $this->client->request('GET', self::APP.'/colis?tous=1');
+        $this->assertSelectorTextContains('.lignes-par-page .active', '10');
+        // Valeur non proposée : ignorée.
+        $this->client->request('GET', self::APP.'/colis?tous=1&par=100000');
+        $this->assertSelectorTextContains('.lignes-par-page .active', '10');
+        $crawler = $this->client->request('GET', self::APP.'/colis?tous=1&par=500');
+        $this->assertSelectorTextContains('.lignes-par-page .active', '500');
+        $this->assertGreaterThan(10, $crawler->filter('tbody tr')->count());
+    }
 }

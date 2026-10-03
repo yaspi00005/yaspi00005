@@ -61,7 +61,7 @@ class ClientController extends AbstractController
         }
 
         return $this->render('client/index.html.twig', [
-            'clients' => Pagination::depuis($clients->rechercheQb($q), $request->query->get('page', 1)),
+            'clients' => Pagination::depuisRequete($clients->rechercheQb($q), $request),
             'q' => $q,
         ]);
     }

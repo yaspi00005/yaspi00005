@@ -1,10 +1,14 @@
 {# Paramètres : pagination (App\Util\Pagination) #}
-{% if pagination.pages > 1 %}
+{% if pagination.total > constant('App\\Util\\Pagination::CHOIX')|first %}
+{% set params = app.request.query.all %}
 <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-3">
-    <small class="text-muted">{{ pagination.premier }}–{{ pagination.dernier }} sur {{ pagination.total }}</small>
+    <div class="d-flex flex-wrap align-items-center gap-3">
+        <small class="text-muted">{{ pagination.premier }}–{{ pagination.dernier }} sur {{ pagination.total }}</small>
+        {% include 'partials/_lignes_par_page.html.twig' %}
+    </div>
+    {% if pagination.pages > 1 %}
     <nav aria-label="Pagination">
         <ul class="pagination pagination-sm pagination-circle mb-0">
-            {% set params = app.request.query.all %}
             <li class="page-item page-indicator {{ not pagination.aPrecedente ? 'disabled' }}">
                 <a class="page-link" href="?{{ params|merge({page: pagination.page - 1})|url_encode }}" aria-label="Précédent"><i class="la la-angle-left"></i></a>
             </li>
@@ -16,5 +20,6 @@
             </li>
         </ul>
     </nav>
+    {% endif %}
 </div>
 {% endif %}

@@ -1,0 +1,8 @@
+{# Choix du nombre de lignes par page. Paramètre : pagination (App\Util\Pagination) #}
+<small class="lignes-par-page" aria-label="Nombre de lignes par page">
+    <span class="text-muted">Afficher</span>
+    {% for n in constant('App\\Util\\Pagination::CHOIX') %}
+        {% if n == pagination.parPage %}<strong class="active" aria-current="true">{{ n }}</strong>{% else %}<a href="?{{ app.request.query.all|merge({par: n, page: null})|url_encode }}" rel="nofollow">{{ n }}</a>{% endif %}
+    {% endfor %}
+    <span class="text-muted">lignes</span>
+</small>

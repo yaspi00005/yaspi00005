@@ -58,7 +58,7 @@ class PaiementController extends AbstractController
         $parMode = $paiements->totauxParMode($qb);
 
         return $this->render('paiement/index.html.twig', [
-            'paiements' => Pagination::depuis($qb, $request->query->get('page', 1), 30),
+            'paiements' => Pagination::depuisRequete($qb, $request, 30),
             'filtres' => $filtres,
             'parCaissier' => $paiements->totauxParCaissier($qb),
             'parMode' => $parMode,

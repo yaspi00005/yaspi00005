@@ -5,7 +5,7 @@
 {% block body %}
 <div class="card">
     <div class="card-header flex-wrap gap-2">
-        <h4 class="card-title">{{ colis.total }} colis</h4>
+        <div class="d-flex flex-wrap align-items-center gap-3"><h4 class="card-title mb-0">{{ colis.total }} colis</h4>{% if colis.total > 10 %}{% include 'partials/_lignes_par_page.html.twig' with {pagination: colis} %}{% endif %}</div>
         <div class="d-flex gap-2">
             <a href="?{{ app.request.query.all|merge({export: 'csv', page: null})|url_encode }}" class="btn btn-outline-primary btn-sm btn-rounded"><i class="fas fa-file-excel me-1"></i> Export Excel</a>
             {% if is_granted('ROLE_RAMASSAGE') %}
