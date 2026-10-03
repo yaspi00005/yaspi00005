@@ -1,0 +1,73 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Paiement groupé{% endblock %}
+
+{% block body %}
+{% if ecartes > 0 %}
+<div class="alert alert-warning"><i class="fas fa-info-circle me-2"></i>{{ ecartes }} colis coché{{ ecartes > 1 ? 's' }} {{ ecartes > 1 ? 'ont été écartés' : 'a été écarté' }} : déjà payé{{ ecartes > 1 ? 's' }} ou hors de votre périmètre.</div>
+{% endif %}
+
+<div class="row">
+    <div class="col-xl-8">
+        <div class="card">
+            <div class="card-header"><h4 class="card-title"><i class="fas fa-list-check text-primary me-2"></i>Récapitulatif : {{ colis|length }} colis</h4></div>
+            <div class="card-body pt-0">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead><tr><th>N° suivi</th><th>Client</th><th>Destinataire</th><th class="num">Montant</th><th class="num">Déjà payé</th><th class="num">À encaisser</th></tr></thead>
+                        <tbody>
+                        {% for c in colis %}
+                            <tr>
+                                <td class="font-w600">{{ c.numeroSuivi }}<br><small class="text-muted">{{ c.dateReception|date('d/m/Y') }}</small></td>
+                                <td>{{ c.client.nomComplet }}<br><small class="text-muted">{{ c.client.telephone|tel }}</small></td>
+                                <td>{{ c.destinataireNom }}</td>
+                                <td class="num">{{ c.montantNet|money_local }}</td>
+                                <td class="num">{{ c.montantPaye|money_local }}</td>
+                                <td class="num font-w600">{{ c.montantRestant|money_local }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr class="table-light"><th colspan="5" class="text-end">Total à encaisser</th><th class="num fs-18 text-primary">{{ total|money_local }}</th></tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4">
+        <div class="card border-primary">
+            <div class="card-header"><h4 class="card-title"><i class="fas fa-cash-register text-primary me-2"></i>Encaisser</h4></div>
+            <div class="card-body">
+                <div class="text-center mb-3">
+                    <div class="text-muted">Total à encaisser</div>
+                    <div class="fs-28 font-w700 text-primary">{{ total|money_local }}</div>
+                    <div class="text-muted small">{{ colis|length }} colis, chacun soldé</div>
+                </div>
+                <form method="post" action="{{ path('colis_paiement_groupe_confirmer') }}" data-confirm="{{ colis|length }} colis seront marqués comme payés, pour un total de {{ total|money }}. Un paiement est enregistré par colis (visible dans sa fiche et dans le journal)." data-confirm-titre="Confirmer l'encaissement ?" data-confirm-type="primary" data-confirm-bouton="Oui, encaisser {{ total|money }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('paiement-groupe') }}">
+                    <input type="hidden" name="total" value="{{ total }}">
+                    {% if retour %}<input type="hidden" name="retour" value="{{ retour }}">{% endif %}
+                    {% for c in colis %}<input type="hidden" name="ids[]" value="{{ hid(c.id) }}">{% endfor %}
+                    <div class="mb-3">
+                        <label class="form-label" for="pg-mode">Mode de paiement</label>
+                        <select id="pg-mode" name="mode" class="form-select form-control" required>
+                            {% for m in modes %}<option value="{{ m.value }}" {{ m == mode ? 'selected' }}>{{ m.label }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="pg-reference">Référence (transaction, chèque…)</label>
+                        <input type="text" id="pg-reference" name="reference" class="form-control" maxlength="120">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="pg-commentaire">Commentaire</label>
+                        <input type="text" id="pg-commentaire" name="commentaire" class="form-control" maxlength="255" placeholder="Paiement groupé de {{ colis|length }} colis">
+                    </div>
+                    <button class="btn btn-primary w-100"><i class="fas fa-check me-1"></i> Encaisser {{ total|money }}</button>
+                </form>
+                <a href="{{ retour ?? path('colis_index', {paiement: 'non_paye'}) }}" class="btn btn-light w-100 mt-2">Annuler, revenir à la liste</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

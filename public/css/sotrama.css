@@ -147,3 +147,8 @@ ol.etapes li { margin-bottom: .35rem; }
 .apercu-video-admin, .apercu-image-admin { width: 100%; max-height: 360px; border-radius: .75rem; background: #000; object-fit: contain; }
 /* En-tête : boutons sur une seule ligne. */
 .header .navbar-nav .btn { white-space: nowrap; }
+
+/* Paiement groupé (liste des colis non payés) */
+.barre-groupe { position: sticky; top: 0; z-index: 5; background: var(--bs-body-bg, #fff); border: 1px solid rgba(0, 0, 0, .08); border-radius: .75rem; padding: .6rem .9rem; }
+.col-case { width: 2.25rem; }
+.col-case .form-check-input { width: 1.2rem; height: 1.2rem; cursor: pointer; }

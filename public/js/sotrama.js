@@ -730,3 +730,32 @@
         afficher();
     });
 })();
+
+// Paiement groupé (liste des colis non payés) : nombre de colis cochés et total à encaisser, en direct.
+(function () {
+    'use strict';
+    const form = document.querySelector('.js-paiement-groupe');
+    if (!form) { return; }
+    const cases = Array.from(document.querySelectorAll('.js-groupe-case'));
+    const tout = document.querySelector('.js-groupe-tout');
+    const nb = form.querySelector('.js-groupe-nb');
+    const total = form.querySelector('.js-groupe-total');
+    const bouton = form.querySelector('.js-groupe-bouton');
+    const format = (centimes) => (centimes / 100).toLocaleString('fr-FR', { minimumFractionDigits: centimes % 100 ? 2 : 0, maximumFractionDigits: 2 }) + ' ' + (form.dataset.devise || '€');
+    const majour = function () {
+        const cochees = cases.filter((c) => c.checked);
+        nb.textContent = cochees.length;
+        total.textContent = format(cochees.reduce((s, c) => s + parseInt(c.dataset.reste, 10), 0));
+        bouton.disabled = cochees.length === 0;
+        if (tout) {
+            tout.checked = cochees.length > 0 && cochees.length === cases.length;
+            tout.indeterminate = cochees.length > 0 && cochees.length < cases.length;
+        }
+        cases.forEach((c) => c.closest('tr').classList.toggle('table-active', c.checked));
+    };
+    cases.forEach((c) => c.addEventListener('change', majour));
+    if (tout) {
+        tout.addEventListener('change', function () { cases.forEach((c) => { c.checked = tout.checked; }); majour(); });
+    }
+    majour();
+})();

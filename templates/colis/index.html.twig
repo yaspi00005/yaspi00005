@@ -54,10 +54,23 @@
             <p class="text-muted small mb-3"><i class="fas fa-eye me-1"></i> Tous les colis sont affichés, y compris ceux déjà récupérés. <a href="{{ path('colis_index') }}">Masquer les colis récupérés</a>.</p>
         {% endif %}
 
+        {# Paiement groupé : seulement sur la liste filtrée « Non payé », pour qui peut encaisser. #}
+        {% set groupe = filtres.paiement == 'non_paye' and colis|filter(c => is_granted('COLIS_ENCAISSER', c) and c.montantRestant > 0)|length > 0 %}
+        {% if groupe %}
+        <form method="post" action="{{ path('colis_paiement_groupe') }}" id="paiement-groupe" class="js-paiement-groupe" data-devise="{{ app_devise }}">
+            <input type="hidden" name="retour" value="{{ app.request.requestUri }}">
+            <div class="barre-groupe d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                <span><i class="fas fa-check-square text-primary me-1"></i> Paiement groupé : cochez les colis à encaisser.
+                    <strong class="ms-1"><span class="js-groupe-nb">0</span> sélectionné(s) · <span class="js-groupe-total">0</span></strong></span>
+                <button class="btn btn-primary btn-sm btn-rounded js-groupe-bouton"><i class="fas fa-cash-register me-1"></i> Encaisser la sélection</button>
+            </div>
+        </form>
+        {% endif %}
         <div class="table-responsive">
             <table class="table table-hover">
                 <thead>
                     <tr>
+                        {% if groupe %}<th class="col-case"><input type="checkbox" class="form-check-input js-groupe-tout" title="Tout cocher" aria-label="Cocher tous les colis de la page"></th>{% endif %}
                         <th>N° suivi</th>
                         <th>Client</th>
                         <th>Destinataire</th>
@@ -73,6 +86,7 @@
                 <tbody>
                 {% for c in colis %}
                     <tr>
+                        {% if groupe %}<td class="col-case">{% if is_granted('COLIS_ENCAISSER', c) and c.montantRestant > 0 %}<input type="checkbox" name="ids[]" value="{{ hid(c.id) }}" form="paiement-groupe" class="form-check-input js-groupe-case" data-reste="{{ c.montantRestant }}" aria-label="Encaisser {{ c.numeroSuivi }}">{% endif %}</td>{% endif %}
                         <td><a href="{{ path('colis_show', {id: c.id, retour: app.request.requestUri}) }}" class="text-primary font-w600">{{ c.numeroSuivi }}</a><br><small class="text-muted">{{ c.dateReception|date('d/m/Y H:i') }}</small></td>
                         <td>{{ c.client.nomComplet }}<br><small class="text-muted">{{ c.client.telephone|tel }}</small></td>
                         <td>{{ c.destinataireNom }}<br><small class="text-muted">{{ c.destinataireTelephone|tel }}</small></td>
@@ -85,7 +99,7 @@
                         {% if not agentSeul %}<td>{{ c.agent ? c.agent.nomComplet : '—' }}</td>{% endif %}
                     </tr>
                 {% else %}
-                    <tr><td colspan="10"><div class="empty-state"><i class="fas fa-search"></i>Aucun colis ne correspond à ces critères.</div></td></tr>
+                    <tr><td colspan="11"><div class="empty-state"><i class="fas fa-search"></i>Aucun colis ne correspond à ces critères.</div></td></tr>
                 {% endfor %}
                 </tbody>
             </table>
