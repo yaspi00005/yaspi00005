@@ -10,6 +10,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Psr\Cache\CacheItemPoolInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
  * Rapports d'activité aux administrateurs, à lancer chaque nuit à minuit (tâche cron) :
@@ -30,6 +31,8 @@ final class RapportActiviteCommand extends Command
     public function __construct(
         private readonly RapportActivite $rapports,
         private readonly CacheItemPoolInterface $cache,
+        #[Autowire('%env(MAILER_DSN)%')] private readonly string $mailerDsn,
+        #[Autowire('%kernel.environment%')] private readonly string $environnement,
     ) {
         parent::__construct();
     }
@@ -55,6 +58,14 @@ final class RapportActiviteCommand extends Command
         $destinataires = $input->getOption('a') ? [$input->getOption('a')] : $this->rapports->destinataires();
         if (!$destinataires && !$input->getOption('apercu')) {
             $io->warning("Aucun administrateur n'a d'adresse e-mail : renseignez-la dans Administration → Utilisateurs (ou RAPPORTS_EMAILS dans .env.local).");
+
+            return Command::FAILURE;
+        }
+
+        // MAILER_DSN=null://null : les e-mails partent « dans le vide » sans erreur ; le rapport serait marqué
+        // comme envoyé et ne repartirait jamais. On s'arrête avant.
+        if ('test' !== $this->environnement && !$input->getOption('apercu') && str_starts_with(strtolower(trim($this->mailerDsn)), 'null:')) {
+            $io->error("Envoi des e-mails désactivé (MAILER_DSN=null://null) : aucun rapport ne peut partir. Renseignez MAILER_DSN dans .env.local (serveur d'envoi de l'hébergeur), puis testez avec « php bin/console mailer:test votre@adresse.fr --env=prod ».");
 
             return Command::FAILURE;
         }
