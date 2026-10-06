@@ -1,4 +1,7 @@
-/* Comportements communs SOTRAMA (jQuery fourni par le thème). */
+/*
+ * SOTRAMA — comportements communs (jQuery fourni par le thème).
+ * Auteur : Yaya DIALLO <bayayadiallo1@gmail.com>
+ */
 (function ($) {
     'use strict';
 

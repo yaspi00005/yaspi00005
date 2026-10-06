@@ -1,6 +1,13 @@
 {
     "type": "project",
     "license": "proprietary",
+    "description": "SOTRAMA : gestion des envois de colis France → Mali / Sénégal",
+    "authors": [
+        {
+            "name": "Yaya DIALLO",
+            "email": "bayayadiallo1@gmail.com"
+        }
+    ],
     "minimum-stability": "stable",
     "prefer-stable": true,
     "require": {

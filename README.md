@@ -7,6 +7,8 @@ et suivi en ligne pour les destinataires.
 Réécriture complète de l'ancienne application (Symfony 7.4, PHP 8.2+, MySQL 8 / MariaDB),
 avec l'interface du thème **Workload** (ThemeForest).
 
+**Auteur :** Yaya DIALLO — bayayadiallo1@gmail.com
+
 ## Fonctionnalités
 
 | Module | Pour qui | Ce qu'on y fait |

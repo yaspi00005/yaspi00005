@@ -1,4 +1,7 @@
-/* Compléments SOTRAMA au thème Workload. */
+/*
+ * SOTRAMA — compléments au thème Workload.
+ * Auteur : Yaya DIALLO <bayayadiallo1@gmail.com>
+ */
 /* Le thème donne aux cartes toute la hauteur de la colonne : on la retire quand plusieurs cartes sont empilées. */
 .card:not(:only-child) { height: auto; }
 .avatar-initiales {
