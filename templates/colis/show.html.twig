@@ -105,20 +105,18 @@
 
         <div class="card">
             <div class="card-header">
-                <h4 class="card-title">Articles ({{ colis.nombreArticles }})</h4>
-                <span class="text-muted">{{ colis.poidsTotal|poids }}</span>
+                <h4 class="card-title">Articles : {{ colis.nombreArticles }} colis</h4>
             </div>
             <div class="card-body pt-0">
                 <div class="table-responsive">
                     <table class="table mb-0">
-                        <thead><tr><th>Photo</th><th>Marchandise</th><th>Observations</th><th class="num">Poids</th><th class="num">Prix</th></tr></thead>
+                        <thead><tr><th>Photo</th><th>Marchandise</th><th>Observations</th><th class="num">Prix</th></tr></thead>
                         <tbody>
                         {% for a in colis.articles %}
                             <tr>
                                 <td>{% if a.photo %}<a href="{{ path('article_photo', {id: a.id}) }}" target="_blank"><img src="{{ path('article_photo', {id: a.id}) }}" alt="Photo de l'article" class="rounded" style="width:56px;height:56px;object-fit:cover"></a>{% else %}<span class="text-muted">—</span>{% endif %}</td>
                                 <td class="font-w600">{{ a.typeMarchandise }}</td>
                                 <td class="text-muted">{{ a.observations }}</td>
-                                <td class="num">{{ a.poidsVolume|poids }}</td>
                                 <td class="num">{{ a.prix|money }}</td>
                             </tr>
                         {% endfor %}

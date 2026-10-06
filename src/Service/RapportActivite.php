@@ -143,7 +143,7 @@ final class RapportActivite
         return [
             'enregistres' => $enregistres,
             'enregistresMontant' => $total($enregistres, fn (Colis $c) => $c->getMontantNet()),
-            'enregistresPoids' => $total($enregistres, fn (Colis $c) => $c->getPoidsTotal()),
+            'enregistresNombre' => $total($enregistres, fn (Colis $c) => $c->getNombreArticles()),
             'parDestination' => $parDestination,
             'remis' => $remis,
             'paiements' => $paiements,

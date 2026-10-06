@@ -29,8 +29,8 @@
             <div class="petit">{{ expedition.modeTransport.label }} → {{ expedition.destination.label }} · départ le {{ expedition.dateDepart|date('d/m/Y') }}{% if criteres %} · {{ criteres }}{% endif %}</div>
         </td>
         <td style="text-align:right;vertical-align:top">
-            <strong style="font-size:14px">{{ colis|length }}</strong> colis<br>
-            <span class="petit">{{ colis|reduce((t, c) => t + c.poidsTotal, 0)|number_format(2, ',', ' ') }} kg</span>
+            <strong style="font-size:14px">{{ colis|reduce((t, c) => t + c.nombreArticles, 0) }}</strong> colis<br>
+            <span class="petit">{{ colis|length }} envoi{{ colis|length > 1 ? 's' }}</span>
         </td>
     </tr>
 </table>
@@ -39,8 +39,8 @@
     <thead>
         <tr>
             <th style="width:11%">N° suivi</th><th style="width:15%">Client</th><th style="width:10%">Tél. client</th>
-            <th style="width:15%">Destinataire</th><th style="width:10%">Tél. destinataire</th><th class="num" style="width:5%">Art.</th>
-            <th class="num" style="width:7%">Poids</th><th class="num" style="width:8%">Montant</th><th class="num" style="width:8%">Reste</th><th style="width:11%">Statut</th>
+            <th style="width:15%">Destinataire</th><th style="width:10%">Tél. destinataire</th><th class="num" style="width:7%">Nb colis</th>
+           <th class="num" style="width:8%">Montant</th><th class="num" style="width:8%">Reste</th><th style="width:11%">Statut</th>
         </tr>
     </thead>
     <tbody>
@@ -52,19 +52,17 @@
             <td>{{ c.destinataireNom }}</td>
             <td>{{ c.destinataireTelephone|tel }}</td>
             <td class="num">{{ c.nombreArticles }}</td>
-            <td class="num">{{ c.poidsTotal ? c.poidsTotal|poids : '—' }}</td>
             <td class="num">{{ c.montantNet|money }}</td>
             <td class="num {{ c.montantRestant ? 'rouge' }}">{{ c.montantRestant|money }}</td>
             <td>{{ c.statut.label }}</td>
         </tr>
     {% else %}
-        <tr><td colspan="10" style="text-align:center;padding:30px;color:#999">Aucun colis pour ces critères.</td></tr>
+        <tr><td colspan="9" style="text-align:center;padding:30px;color:#999">Aucun colis pour ces critères.</td></tr>
     {% endfor %}
     {% if colis %}
         <tr class="total">
             <td colspan="5">Total</td>
             <td class="num">{{ colis|reduce((t, c) => t + c.nombreArticles, 0) }}</td>
-            <td class="num">{{ colis|reduce((t, c) => t + c.poidsTotal, 0)|poids }}</td>
             <td class="num">{{ colis|reduce((t, c) => t + c.montantNet, 0)|money }}</td>
             <td class="num">{{ colis|reduce((t, c) => t + c.montantRestant, 0)|money }}</td>
             <td></td>

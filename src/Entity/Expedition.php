@@ -281,6 +281,12 @@ class Expedition
         return max(0, $this->getMontantTotal() - $this->getMontantEncaisse());
     }
 
+    /** Nombre de colis physiques (cartons, valises…) : un par article. */
+    public function getNombreArticles(): int
+    {
+        return array_sum($this->colis->map(fn (Colis $c) => $c->getNombreArticles())->toArray());
+    }
+
     public function getPoidsTotal(): float
     {
         return array_sum($this->colis->map(fn (Colis $c) => $c->getPoidsTotal())->toArray());

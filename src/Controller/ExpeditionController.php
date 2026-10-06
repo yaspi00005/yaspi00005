@@ -129,7 +129,7 @@ class ExpeditionController extends AbstractController
         $valeur = fn (Colis $c) => match ($f['tri']) {
             'client' => mb_strtolower($c->getClient()->getNomComplet()),
             'destinataire' => mb_strtolower((string) $c->getDestinataireNom()),
-            'poids' => $c->getPoidsTotal(),
+            'nombre' => $c->getNombreArticles(),
             'montant' => $c->getMontantNet(),
             'reste' => $c->getMontantRestant(),
             'statut' => array_search($c->getStatut(), StatutColis::cases(), true),
@@ -160,7 +160,7 @@ class ExpeditionController extends AbstractController
     }
 
     /** Tris proposés sur la liste des colis de l'expédition : clé → valeur comparée. */
-    private const TRIS = ['numero', 'client', 'destinataire', 'poids', 'montant', 'reste', 'statut', 'date'];
+    private const TRIS = ['numero', 'client', 'destinataire', 'nombre', 'montant', 'reste', 'statut', 'date'];
 
     #[Route('/{id}', name: 'expedition_show', requirements: ['id' => self::ID], methods: ['GET'])]
     public function show(Request $request, Expedition $expedition, ColisRepository $colisRepository, PaiementRepository $paiements, ExportExcel $excel, DocumentService $documents): Response
@@ -193,10 +193,10 @@ class ExpeditionController extends AbstractController
             $avecCodes = $this->isGranted(User::ROLE_ADMIN);
 
             return $excel->reponse('manifeste-'.$expedition->getNumero().'.xlsx', 'Manifeste '.$expedition->getNumero(),
-                ['N° suivi', 'Client', 'Tél. client', 'Destinataire', 'Tél. destinataire', 'Articles', 'Poids (kg)', 'Tarif net', 'Payé', 'Reste', 'Statut', ...($avecCodes ? ['Code retrait'] : [])],
+                ['N° suivi', 'Client', 'Tél. client', 'Destinataire', 'Tél. destinataire', 'Nb colis', 'Tarif net', 'Payé', 'Reste', 'Statut', ...($avecCodes ? ['Code retrait'] : [])],
                 array_map(fn (Colis $c) => [
                     $c->getNumeroSuivi(), $c->getClient()->getNomComplet(), $c->getClient()->getTelephone(),
-                    $c->getDestinataireNom(), $c->getDestinataireTelephone(), $c->getNombreArticles(), $c->getPoidsTotal(),
+                    $c->getDestinataireNom(), $c->getDestinataireTelephone(), $c->getNombreArticles(),
                     Csv::montant($c->getMontantNet()), Csv::montant($c->getMontantPaye()), Csv::montant($c->getMontantRestant()),
                     $c->getStatut()->label(), ...($avecCodes ? [$c->getCodeRetrait()] : []),
                 ], $liste),

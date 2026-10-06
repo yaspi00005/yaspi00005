@@ -39,9 +39,9 @@
 
 <div class="row">
     {% for s in [
-        {v: expedition.colis|length, l: 'Colis', i: 'fa-box', c: 'primary'},
+        {v: expedition.colis|length, l: 'Envois (n° de suivi)', i: 'fa-receipt', c: 'primary'},
         {v: clients, l: 'Clients', i: 'fa-users', c: 'info'},
-        {v: expedition.poidsTotal|poids, l: 'Poids total', i: 'fa-weight-hanging', c: 'warning'},
+        {v: expedition.nombreArticles, l: 'Nombre de colis', i: 'fa-boxes', c: 'warning'},
         {v: expedition.montantEncaisse|money, l: 'Encaissé sur ' ~ expedition.montantTotal|money, i: 'fa-euro-sign', c: 'success'},
     ] %}
     <div class="col-xl-3 col-sm-6">
@@ -164,7 +164,7 @@
                     <table class="table table-hover">
                         <thead><tr>
                             {{ t.tri('N° suivi', 'numero', filtres, expedition) }}{{ t.tri('Client', 'client', filtres, expedition) }}{{ t.tri('Destinataire', 'destinataire', filtres, expedition) }}
-                            {{ t.tri('Poids', 'poids', filtres, expedition, 'num') }}{{ t.tri('Montant', 'montant', filtres, expedition, 'num') }}{{ t.tri('Reste', 'reste', filtres, expedition, 'num') }}
+                            {{ t.tri('Nb colis', 'nombre', filtres, expedition, 'num') }}{{ t.tri('Montant', 'montant', filtres, expedition, 'num') }}{{ t.tri('Reste', 'reste', filtres, expedition, 'num') }}
                             {{ t.tri('Statut', 'statut', filtres, expedition) }}<th></th>
                         </tr></thead>
                         <tbody>
@@ -173,7 +173,7 @@
                                 <td><a href="{{ path('colis_show', {id: c.id, retour: app.request.requestUri}) }}" class="text-primary font-w600">{{ c.numeroSuivi }}</a></td>
                                 <td>{{ c.client.nomComplet }}</td>
                                 <td>{{ c.destinataireNom }}<br><small class="text-muted">{{ c.destinataireTelephone|tel }}</small></td>
-                                <td class="num">{{ c.poidsTotal|poids }}</td>
+                                <td class="num">{{ c.nombreArticles }}</td>
                                 <td class="num">{{ c.montantNet|money }}</td>
                                 <td class="num {{ c.montantRestant ? 'text-danger font-w600' }}">{{ c.montantRestant|money }}</td>
                                 <td>{% include 'partials/_badge.html.twig' with {statut: c.statut} %}</td>
@@ -203,12 +203,12 @@
                     <input type="hidden" name="_token" value="{{ csrf_token('affecter-expedition-' ~ expedition.id) }}">
                     <div class="table-responsive">
                         <table class="table">
-                            <thead><tr><th><input type="checkbox" class="form-check-input" data-tout-cocher=".js-affecter" aria-label="Tout sélectionner"></th><th>N° suivi</th><th>Client</th><th>Reçu le</th><th class="num">Poids</th></tr></thead>
+                            <thead><tr><th><input type="checkbox" class="form-check-input" data-tout-cocher=".js-affecter" aria-label="Tout sélectionner"></th><th>N° suivi</th><th>Client</th><th>Reçu le</th><th class="num">Nb colis</th></tr></thead>
                             <tbody>
                             {% for c in colisSansExpedition %}
                                 <tr>
                                     <td><input type="checkbox" name="colis[]" value="{{ hid(c.id) }}" class="form-check-input js-affecter" aria-label="Sélectionner {{ c.numeroSuivi }}"></td>
-                                    <td>{{ c.numeroSuivi }}</td><td>{{ c.client.nomComplet }}</td><td>{{ c.dateReception|date('d/m/Y') }}</td><td class="num">{{ c.poidsTotal|poids }}</td>
+                                    <td>{{ c.numeroSuivi }}</td><td>{{ c.client.nomComplet }}</td><td>{{ c.dateReception|date('d/m/Y') }}</td><td class="num">{{ c.nombreArticles }}</td>
                                 </tr>
                             {% endfor %}
                             </tbody>

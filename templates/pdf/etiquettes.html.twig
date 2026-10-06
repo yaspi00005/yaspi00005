@@ -98,7 +98,7 @@
 
                 <div class="contenu">
                     <div class="titre premier">Contenu{{ et.total > 1 and et.parArticle ? ' de ce colis' }}</div>
-                    <div class="moyen">{{ et.contenu|u.truncate(110, '…') }}{% if et.poids %} — <strong>{{ et.total > 1 and not et.parArticle ? 'poids total ' }}{{ et.poids|number_format(1, ',', ' ') }} kg</strong>{% endif %}</div>
+                    <div class="moyen">{{ et.contenu|u.truncate(110, '…') }}</div>
                 </div>
 
                 <div class="code-barres">

@@ -130,15 +130,13 @@
         let index = $liste.children('.article-ligne').length;
 
         const recalculer = function () {
-            let poids = 0, total = 0, n = 0;
+            let total = 0, n = 0;
             $liste.children('.article-ligne').each(function () {
                 n++;
-                poids += parseFloat($(this).find('.js-poids').val().replace(',', '.')) || 0;
                 total += parseFloat($(this).find('.js-prix').val().replace(',', '.')) || 0;
                 $(this).find('.numero-article').text(n);
             });
             $('#total-articles').text(n);
-            $('#total-poids').text(formatMontant(poids));
             $('#total-prix').text(formatMontant(total));
         };
 

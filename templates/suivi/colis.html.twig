@@ -43,7 +43,7 @@
         <div class="col-sm-6">
             <div class="border rounded-3 p-3 h-100">
                 <div class="text-muted fs-13">Contenu</div>
-                <div class="text-black">{{ colis.nombreArticles }} article(s) · {{ colis.poidsTotal|poids }}</div>
+                <div class="text-black">{{ colis.nombreArticles }} colis</div>
                 <div class="text-muted fs-13 mt-2">Reste à payer</div>
                 <div class="fs-20 font-w700 {{ colis.montantRestant ? 'text-danger' : 'text-success' }}">{{ colis.montantRestant ? colis.montantRestant|money : 'Soldé ✔' }}</div>
             </div>

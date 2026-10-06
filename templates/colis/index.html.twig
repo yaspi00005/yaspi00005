@@ -75,7 +75,7 @@
                         <th>Client</th>
                         <th>Destinataire</th>
                         {% if is_granted('ROLE_RAMASSAGE') %}<th>Expédition</th>{% endif %}
-                        <th class="num">Poids</th>
+                        <th class="num">Nb colis</th>
                         <th class="num">Montant</th>
                         <th class="num">Reste</th>
                         <th>Statut</th>
@@ -91,7 +91,7 @@
                         <td>{{ c.client.nomComplet }}<br><small class="text-muted">{{ c.client.telephone|tel }}</small></td>
                         <td>{{ c.destinataireNom }}<br><small class="text-muted">{{ c.destinataireTelephone|tel }}</small></td>
                         {% if is_granted('ROLE_RAMASSAGE') %}<td>{% if c.expedition %}{% if is_granted('ROLE_ADMIN') %}<a href="{{ path('expedition_show', {id: c.expedition.id}) }}">{{ c.expedition.numero }}</a>{% else %}{{ c.expedition.numero }}{% endif %}<br><small class="text-muted">{{ c.expedition.destination.label }}</small>{% else %}<span class="text-muted">—</span>{% endif %}</td>{% endif %}
-                        <td class="num">{{ c.poidsTotal|poids }}</td>
+                        <td class="num">{{ c.nombreArticles }}</td>
                         <td class="num">{{ c.montantNet|money_local }}</td>
                         <td class="num {{ c.montantRestant > 0 ? 'text-danger font-w600' }}">{{ c.montantRestant|money_local }}</td>
                         <td>{% include 'partials/_badge.html.twig' with {statut: c.statut} %}</td>

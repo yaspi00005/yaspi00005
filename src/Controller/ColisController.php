@@ -71,7 +71,7 @@ class ColisController extends AbstractController
 
         if ('csv' === $request->query->get('export')) {
             return $excel->reponse('colis-'.date('Y-m-d').'.xlsx', 'Liste des colis',
-                ['N° suivi', 'Date', 'Ajouté par', 'Client', 'Téléphone client', 'Destinataire', 'Tél. destinataire', 'Expédition', 'Articles', 'Poids (kg)', 'Tarif', 'Remise', 'Payé', 'Reste', 'Statut', 'Paiement'],
+                ['N° suivi', 'Date', 'Ajouté par', 'Client', 'Téléphone client', 'Destinataire', 'Tél. destinataire', 'Expédition', 'Nb colis', 'Tarif', 'Remise', 'Payé', 'Reste', 'Statut', 'Paiement'],
                 (function () use ($qb) {
                     foreach ($qb->getQuery()->toIterable() as $c) {
                         /* @var Colis $c */
@@ -79,7 +79,7 @@ class ColisController extends AbstractController
                             $c->getNumeroSuivi(), $c->getDateReception()->format('d/m/Y H:i'), $c->getAgent()?->getNomComplet(),
                             $c->getClient()->getNomComplet(), $c->getClient()->getTelephone(),
                             $c->getDestinataireNom(), $c->getDestinataireTelephone(),
-                            $c->getExpedition()?->getNumero(), $c->getNombreArticles(), $c->getPoidsTotal(),
+                            $c->getExpedition()?->getNumero(), $c->getNombreArticles(),
                             Csv::montant($c->getFrais()), Csv::montant($c->getRemise()), Csv::montant($c->getMontantPaye()), Csv::montant($c->getMontantRestant()),
                             $c->getStatut()->label(), $c->getStatutPaiement()->label(),
                         ];

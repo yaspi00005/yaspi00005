@@ -38,7 +38,7 @@
 
 <table class="chiffres" style="margin-top:12px">
     <tr>
-        <td><div class="l">Colis enregistrés</div><div class="v">{{ r.enregistres|length }}</div><div class="petit">{{ r.enregistresMontant|money }} · {{ r.enregistresPoids|poids }}</div></td>
+        <td><div class="l">Colis enregistrés</div><div class="v">{{ r.enregistres|length }}</div><div class="petit">{{ r.enregistresMontant|money }} · {{ r.enregistresNombre }} colis</div></td>
         <td><div class="l">Colis remis</div><div class="v">{{ r.remis|length }}</div><div class="petit">aux destinataires</div></td>
         <td><div class="l">Paiements reçus</div><div class="v">{{ r.paiementsTotal|money }}</div><div class="petit">{{ r.paiements|length }} paiement(s){% if r.paiementsRemises %} · remises {{ r.paiementsRemises|money }}{% endif %}</div></td>
         <td><div class="l">Ramassages</div><div class="v">{{ r.ramassagesPrevus|length }}</div><div class="petit">prévus · {{ r.ramassagesCrees }} planifié(s)</div></td>
@@ -106,7 +106,7 @@
 <h2>Colis enregistrés ({{ r.enregistres|length }})</h2>
 {% if r.enregistres %}
 <table class="liste">
-    <tr><th>Date</th><th>N° de suivi</th><th>Client</th><th>Destinataire</th><th>Destination</th><th class="num">Poids</th><th class="num">Montant</th><th class="num">Reste</th></tr>
+    <tr><th>Date</th><th>N° de suivi</th><th>Client</th><th>Destinataire</th><th>Destination</th><th class="num">Nb colis</th><th class="num">Montant</th><th class="num">Reste</th></tr>
     {% for c in r.enregistres %}
     <tr>
         <td>{{ c.dateReception|date('d/m H:i') }}</td>
@@ -114,12 +114,12 @@
         <td>{{ c.client.nomComplet }}</td>
         <td>{{ c.destinataireNom }}</td>
         <td>{{ c.expedition ? c.expedition.destination.ville : '—' }}</td>
-        <td class="num">{{ c.poidsTotal|poids }}</td>
+        <td class="num">{{ c.nombreArticles }}</td>
         <td class="num">{{ c.montantNet|money }}</td>
         <td class="num">{{ c.montantRestant ? c.montantRestant|money : '✔' }}</td>
     </tr>
     {% endfor %}
-    <tr class="total"><td colspan="5">Total</td><td class="num">{{ r.enregistresPoids|poids }}</td><td class="num">{{ r.enregistresMontant|money }}</td><td></td></tr>
+    <tr class="total"><td colspan="5">Total</td><td class="num">{{ r.enregistresNombre }}</td><td class="num">{{ r.enregistresMontant|money }}</td><td></td></tr>
 </table>
 {% else %}<div class="vide">Aucun colis enregistré sur la période.</div>{% endif %}
 
