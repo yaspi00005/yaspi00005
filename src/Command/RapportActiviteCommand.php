@@ -51,6 +51,8 @@ final class RapportActiviteCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
+        // Trace de chaque lancement dans var/log/rapports.log : prouve que la tâche cron tourne, et avec quel PHP.
+        $io->text(\sprintf('--- %s · lancement (PHP %s, %s)', date('d/m/Y H:i:s'), \PHP_VERSION, \PHP_SAPI));
         $maintenant = new \DateTimeImmutable();
         $date = $input->getOption('date') ? new \DateTimeImmutable($input->getOption('date')) : null;
         $types = $input->getOption('type') ? [$input->getOption('type')] : RapportActivite::rapportsDus($maintenant);
