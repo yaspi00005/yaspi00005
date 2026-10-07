@@ -434,9 +434,10 @@ class Colis
         return $this;
     }
 
+    /** Nombre de colis physiques (cartons, valises…) : somme des quantités des lignes. */
     public function getNombreArticles(): int
     {
-        return $this->articles->count();
+        return array_sum($this->articles->map(fn (Article $a) => $a->getQuantite())->toArray());
     }
 
     public function getPoidsTotal(): float

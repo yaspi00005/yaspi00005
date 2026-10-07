@@ -60,8 +60,7 @@
             <div class="card-body">
                 {{ form_errors(form.articles) }}
                 <div id="articles-liste"
-                     data-prototype="{{ include('colis/_article.html.twig', {f: form.articles.vars.prototype})|e('html_attr') }}"
-                     data-tarifs="{{ types|filter(t => t.prixUnitaire)|reduce((acc, t) => acc|merge({(t.nom|lower): t.prixUnitaire}), {})|json_encode }}">
+                     data-prototype="{{ include('colis/_article.html.twig', {f: form.articles.vars.prototype})|e('html_attr') }}">
                     {% for f in form.articles %}
                         {% include 'colis/_article.html.twig' with {f: f} %}
                     {% endfor %}

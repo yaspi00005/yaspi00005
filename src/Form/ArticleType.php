@@ -7,6 +7,7 @@ use App\Repository\TypeMarchandiseRepository;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
+use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\MoneyType;
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
@@ -28,13 +29,11 @@ class ArticleType extends AbstractType
 
         $builder
             ->add('typeMarchandise', ChoiceType::class, $this->optionsType($noms))
-            ->add('poidsVolume', NumberType::class, [
-                'invalid_message' => 'Saisissez un nombre valide (ex. : 2,5).',
-                'label' => 'Poids (kg)',
-                'required' => false,
-                'scale' => 2,
-                'html5' => true,
-                'attr' => ['step' => '0.01', 'min' => '0.01', 'class' => 'js-poids'],
+            ->add('quantite', IntegerType::class, [
+                'invalid_message' => 'Saisissez un nombre entier (ex. : 3).',
+                'label' => 'Nombre de colis',
+                'empty_data' => '1',
+                'attr' => ['min' => 1, 'max' => 999, 'step' => 1, 'inputmode' => 'numeric', 'class' => 'js-quantite'],
             ])
             ->add('prix', MoneyType::class, [
                 'invalid_message' => 'Saisissez un montant valide (ex. : 12,50).',

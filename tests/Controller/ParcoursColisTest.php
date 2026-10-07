@@ -44,8 +44,8 @@ final class ParcoursColisTest extends WebTestCase
         $valeurs['colis']['expedition'] = $expedition->getId();
         $valeurs['colis']['typeExpedition'] = 'standard';
         $valeurs['colis']['articles'] = [
-            ['typeMarchandise' => 'Vêtements', 'poidsVolume' => '10', 'prix' => '80', 'observations' => ''],
-            ['typeMarchandise' => 'Chaussures', 'poidsVolume' => '2,5', 'prix' => '22,50', 'observations' => 'Fragile'],
+            ['typeMarchandise' => 'Vêtements', 'quantite' => '3', 'prix' => '80', 'observations' => ''],
+            ['typeMarchandise' => 'Chaussures', 'quantite' => '1', 'prix' => '22,50', 'observations' => 'Fragile'],
         ];
         $valeurs['confirmer_doublon'] = '1'; // les tests créent plusieurs fois le même colis
         $this->client->request('POST', '/colis/nouveau', $valeurs);
@@ -64,9 +64,9 @@ final class ParcoursColisTest extends WebTestCase
 
         $this->assertMatchesRegularExpression('/^ST\d{4}-\d{4}$/', $colis->getNumeroSuivi());
         $this->assertMatchesRegularExpression('/^[A-Z2-9]{6}$/', $colis->getCodeRetrait());
-        $this->assertSame(2, $colis->getNombreArticles());
+        $this->assertCount(2, $colis->getArticles());
+        $this->assertSame(4, $colis->getNombreArticles(), 'Nombre de colis = 3 cartons de vêtements + 1 de chaussures.');
         $this->assertSame(10250, $colis->getFrais(), 'Frais = somme des prix des articles (80 + 22,50).');
-        $this->assertSame(12.5, $colis->getPoidsTotal());
         $this->assertSame(StatutColis::EnPreparation, $colis->getStatut());
         $this->assertCount(1, $colis->getHistorique());
     }
@@ -96,7 +96,7 @@ final class ParcoursColisTest extends WebTestCase
         $valeurs['colis']['destinataireNom'] = 'Double';
         $valeurs['colis']['destinataireTelephone'] = '76000000';
         $valeurs['colis']['typeExpedition'] = 'standard';
-        $valeurs['colis']['articles'] = [['typeMarchandise' => 'Divers', 'poidsVolume' => '1', 'prix' => '10']];
+        $valeurs['colis']['articles'] = [['typeMarchandise' => 'Divers', 'quantite' => '1', 'prix' => '10']];
 
         $this->client->request('POST', '/colis/nouveau', $valeurs);
         $this->client->request('POST', '/colis/nouveau', $valeurs);

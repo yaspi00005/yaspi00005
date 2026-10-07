@@ -18,13 +18,13 @@ class TypeMarchandiseType extends AbstractType
             ->add('nom', TextType::class, ['label' => 'Nom'])
             ->add('prixUnitaire', MoneyType::class, [
                 'invalid_message' => 'Saisissez un montant valide (ex. : 12,50).',
-                'label' => 'Tarif indicatif au kg',
+                'label' => 'Tarif indicatif',
                 'divisor' => 100,
                 'currency' => false,
                 'html5' => true,
                 'required' => false,
                 'attr' => ['step' => '0.01', 'min' => '0'],
-                'help' => 'Pré-remplit le prix lors de la saisie (poids × tarif).',
+                'help' => 'Pour mémoire : le prix de chaque ligne se saisit dans le colis.',
             ])
             ->add('actif', CheckboxType::class, ['label' => 'Proposé à la saisie', 'required' => false]);
     }

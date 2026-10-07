@@ -39,7 +39,7 @@ final class PhotoColisTest extends WebTestCase
         $valeurs['colis']['destinataireTelephone'] = '76 00 00 01';
         $valeurs['colis']['expedition'] = static::getContainer()->get(ExpeditionRepository::class)->findOneBy(['statut' => StatutExpedition::EnPreparation])->getId();
         $valeurs['colis']['typeExpedition'] = 'standard';
-        $valeurs['colis']['articles'] = [['typeMarchandise' => 'Divers', 'poidsVolume' => '1', 'prix' => '10']];
+        $valeurs['colis']['articles'] = [['typeMarchandise' => 'Divers', 'quantite' => '1', 'prix' => '10']];
 
         $client->request('POST', '/colis/nouveau', $valeurs, ['colis' => ['photoFile' => $this->image(), 'articles' => [['photoFile' => $this->image()]]]]);
         $this->assertResponseRedirects();

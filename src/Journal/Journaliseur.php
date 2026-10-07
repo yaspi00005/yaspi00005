@@ -62,7 +62,7 @@ final class Journaliseur
         'frais' => 'Tarif', 'remise' => 'Remise', 'observations' => 'Observations', 'photo' => 'Photo',
         'dateReception' => 'Date de réception', 'dateRecuperation' => 'Date de remise', 'recupererPar' => 'Remis à',
         'expedition' => 'Expédition', 'client' => 'Client', 'agent' => 'Agent', 'typeMarchandise' => 'Marchandise',
-        'poidsVolume' => 'Poids', 'prix' => 'Prix', 'montant' => 'Montant', 'mode' => 'Mode', 'date' => 'Date',
+        'poidsVolume' => 'Poids', 'quantite' => 'Nombre de colis', 'prix' => 'Prix', 'montant' => 'Montant', 'mode' => 'Mode', 'date' => 'Date',
         'caissier' => 'Caissier', 'reference' => 'Référence', 'commentaire' => 'Commentaire', 'nom' => 'Nom',
         'prenom' => 'Prénom', 'telephone' => 'Téléphone', 'email' => 'E-mail', 'adresse' => 'Adresse',
         'ville' => 'Ville', 'codePostal' => 'Code postal', 'pays' => 'Pays', 'notes' => 'Notes',

@@ -34,7 +34,7 @@ final class MessagesErreurTest extends WebTestCase
         $valeurs['colis']['destinataireNom'] = 'Awa';
         $valeurs['colis']['destinataireTelephone'] = '76000000';
         $valeurs['colis']['typeExpedition'] = 'standard';
-        $valeurs['colis']['articles'] = [['typeMarchandise' => 'Vêtements', 'poidsVolume' => '', 'prix' => '']];
+        $valeurs['colis']['articles'] = [['typeMarchandise' => 'Vêtements', 'quantite' => '1', 'prix' => '']];
         $client->request('POST', '/colis/nouveau', $valeurs);
 
         $this->assertResponseStatusCodeSame(422);
@@ -44,7 +44,7 @@ final class MessagesErreurTest extends WebTestCase
 
         // Avec un prix mais sans poids : le colis est enregistré (destinataire propre à ce test, sinon « doublon »).
         $valeurs['colis']['destinataireTelephone'] = '76 91 82 73';
-        $valeurs['colis']['articles'] = [['typeMarchandise' => 'Vêtements', 'poidsVolume' => '', 'prix' => '45']];
+        $valeurs['colis']['articles'] = [['typeMarchandise' => 'Vêtements', 'quantite' => '1', 'prix' => '45']];
         $client->request('POST', '/colis/nouveau', $valeurs);
         $this->assertResponseRedirects();
         $client->followRedirect();
@@ -56,12 +56,12 @@ final class MessagesErreurTest extends WebTestCase
     {
         $client = $this->connecte('ramassage');
         $valeurs = $client->request('GET', '/colis/nouveau')->selectButton('Enregistrer le colis')->form()->getPhpValues();
-        $valeurs['colis']['articles'] = [['typeMarchandise' => 'Vêtements', 'poidsVolume' => 'deux', 'prix' => 'abc']];
+        $valeurs['colis']['articles'] = [['typeMarchandise' => 'Vêtements', 'quantite' => 'deux', 'prix' => 'abc']];
         $client->request('POST', '/colis/nouveau', $valeurs);
 
         $this->assertResponseStatusCodeSame(422);
         $this->assertSelectorTextContains('body', 'Saisissez un montant valide');
-        $this->assertSelectorTextContains('body', 'Saisissez un nombre valide');
+        $this->assertSelectorTextContains('body', 'Saisissez un nombre entier');
         $this->assertPasDeMessageTechnique($client);
     }
 

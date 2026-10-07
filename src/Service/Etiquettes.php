@@ -58,17 +58,20 @@ final class Etiquettes
 
         $etiquettes = [];
         foreach ($colis as $c) {
-            $articles = array_values($c->getArticles()->toArray());
+            // Une pièce par colis physique : « Vêtements — 3 colis » donne 3 étiquettes.
+            $articles = [];
+            foreach ($c->getArticles() as $a) {
+                array_push($articles, ...array_fill(0, $a->getQuantite(), $a));
+            }
             $total = 1 === \count($colis) && $nombre ? $nombre : max(1, \count($articles));
             $qr = $this->documents->qrCodeDataUri($this->lienScan($c), 360);
             $codeBarres = Code128::pngDataUri($c->getNumeroSuivi());
             for ($i = 1; $i <= $total && \count($etiquettes) < self::MAX; ++$i) {
-                // Une étiquette par article quand le nombre correspond : son contenu et son poids y figurent.
+                // Une étiquette par colis quand le nombre correspond : le contenu de sa ligne y figure.
                 $article = \count($articles) === $total ? $articles[$i - 1] : null;
                 $etiquettes[] = [
                     'colis' => $c, 'numero' => $i, 'total' => $total, 'qr' => $qr, 'codeBarres' => $codeBarres,
                     'contenu' => $article ? $this->contenu($article) : $this->resume($articles),
-                    'poids' => $article ? (float) $article->getPoidsVolume() : $c->getPoidsTotal(),
                     'parArticle' => null !== $article,
                 ];
             }

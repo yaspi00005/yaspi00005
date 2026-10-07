@@ -37,6 +37,17 @@ final class ColisTest extends TestCase
         $this->assertSame(2, $colis->getNombreArticles());
     }
 
+    public function testNombreDeColisParLigne(): void
+    {
+        $colis = new Colis();
+        $colis->addArticle((new Article())->setTypeMarchandise('Vêtements')->setQuantite(3)->setPrix(9000));
+        $colis->addArticle((new Article())->setTypeMarchandise('Valise')->setPrix(4000));
+
+        $this->assertCount(2, $colis->getArticles());
+        $this->assertSame(4, $colis->getNombreArticles(), '3 cartons de vêtements + 1 valise');
+        $this->assertSame(13000, $colis->getTotalArticles());
+    }
+
     public function testRegleDeSuppressionEtDeRemise(): void
     {
         $colis = (new Colis())->setFrais(1000);

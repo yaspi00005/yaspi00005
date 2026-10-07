@@ -63,10 +63,10 @@
 </table>
 <br>
 <table class="articles">
-    <thead><tr><th>#</th><th>Marchandise</th><th>Observations</th><th class="num">Prix</th></tr></thead>
+    <thead><tr><th>#</th><th>Marchandise</th><th>Observations</th><th class="num">Colis</th><th class="num">Prix</th></tr></thead>
     <tbody>
     {% for a in colis.articles %}
-        <tr><td>{{ loop.index }}</td><td>{{ a.typeMarchandise }}</td><td>{{ a.observations }}</td><td class="num">{{ a.prix|money }}{% if fcfa|default(false) %}<br><span class="petit">≈ {{ a.prix|fcfa }}</span>{% endif %}</td></tr>
+        <tr><td>{{ loop.index }}</td><td>{{ a.typeMarchandise }}</td><td>{{ a.observations }}</td><td class="num">{{ a.quantite }}</td><td class="num">{{ a.prix|money }}{% if fcfa|default(false) %}<br><span class="petit">≈ {{ a.prix|fcfa }}</span>{% endif %}</td></tr>
     {% endfor %}
     </tbody>
 </table>

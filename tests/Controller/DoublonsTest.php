@@ -73,7 +73,7 @@ final class DoublonsTest extends WebTestCase
         $valeurs['colis']['destinataireNom'] = 'Test Doublon';
         $valeurs['colis']['destinataireTelephone'] = $colis->getDestinataireTelephone();
         $valeurs['colis']['typeExpedition'] = 'standard';
-        $valeurs['colis']['articles'] = [['typeMarchandise' => 'Vêtements', 'poidsVolume' => '5', 'prix' => '40', 'observations' => '']];
+        $valeurs['colis']['articles'] = [['typeMarchandise' => 'Vêtements', 'quantite' => '1', 'prix' => '40', 'observations' => '']];
         $this->client->request('POST', '/colis/nouveau', $valeurs);
         $this->assertResponseStatusCodeSame(422);
         $this->assertSelectorTextContains('.alert-warning', $colis->getNumeroSuivi());

@@ -126,17 +126,17 @@
     // ---------- Saisie des articles d'un colis ----------
     const $liste = $('#articles-liste');
     if ($liste.length) {
-        const tarifs = $liste.data('tarifs') || {};
         let index = $liste.children('.article-ligne').length;
 
         const recalculer = function () {
-            let total = 0, n = 0;
+            let total = 0, n = 0, colis = 0;
             $liste.children('.article-ligne').each(function () {
                 n++;
+                colis += Math.max(1, parseInt($(this).find('.js-quantite').val(), 10) || 1);
                 total += parseFloat($(this).find('.js-prix').val().replace(',', '.')) || 0;
                 $(this).find('.numero-article').text(n);
             });
-            $('#total-articles').text(n);
+            $('#total-articles').text(colis);
             $('#total-prix').text(formatMontant(total));
         };
 
@@ -163,22 +163,8 @@
             $(this).closest('.article-ligne').remove();
             recalculer();
         });
-        $liste.on('input change', '.js-poids, .js-prix', recalculer);
+        $liste.on('input change', '.js-quantite, .js-prix', recalculer);
 
-        // Prix suggéré = poids × tarif du type de marchandise (si le prix n'a pas été saisi à la main).
-        $liste.on('input change', '.js-poids, .js-type-marchandise', function () {
-            const $ligne = $(this).closest('.article-ligne');
-            const tarif = tarifs[($ligne.find('.js-type-marchandise').val() || '').trim().toLowerCase()];
-            const $prix = $ligne.find('.js-prix');
-            const saisi = $ligne.find('.js-poids').val().trim();
-            // Poids facultatif : sans poids, le prix saisi n'est pas écrasé.
-            if (tarif && saisi !== '' && !$prix.data('manuel')) {
-                const poids = parseFloat(saisi.replace(',', '.')) || 0;
-                $prix.val((poids * tarif / 100).toFixed(2));
-                recalculer();
-            }
-        });
-        $liste.on('keydown', '.js-prix', function () { $(this).data('manuel', true); });
 
         if (!$liste.children('.article-ligne').length) {
             ajouter();
