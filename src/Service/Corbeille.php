@@ -132,8 +132,10 @@ final class Corbeille
         $expires = $this->avecCorbeille(fn () => $this->em->getRepository(Colis::class)->createQueryBuilder('c')
             ->andWhere('c.supprimeLe IS NOT NULL AND c.supprimeLe <= :limite')->setParameter('limite', $limite)
             ->getQuery()->getResult());
+        // Suppression automatique : notée au nom du « Système », pas de la personne qui a ouvert la page.
         foreach ($expires as $colis) {
-            $this->supprimerDefinitivement($colis);
+            $this->journal->commeSysteme(\sprintf('Système (corbeille : %d jours écoulés)', Colis::JOURS_CORBEILLE),
+                fn () => $this->supprimerDefinitivement($colis));
         }
 
         return \count($expires);

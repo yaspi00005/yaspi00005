@@ -133,4 +133,30 @@ final class CorbeilleTest extends WebTestCase
         $this->assertGreaterThan($max, (int) substr($premier, -4));
         $this->assertGreaterThan((int) substr($premier, -4), (int) substr($second, -4), 'Le compteur ne revient jamais en arrière.');
     }
+
+    public function testVidageAutomatiqueNoteAuNomDuSystemeEtNonDeLaPersonneConnectee(): void
+    {
+        $colis = $this->colisDeLAgent();
+        $id = $colis->getId();
+        $numero = $colis->getNumeroSuivi();
+        $em = static::getContainer()->get(EntityManagerInterface::class);
+        static::getContainer()->get(ColisService::class)->supprimer($colis, null);
+        $em->getConnection()->executeStatement('UPDATE colis SET supprime_le = ? WHERE id = ?', [(new \DateTimeImmutable('-8 days'))->format('Y-m-d H:i:s'), $id]);
+        $em->clear();
+
+        // L'administrateur ouvre la corbeille : le colis expiré est supprimé définitivement…
+        $this->connecte('admin');
+        $this->client->request('GET', '/corbeille');
+        $this->assertResponseIsSuccessful();
+        $this->assertSame(0, (int) $em->getConnection()->fetchOne('SELECT COUNT(*) FROM colis WHERE id = ?', [$id]));
+
+        // … mais le journal l'attribue au Système, pas à lui.
+        $lignes = $em->getConnection()->fetchAllAssociative("SELECT utilisateur_nom, utilisateur_id, ip FROM journal WHERE action = 'suppression' AND libelle LIKE ?", ['%'.$numero.'%']);
+        $this->assertNotEmpty($lignes);
+        foreach ($lignes as $l) {
+            $this->assertStringStartsWith('Système', $l["utilisateur_nom"]);
+            $this->assertNull($l['utilisateur_id']);
+            $this->assertNull($l['ip']);
+        }
+    }
 }

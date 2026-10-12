@@ -77,6 +77,8 @@ final class Journaliseur
     /** @var list<array{0: object, 1: string, 2: ?array, 3: ?array{string, ?int, array{?int, ?int}}}> actions en attente de la fin de l'enregistrement */
     private array $enAttente = [];
     private bool $ecriture = false;
+    /** Tâche automatique en cours : ses actions sont notées à ce nom, jamais à celui de l'utilisateur connecté. */
+    private ?string $systeme = null;
 
     public function __construct(
         private readonly Security $security,
@@ -88,6 +90,27 @@ final class Journaliseur
     public function suspendre(bool $suspendre = true): void
     {
         $this->actif = !$suspendre;
+    }
+
+    /**
+     * Exécute une tâche automatique (ex. vidage de la corbeille déclenché à l'ouverture d'une page) : le journal
+     * l'attribue au « Système » et non à la personne connectée, qui n'a rien fait.
+     *
+     * @template T
+     *
+     * @param callable(): T $fn
+     *
+     * @return T
+     */
+    public function commeSysteme(string $nom, callable $fn): mixed
+    {
+        $avant = $this->systeme;
+        $this->systeme = $nom;
+        try {
+            return $fn();
+        } finally {
+            $this->systeme = $avant;
+        }
     }
 
     public function onFlush(OnFlushEventArgs $args): void
@@ -168,6 +191,9 @@ final class Journaliseur
 
     private function nouveau(string $action, string $libelle, ?User $utilisateur = null, ?string $nom = null): Journal
     {
+        if (null !== $this->systeme) {
+            return new Journal($action, $libelle, null, $this->systeme);
+        }
         $utilisateur ??= ($u = $this->security->getUser()) instanceof User ? $u : null;
         $nom ??= $utilisateur ? $utilisateur->getNomComplet().' ('.$utilisateur->getUsername().')' : 'Système';
 
