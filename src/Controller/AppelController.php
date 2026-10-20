@@ -4,8 +4,10 @@ namespace App\Controller;
 
 use App\Entity\Appel;
 use App\Entity\Camion;
+use App\Entity\Journal;
 use App\Entity\User;
 use App\Form\AppelType;
+use App\Journal\Journaliseur;
 use App\Repository\AppelRepository;
 use App\Repository\CamionRepository;
 use App\Repository\ColisRepository;
@@ -172,6 +174,27 @@ class AppelController extends AbstractController
             $appel->setConfirme(!$appel->isConfirme());
             $this->registre->enregistrer($appel, $appel->getRamassage()?->getDatePrevue(), $this->getUser());
             $this->addFlash('success', $appel->getNomComplet().' : '.($appel->isConfirme() ? 'confirmé.' : 'remis en attente.'));
+        }
+
+        return $this->redirect($this->retour($request));
+    }
+
+    /** Bouton « Traité » : l'appel passe aux Archives (ou, depuis les Archives, revient en cours). */
+    #[Route('/{id}/traiter', name: 'appel_traiter', requirements: ['id' => self::ID], methods: ['POST'])]
+    public function marquerTraite(Request $request, Appel $appel, Journaliseur $journal, EntityManagerInterface $em): Response
+    {
+        $valide = $this->isCsrfTokenValid('traiter-appel-'.$appel->getId(), $request->getPayload()->getString('_token'));
+        if ($valide) {
+            $traite = !$appel->isArchive();
+            $this->registre->marquerTraite($appel, $this->getUser(), $traite);
+            $message = 'Appel de '.$appel->getNomComplet().($traite ? ' marqué traité (archivé).' : ' remis en cours.');
+            $journal->ecrire($em, Journal::MODIFICATION, $message, 'Appel', $appel->getId(), clientId: $appel->getClient()?->getId());
+            if (!$request->isXmlHttpRequest()) {
+                $this->addFlash('success', $message);
+            }
+        }
+        if ($request->isXmlHttpRequest()) {
+            return $this->json(['ok' => $valide, 'archive' => $appel->isArchive()], $valide ? 200 : 403);
         }
 
         return $this->redirect($this->retour($request));

@@ -672,6 +672,20 @@
 
         // Ordre de passage du camion : flèches ↑ ↓ sans recharger la page. La ligne bouge tout de suite,
         // puis la liste est relue (numéros et flèches à jour).
+        // Bouton « Traité » (ou « Remettre en cours ») : après la confirmation, la ligne disparaît sans recharger.
+        liste.addEventListener('submit', function (e) {
+            const f = e.target.closest('.js-traiter-appel');
+            if (!f || f.dataset.confirme !== '1') { return; } // la fenêtre de confirmation passe d'abord
+            e.preventDefault();
+            const ligne = f.closest('tr, .registre-fiche');
+            if (ligne) { ligne.classList.add('ligne-traitee'); }
+            fetch(f.action, { method: 'POST', body: new FormData(f), headers: { 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' })
+                .then(r => r.ok ? r.json() : Promise.reject())
+                .then(d => { if (window.toastr) { toastr.success(d.archive ? 'Appel traité : il est dans les Archives.' : 'Appel remis en cours.'); } })
+                .catch(() => { if (window.toastr) { toastr.error("L'appel n'a pas pu être mis à jour. Réessayez."); } })
+                .finally(() => setTimeout(() => rafraichir(true), 350));
+        });
+
         liste.addEventListener('submit', function (e) {
             const f = e.target.closest('.js-deplacer-appel');
             if (!f) { return; }

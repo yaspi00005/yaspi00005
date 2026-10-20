@@ -81,6 +81,14 @@ class Appel
     #[Assert\PositiveOrZero(message: "L'estimation ne peut pas être négative.")]
     private ?int $estimation = null;
 
+    /** Appel marqué « traité » (bouton du registre) : il passe aux Archives. */
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $traiteLe = null;
+
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(onDelete: 'SET NULL')]
+    private ?User $traitePar = null;
+
     /** Ordre de passage du camion chez ce client (1 = premier) ; null : pas encore placé, en fin de tournée. */
     #[ORM\Column(nullable: true)]
     private ?int $ordreTournee = null;
@@ -335,10 +343,30 @@ class Appel
     }
 
     /** État affiché dans le registre : [libellé, couleur du badge]. */
-    /** Archivé : ramassage effectué ou annulé (même règle que AppelRepository::ARCHIVE). */
+    /** Archivé : marqué traité, ou ramassage effectué ou annulé (même règle que AppelRepository::ARCHIVE). */
     public function isArchive(): bool
     {
-        return null !== $this->ramassage && \in_array($this->ramassage->getStatut(), [\App\Enum\StatutRamassage::Effectue, \App\Enum\StatutRamassage::Annule], true);
+        return null !== $this->traiteLe
+            || (null !== $this->ramassage && \in_array($this->ramassage->getStatut(), [\App\Enum\StatutRamassage::Effectue, \App\Enum\StatutRamassage::Annule], true));
+    }
+
+    public function getTraiteLe(): ?\DateTimeImmutable
+    {
+        return $this->traiteLe;
+    }
+
+    public function getTraitePar(): ?User
+    {
+        return $this->traitePar;
+    }
+
+    /** Marque l'appel traité (par $par) ou le remet en cours (null). */
+    public function traiter(?User $par, bool $traite = true): static
+    {
+        $this->traiteLe = $traite ? new \DateTimeImmutable() : null;
+        $this->traitePar = $traite ? $par : null;
+
+        return $this;
     }
 
     /** Date de ramassage passée sans que le ramassage soit fait : à reprendre au prochain passage. */

@@ -174,3 +174,5 @@ ol.etapes li { margin-bottom: .35rem; }
 /* Registre : ligne qui vient de changer de place dans la tournée */
 @keyframes ligne-deplacee { from { background: rgba(0, 161, 93, .18); } to { background: transparent; } }
 .ligne-deplacee, .ligne-deplacee > td { animation: ligne-deplacee 1.2s ease-out; }
+
+.ligne-traitee, .ligne-traitee > td { opacity: .25; transition: opacity .3s; }

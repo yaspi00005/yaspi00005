@@ -69,6 +69,22 @@ final class RegistreAppels
         $this->em->flush();
     }
 
+    /**
+     * Bouton « Traité » du registre : l'appel passe aux Archives et son ramassage encore à faire est marqué effectué.
+     * Remis en cours : le ramassage marqué effectué redevient confirmé (ou en attente).
+     */
+    public function marquerTraite(Appel $appel, ?User $par, bool $traite): void
+    {
+        $appel->traiter($par, $traite);
+        $r = $appel->getRamassage();
+        if ($r && $traite && ($r->getStatut()->estAFaire() || StatutRamassage::Demande === $r->getStatut())) {
+            $r->setStatut(StatutRamassage::Effectue);
+        } elseif ($r && !$traite && StatutRamassage::Effectue === $r->getStatut()) {
+            $r->setStatut($appel->isConfirme() ? StatutRamassage::Confirme : StatutRamassage::EnAttente);
+        }
+        $this->em->flush();
+    }
+
     public function depuisDemandeEnLigne(Ramassage $ramassage, array $d, ?\App\Entity\Expedition $depart): Appel
     {
         // La demande du client n'est jamais perdue ; si son numéro est déjà en cours, l'équipe est prévenue.

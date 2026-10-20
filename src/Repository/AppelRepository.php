@@ -36,8 +36,8 @@ class AppelRepository extends ServiceEntityRepository
     ];
 
     /** Condition DQL d'un appel archivé (même règle que Appel::isArchive()). */
-    /** Seul un ramassage effectué ou annulé archive l'appel ; passé sans être fait, il reste à reprogrammer. */
-    private const ARCHIVE = '(r.id IS NOT NULL AND r.statut IN (:ramassagesFinis))';
+    /** Archivé : bouton « Traité », ou ramassage effectué ou annulé ; passé sans être fait, il reste à reprogrammer. */
+    private const ARCHIVE = '(a.traiteLe IS NOT NULL OR (r.id IS NOT NULL AND r.statut IN (:ramassagesFinis)))';
 
     public function __construct(ManagerRegistry $registry)
     {

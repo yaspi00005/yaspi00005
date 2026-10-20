@@ -27,6 +27,20 @@
     {% set sens = actif and filtres.sens == 'asc' ? 'desc' : 'asc' %}
     <th class="{{ classe }}"><a href="?{{ app.request.query.all|merge({tri: cle, sens: sens, page: null})|filter(v => v is not null)|url_encode }}" class="lien-tri{{ actif ? ' actif' }}" title="Trier par {{ libelle|lower }}">{{ libelle }} <i class="fas fa-{{ actif ? (filtres.sens == 'asc' ? 'sort-up' : 'sort-down') : 'sort' }}"></i></a></th>
 {% endmacro %}
+{% macro traiter(a) %}
+    {% set archive = a.archive %}
+    <form method="post" action="{{ path('appel_traiter', {id: a.id}) }}" class="d-inline js-traiter-appel"
+          data-confirm="{{ archive ? 'L\'appel de ' ~ a.nomComplet ~ ' reviendra dans la liste des appels en cours.' : 'L\'appel de ' ~ a.nomComplet ~ ' disparaîtra de la liste et passera aux Archives.' ~ (a.ramassage ? ' Son ramassage sera marqué effectué.' : '') }}"
+          data-confirm-titre="{{ archive ? 'Remettre en cours ?' : 'Marquer comme traité ?' }}" data-confirm-type="{{ archive ? 'warning' : 'primary' }}" data-confirm-bouton="{{ archive ? 'Remettre en cours' : 'Oui, traité' }}">
+        <input type="hidden" name="_token" value="{{ csrf_token('traiter-appel-' ~ a.id) }}">
+        <input type="hidden" name="retour" value="{{ app.request.pathInfo }}?{{ app.request.query.all|url_encode }}">
+        {% if archive %}
+            <button class="btn btn-outline-warning btn-xs text-nowrap" title="Remettre cet appel dans la liste"><i class="fas fa-undo me-1"></i>Remettre en cours</button>
+        {% else %}
+            <button class="btn btn-outline-success btn-xs text-nowrap" title="Appel traité : il passe aux Archives"><i class="fas fa-check me-1"></i>Traité</button>
+        {% endif %}
+    </form>
+{% endmacro %}
 {% import _self as m %}
 {# Camion choisi : ordre de passage, modifiable avec les flèches (repris dans le PDF du camion). #}
 {% set tournee = filtres.camion and filtres.vue != 'archives' and not filtres.tri %}
@@ -51,6 +65,7 @@
                 <span class="badge badge-{{ etat[1] }} light">{{ etat[0] }}</span>
             </small>
             {% if a.commentaire %}<small class="d-block text-muted mt-1">{{ a.commentaire|u.truncate(100, '…') }}</small>{% endif %}
+            <div class="mt-2">{{ m.traiter(a) }}</div>
             {% if tournee %}<div class="mt-1">{% if not loop.first or appels.page > 1 %}{{ m.deplacer(a, 'haut') }}{% endif %}{% if not loop.last or appels.aSuivante %}{{ m.deplacer(a, 'bas') }}{% endif %}</div>{% endif %}
         </div>
     {% else %}
@@ -83,7 +98,7 @@
                 <td>{{ m.confirmer(a) }}</td>
                 <td>{% if a.ramassage %}<a href="{{ path('ramassage_edit', {id: a.ramassage.id}) }}" class="badge badge-{{ etat[1] }} light">{{ etat[0] }}</a>{% else %}<span class="badge badge-{{ etat[1] }} light">{{ etat[0] }}</span>{% endif %}</td>
                 <td class="registre-commentaire">{{ a.commentaire|u.truncate(120, '…') }}</td>
-                <td class="text-end"><a href="{{ path('appel_edit', {id: a.id}) }}" class="btn btn-primary shadow btn-xs sharp" title="Modifier" aria-label="Modifier l'appel de {{ a.nomComplet }}"><i class="fas fa-pencil-alt"></i></a></td>
+                <td class="text-end text-nowrap">{{ m.traiter(a) }} <a href="{{ path('appel_edit', {id: a.id}) }}" class="btn btn-primary shadow btn-xs sharp" title="Modifier" aria-label="Modifier l'appel de {{ a.nomComplet }}"><i class="fas fa-pencil-alt"></i></a></td>
             </tr>
         {% else %}
             <tr><td colspan="15"><div class="empty-state"><i class="fas fa-phone-alt"></i>Aucun appel{{ filtres.q or filtres.vue != 'tous' or filtres.camion or filtres.chauffeur or filtres.expedition ? ' pour ces critères' }}.</div></td></tr>

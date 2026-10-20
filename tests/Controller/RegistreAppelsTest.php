@@ -381,6 +381,45 @@ final class RegistreAppelsTest extends WebTestCase
         $this->assertSame($total, $crawler->filter('.registre-table tbody tr')->reduce(fn ($tr) => !$tr->filter('.empty-state')->count())->count());
     }
 
+    public function testBoutonTraiteArchiveEtRemetEnCours(): void
+    {
+        $this->connecter('ramassage');
+        $crawler = $this->client->request('GET', '/appels');
+        $this->client->submit($crawler->selectButton("Enregistrer l'appel")->form(), [
+            'appel[nom]' => 'Traoré', 'appel[prenom]' => 'Mamadou', 'appel[telephone]' => self::TELEPHONE,
+            'appel[codePostal]' => '77184', 'appel[ville]' => 'Émerainville', 'appel[confirme]' => '1',
+            'appel[dateRamassage]' => (new \DateTimeImmutable('+2 days'))->format('Y-m-d').'T10:00',
+        ]);
+        $hid = static::getContainer()->get(IdChiffreur::class)->encode($this->appel()->getId());
+
+        // Bouton « Traité » (appel en arrière-plan) : archivé, ramassage effectué, auteur noté.
+        $crawler = $this->client->request('GET', '/appels');
+        $form = $crawler->filter('form.js-traiter-appel[action$="/'.$hid.'/traiter"]')->first();
+        $this->assertStringContainsString('passera aux Archives', $form->attr('data-confirm'));
+        $token = $form->filter('input[name="_token"]')->attr('value');
+        $this->client->xmlHttpRequest('POST', '/appels/'.$hid.'/traiter', ['_token' => $token]);
+        $this->assertSame(['ok' => true, 'archive' => true], json_decode((string) $this->client->getResponse()->getContent(), true));
+        $appel = $this->appel();
+        $this->assertTrue($appel->isArchive());
+        $this->assertSame('ramassage', $appel->getTraitePar()->getUserIdentifier());
+        $this->assertSame(StatutRamassage::Effectue, $appel->getRamassage()->getStatut());
+        $this->client->request('GET', '/appels');
+        $this->assertSelectorTextNotContains('#registre-liste', 'Mamadou TRAORÉ');
+
+        // Depuis les Archives : « Remettre en cours ».
+        $crawler = $this->client->request('GET', '/appels', ['vue' => 'archives']);
+        $this->assertSelectorTextContains('#registre-liste', 'Remettre en cours');
+        $token = $crawler->filter('form.js-traiter-appel[action$="/'.$hid.'/traiter"] input[name="_token"]')->first()->attr('value');
+        $this->client->xmlHttpRequest('POST', '/appels/'.$hid.'/traiter', ['_token' => $token]);
+        $appel = $this->appel();
+        $this->assertFalse($appel->isArchive());
+        $this->assertSame(StatutRamassage::Confirme, $appel->getRamassage()->getStatut());
+
+        // Jeton invalide : refusé.
+        $this->client->xmlHttpRequest('POST', '/appels/'.$hid.'/traiter', ['_token' => 'faux']);
+        $this->assertResponseStatusCodeSame(403);
+    }
+
     private function connecter(string $login): void
     {
         $this->client->loginUser(static::getContainer()->get(UserRepository::class)->findOneBy(['username' => $login]));
