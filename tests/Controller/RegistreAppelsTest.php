@@ -295,6 +295,30 @@ final class RegistreAppelsTest extends WebTestCase
         static::getContainer()->get(Connection::class)->executeStatement('DELETE FROM appel WHERE telephone IN (?, ?)', ['07 58 31 92 46', '07 58 31 92 47']);
     }
 
+    public function testTriEnCliquantSurLesTitres(): void
+    {
+        $this->connecter('ramassage');
+        $noms = function (string $sens): array {
+            $crawler = $this->client->request('GET', '/appels', ['tri' => 'nom', 'sens' => $sens]);
+            $this->assertResponseIsSuccessful();
+
+            return $crawler->filter('.registre-table tbody td.font-w600')->each(fn ($td) => trim($td->text()));
+        };
+        $croissant = $noms('asc');
+        $this->assertGreaterThan(1, \count($croissant));
+        $attendu = $croissant;
+        sort($attendu, \SORT_STRING | \SORT_FLAG_CASE);
+        $this->assertSame(array_map('mb_strtolower', $attendu), array_map('mb_strtolower', $croissant));
+        $this->assertSame(array_reverse($croissant), $noms('desc'));
+
+        // Le titre actif propose l'ordre inverse ; un tri inconnu est ignoré.
+        $crawler = $this->client->request('GET', '/appels', ['tri' => 'nom', 'sens' => 'asc']);
+        $this->assertStringContainsString('sens=desc', $crawler->filter('a.lien-tri.actif')->attr('href'));
+        $this->client->request('GET', '/appels', ['tri' => 'a.id; DROP', 'sens' => 'asc']);
+        $this->assertResponseIsSuccessful();
+        $this->assertSelectorNotExists('a.lien-tri.actif');
+    }
+
     private function connecter(string $login): void
     {
         $this->client->loginUser(static::getContainer()->get(UserRepository::class)->findOneBy(['username' => $login]));

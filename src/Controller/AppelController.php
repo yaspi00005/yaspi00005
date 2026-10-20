@@ -66,6 +66,8 @@ class AppelController extends AbstractController
             'au' => $request->query->getString('au'),
             'utilisateur' => $this->chiffreur->decodeOptionnel($request->query->get('utilisateur')),
             'source' => $request->query->getString('source'),
+            'tri' => \array_key_exists($t = $request->query->getString('tri'), AppelRepository::TRIS) ? $t : '',
+            'sens' => 'desc' === $request->query->getString('sens') ? 'desc' : 'asc',
         ];
         $qb = $appels->filtreQb($filtres);
 

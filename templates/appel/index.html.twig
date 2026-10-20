@@ -53,6 +53,7 @@
             {% if filtres.vue != 'tous' %}<input type="hidden" name="vue" value="{{ filtres.vue }}">{% endif %}
             {% if filtres.camion %}<input type="hidden" name="camion" value="{{ hid(filtres.camion) }}">{% endif %}
             {% if filtres.chauffeur %}<input type="hidden" name="chauffeur" value="{{ hid(filtres.chauffeur) }}">{% endif %}
+            {% if filtres.tri %}<input type="hidden" name="tri" value="{{ filtres.tri }}"><input type="hidden" name="sens" value="{{ filtres.sens }}">{% endif %}
             <div class="col-md-4"><input type="search" name="q" value="{{ filtres.q }}" class="form-control" placeholder="Recherche (nom, ville, téléphone, code postal, commentaire…)" aria-label="Rechercher"></div>
             <div class="col-6 col-md-2"><input type="date" name="du" value="{{ filtres.du }}" class="form-control" title="Appel reçu depuis le" aria-label="Appel reçu depuis le"></div>
             <div class="col-6 col-md-2"><input type="date" name="au" value="{{ filtres.au }}" class="form-control" title="Appel reçu jusqu'au" aria-label="Appel reçu jusqu'au"></div>

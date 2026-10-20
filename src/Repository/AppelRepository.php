@@ -27,6 +27,13 @@ class AppelRepository extends ServiceEntityRepository
         'archives' => '🗄️ Archives',
     ];
 
+    /** Colonnes triables du tableau (clic sur le titre) => expression DQL. */
+    public const TRIS = [
+        'date' => 'a.dateAppel', 'conteneur' => 'dateConteneurTri', 'camion' => 'cam.nom', 'nom' => 'a.nom',
+        'telephone' => 'a.telephone', 'cp' => 'a.codePostal', 'ville' => 'a.ville', 'adresse' => 'a.adresse',
+        'estimation' => 'a.estimation', 'utilisateur' => 'u.prenom', 'confirme' => 'a.confirme',
+    ];
+
     /** Condition DQL d'un appel archivé (même règle que Appel::isArchive()). */
     private const ARCHIVE = '((r.id IS NOT NULL AND r.statut IN (:ramassagesFinis)) OR (e.id IS NOT NULL AND e.statut <> :enPreparation) OR (e.id IS NULL AND a.dateConteneur IS NOT NULL AND a.dateConteneur < :aujourdhui))';
 
@@ -78,6 +85,13 @@ class AppelRepository extends ServiceEntityRepository
         }
         if (\in_array($filtres['source'] ?? '', [Appel::SOURCE_TELEPHONE, Appel::SOURCE_SITE], true)) {
             $qb->andWhere('a.source = :source')->setParameter('source', $filtres['source']);
+        }
+        // Tri choisi en cliquant sur un titre de colonne (remplace l'ordre par défaut, y compris celui de la tournée).
+        if (isset(self::TRIS[$tri = $filtres['tri'] ?? ''])) {
+            if ('conteneur' === $tri) {
+                $qb->addSelect('COALESCE(e.dateDepart, a.dateConteneur) AS HIDDEN dateConteneurTri');
+            }
+            $qb->orderBy(self::TRIS[$tri], 'desc' === ($filtres['sens'] ?? '') ? 'DESC' : 'ASC')->addOrderBy('a.id', 'DESC');
         }
         if ($filtres['camion'] ?? null) {
             $qb->andWhere('cam.id = :camion')->setParameter('camion', $filtres['camion']);

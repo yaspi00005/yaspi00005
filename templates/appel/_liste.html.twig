@@ -22,10 +22,16 @@
         <button class="btn btn-light btn-xs" title="{{ sens == 'haut' ? 'Passer avant' : 'Passer après' }}" aria-label="{{ sens == 'haut' ? 'Passer avant' : 'Passer après' }} {{ a.nomComplet }}"><i class="fas fa-arrow-{{ sens == 'haut' ? 'up' : 'down' }}"></i></button>
     </form>
 {% endmacro %}
+{% macro tri(libelle, cle, filtres, classe = '') %}
+    {% set actif = filtres.tri == cle %}
+    {% set sens = actif and filtres.sens == 'asc' ? 'desc' : 'asc' %}
+    <th class="{{ classe }}"><a href="?{{ app.request.query.all|merge({tri: cle, sens: sens, page: null})|filter(v => v is not null)|url_encode }}" class="lien-tri{{ actif ? ' actif' }}" title="Trier par {{ libelle|lower }}">{{ libelle }} <i class="fas fa-{{ actif ? (filtres.sens == 'asc' ? 'sort-up' : 'sort-down') : 'sort' }}"></i></a></th>
+{% endmacro %}
 {% import _self as m %}
 {# Camion choisi : ordre de passage, modifiable avec les flèches (repris dans le PDF du camion). #}
-{% set tournee = filtres.camion and filtres.vue != 'archives' %}
-{% if tournee %}<p class="text-muted small mb-2"><i class="fas fa-route me-1"></i> Ordre de passage du camion : utilisez les flèches ↑ ↓ pour le modifier. Il est repris dans le PDF du camion.</p>{% endif %}
+{% set tournee = filtres.camion and filtres.vue != 'archives' and not filtres.tri %}
+{% if tournee %}<p class="text-muted small mb-2"><i class="fas fa-route me-1"></i> Ordre de passage du camion : utilisez les flèches ↑ ↓ pour le modifier. Il est repris dans le PDF du camion.</p>
+{% elseif filtres.camion and filtres.tri %}<p class="text-muted small mb-2"><i class="fas fa-sort me-1"></i> Liste triée par colonne. <a href="?{{ app.request.query.all|merge({tri: null, sens: null, page: null})|filter(v => v is not null)|url_encode }}">Revenir à l'ordre de passage du camion</a> pour le modifier.</p>{% endif %}
 {# Téléphone : une fiche par appel (le tableau serait trop large). #}
 <div class="d-md-none">
     {% for a in appels %}
@@ -54,7 +60,10 @@
 <div class="table-responsive d-none d-md-block">
     <table class="table table-hover registre-table mb-0">
         <thead>
-            <tr>{% if tournee %}<th>N°</th>{% endif %}<th>Date appel</th><th>Conteneur</th><th>Camion</th><th>Nom</th><th>Téléphone</th><th>CP</th><th>Ville</th><th>Adresse</th><th class="num">Estimation</th><th>Utilisateur</th><th>Confirmé</th><th>Ramassage</th><th>Commentaire</th><th></th></tr>
+            <tr>{% if tournee %}<th>N°</th>{% endif %}
+                {{ m.tri('Date appel', 'date', filtres) }}{{ m.tri('Conteneur', 'conteneur', filtres) }}{{ m.tri('Camion', 'camion', filtres) }}{{ m.tri('Nom', 'nom', filtres) }}
+                {{ m.tri('Téléphone', 'telephone', filtres) }}{{ m.tri('CP', 'cp', filtres) }}{{ m.tri('Ville', 'ville', filtres) }}{{ m.tri('Adresse', 'adresse', filtres) }}
+                {{ m.tri('Estimation', 'estimation', filtres, 'num') }}{{ m.tri('Utilisateur', 'utilisateur', filtres) }}{{ m.tri('Confirmé', 'confirme', filtres) }}<th>Ramassage</th><th>Commentaire</th><th></th></tr>
         </thead>
         <tbody>
         {% for a in appels %}
