@@ -339,6 +339,31 @@ final class RegistreAppelsTest extends WebTestCase
         static::getContainer()->get(Connection::class)->executeStatement('DELETE FROM appel WHERE telephone IN (?, ?)', ['07 58 31 92 48', '07 58 31 92 49']);
     }
 
+    public function testDateDeRamassagePasseeArchiveLAppel(): void
+    {
+        $this->connecter('ramassage');
+        $crawler = $this->client->request('GET', '/appels');
+        $this->client->submit($crawler->selectButton("Enregistrer l'appel")->form(), [
+            'appel[nom]' => 'Traoré', 'appel[prenom]' => 'Mamadou', 'appel[telephone]' => self::TELEPHONE,
+            'appel[codePostal]' => '77184', 'appel[ville]' => 'Émerainville',
+            'appel[dateRamassage]' => (new \DateTimeImmutable('+1 day'))->format('Y-m-d').'T10:00',
+        ]);
+        $this->assertResponseRedirects('/appels');
+        $this->assertFalse($this->appel()->isArchive(), 'Ramassage à venir : en cours');
+
+        // Aujourd'hui : toujours en cours ; la veille : archivé.
+        $db = static::getContainer()->get(Connection::class);
+        $id = $this->appel()->getRamassage()->getId();
+        $db->executeStatement('UPDATE ramassage SET date_prevue = ? WHERE id = ?', [(new \DateTimeImmutable('today 08:00'))->format('Y-m-d H:i:s'), $id]);
+        $this->assertNotNull(static::getContainer()->get(AppelRepository::class)->enCoursAuTelephone(self::TELEPHONE));
+        $db->executeStatement('UPDATE ramassage SET date_prevue = ? WHERE id = ?', [(new \DateTimeImmutable('yesterday 10:00'))->format('Y-m-d H:i:s'), $id]);
+        $this->assertNull(static::getContainer()->get(AppelRepository::class)->enCoursAuTelephone(self::TELEPHONE));
+        $this->client->request('GET', '/appels', ['vue' => 'archives']);
+        $this->assertSelectorTextContains('#registre-liste', 'Mamadou TRAORÉ');
+        $this->client->request('GET', '/appels');
+        $this->assertSelectorTextNotContains('#registre-liste', 'Mamadou TRAORÉ');
+    }
+
     private function connecter(string $login): void
     {
         $this->client->loginUser(static::getContainer()->get(UserRepository::class)->findOneBy(['username' => $login]));

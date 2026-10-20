@@ -18,7 +18,8 @@ class AppelRepository extends ServiceEntityRepository
 {
     /**
      * « À traiter » : appels en cours sans camion (un appel affecté à un camion sort de cette liste et se retrouve
-     * avec le bouton de son camion). « Archives » : ramassage effectué ou annulé, ou conteneur parti.
+     * avec le bouton de son camion). « Archives » : date du ramassage passée, ramassage effectué ou annulé,
+     * ou conteneur parti.
      */
     public const VUES = [
         'tous' => '📋 À traiter (sans camion)',
@@ -35,7 +36,7 @@ class AppelRepository extends ServiceEntityRepository
     ];
 
     /** Condition DQL d'un appel archivé (même règle que Appel::isArchive()). */
-    private const ARCHIVE = '((r.id IS NOT NULL AND r.statut IN (:ramassagesFinis)) OR (e.id IS NOT NULL AND e.statut <> :enPreparation) OR (e.id IS NULL AND a.dateConteneur IS NOT NULL AND a.dateConteneur < :aujourdhui))';
+    private const ARCHIVE = '((r.id IS NOT NULL AND (r.statut IN (:ramassagesFinis) OR r.datePrevue < :aujourdhui)) OR (e.id IS NOT NULL AND e.statut <> :enPreparation) OR (e.id IS NULL AND a.dateConteneur IS NOT NULL AND a.dateConteneur < :aujourdhui))';
 
     public function __construct(ManagerRegistry $registry)
     {

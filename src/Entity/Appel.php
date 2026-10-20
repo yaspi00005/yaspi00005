@@ -335,11 +335,12 @@ class Appel
     }
 
     /** État affiché dans le registre : [libellé, couleur du badge]. */
-    /** Archivé : ramassage effectué ou annulé, ou conteneur parti (même règle que AppelRepository::ARCHIVE). */
+    /** Archivé : date du ramassage passée, ramassage effectué ou annulé, ou conteneur parti (même règle que AppelRepository::ARCHIVE). */
     public function isArchive(): bool
     {
         $r = $this->ramassage;
-        if ($r && \in_array($r->getStatut(), [\App\Enum\StatutRamassage::Effectue, \App\Enum\StatutRamassage::Annule], true)) {
+        if ($r && (\in_array($r->getStatut(), [\App\Enum\StatutRamassage::Effectue, \App\Enum\StatutRamassage::Annule], true)
+            || $r->getDatePrevue() < new \DateTimeImmutable('today'))) {
             return true;
         }
         if ($this->expedition) {
