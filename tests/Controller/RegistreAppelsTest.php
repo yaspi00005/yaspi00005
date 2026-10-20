@@ -298,18 +298,26 @@ final class RegistreAppelsTest extends WebTestCase
     public function testTriEnCliquantSurLesTitres(): void
     {
         $this->connecter('ramassage');
-        $noms = function (string $sens): array {
-            $crawler = $this->client->request('GET', '/appels', ['tri' => 'nom', 'sens' => $sens]);
+        // Deux appels sans camion, créés par le test (noms extrêmes de l'alphabet).
+        foreach ([['Zzorro', '07 58 31 92 48'], ['Aabbou', '07 58 31 92 49']] as [$nom, $tel]) {
+            $crawler = $this->client->request('GET', '/appels');
+            $this->client->submit($crawler->selectButton("Enregistrer l'appel")->form(), [
+                'appel[nom]' => $nom, 'appel[telephone]' => $tel, 'appel[codePostal]' => '75010', 'appel[ville]' => 'Paris',
+            ]);
+            $this->assertResponseRedirects('/appels');
+        }
+        $position = function (string $sens): array {
+            $crawler = $this->client->request('GET', '/appels', ['tri' => 'nom', 'sens' => $sens, 'par' => 500]);
             $this->assertResponseIsSuccessful();
+            $noms = $crawler->filter('.registre-table tbody td.font-w600')->each(fn ($td) => mb_strtolower(trim($td->text())));
 
-            return $crawler->filter('.registre-table tbody td.font-w600')->each(fn ($td) => trim($td->text()));
+            return [array_search('aabbou', $noms, true), array_search('zzorro', $noms, true)];
         };
-        $croissant = $noms('asc');
-        $this->assertGreaterThan(1, \count($croissant));
-        $attendu = $croissant;
-        sort($attendu, \SORT_STRING | \SORT_FLAG_CASE);
-        $this->assertSame(array_map('mb_strtolower', $attendu), array_map('mb_strtolower', $croissant));
-        $this->assertSame(array_reverse($croissant), $noms('desc'));
+        [$a, $z] = $position('asc');
+        $this->assertNotFalse($a);
+        $this->assertLessThan($z, $a, 'Croissant : Aabbou avant Zzorro');
+        [$a, $z] = $position('desc');
+        $this->assertGreaterThan($z, $a, 'Décroissant : Zzorro avant Aabbou');
 
         // Le titre actif propose l'ordre inverse ; un tri inconnu est ignoré.
         $crawler = $this->client->request('GET', '/appels', ['tri' => 'nom', 'sens' => 'asc']);
@@ -317,6 +325,7 @@ final class RegistreAppelsTest extends WebTestCase
         $this->client->request('GET', '/appels', ['tri' => 'a.id; DROP', 'sens' => 'asc']);
         $this->assertResponseIsSuccessful();
         $this->assertSelectorNotExists('a.lien-tri.actif');
+        static::getContainer()->get(Connection::class)->executeStatement('DELETE FROM appel WHERE telephone IN (?, ?)', ['07 58 31 92 48', '07 58 31 92 49']);
     }
 
     private function connecter(string $login): void
