@@ -50,7 +50,16 @@ final class DocumentService
      */
     public function recuPdf(Colis $colis, bool $pourRepresentant = false): string
     {
+        // Toutes les photos, en grand sur le reçu : colis, autres photos du colis, puis articles.
         $photos = [];
+        if ($uri = $this->photos->dataUri($colis->getPhoto())) {
+            $photos[] = ['uri' => $uri, 'legende' => 'Colis'];
+        }
+        foreach ($colis->getPhotos() as $photo) {
+            if ($uri = $this->photos->dataUri($photo->getFichier())) {
+                $photos[] = ['uri' => $uri, 'legende' => 'Colis — photo '.(\count($photos) + 1)];
+            }
+        }
         foreach ($colis->getArticles() as $article) {
             if ($uri = $this->photos->dataUri($article->getPhoto())) {
                 $photos[] = ['uri' => $uri, 'legende' => $article->getTypeMarchandise().($article->getObservations() ? ' — '.$article->getObservations() : '')];

@@ -160,3 +160,8 @@ ol.etapes li { margin-bottom: .35rem; }
 .lignes-par-page { display: inline-flex; flex-wrap: wrap; align-items: center; gap: .35rem; }
 .lignes-par-page a, .lignes-par-page .active { display: inline-block; min-width: 2rem; padding: .1rem .45rem; border-radius: 1rem; text-align: center; border: 1px solid rgba(0, 0, 0, .1); }
 .lignes-par-page .active { background: var(--primary, #0d6efd); border-color: transparent; color: #fff; }
+
+/* Photos du colis (plusieurs) */
+.photo-colis-bloc { position: relative; }
+.photo-colis-bloc form { position: absolute; top: .5rem; right: .5rem; }
+.js-photo .photo-apercu.me-2 { display: inline-block; }

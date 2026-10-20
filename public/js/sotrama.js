@@ -207,6 +207,21 @@
 
     const afficher = function (zone, file) {
         zone.querySelectorAll('.js-photo-nouvelle').forEach(el => el.remove());
+        // Plusieurs photos : une vignette par photo.
+        if (Array.isArray(file)) {
+            const info = zone.querySelector('.js-photo-info');
+            zone.querySelector('.js-photo-retirer').classList.toggle('d-none', !file.length);
+            info.textContent = file.length ? file.length + ' photo(s) prête(s) (' + taille(file.reduce((t, f) => t + f.size, 0)) + ')' : '';
+            const input = zone.querySelector('.js-photo-input');
+            file.slice().reverse().forEach(function (f) {
+                const img = document.createElement('img');
+                img.className = 'photo-apercu mt-2 me-2 js-photo-nouvelle';
+                img.alt = 'Nouvelle photo';
+                img.src = URL.createObjectURL(f);
+                input.insertAdjacentElement('afterend', img);
+            });
+            return;
+        }
         const actuelle = zone.querySelector('.js-photo-actuelle');
         const info = zone.querySelector('.js-photo-info');
         zone.querySelector('.js-photo-retirer').classList.toggle('d-none', !file);
@@ -227,7 +242,8 @@
         const input = zone.querySelector('.js-photo-input');
         if (bouton.classList.contains('js-photo-retirer')) {
             input.value = '';
-            afficher(zone, null);
+            input._photos = [];
+            afficher(zone, input.multiple ? [] : null);
             return;
         }
         // « capture » ouvre directement l'appareil photo (arrière) sur mobile ; sans, la galerie.
@@ -239,6 +255,22 @@
         const input = e.target;
         if (!input.matches || !input.matches('.js-photo-input')) { return; }
         const zone = bloc(input);
+        if (input.multiple) {
+            // Les photos s'ajoutent aux précédentes (l'appareil photo n'en renvoie qu'une à la fois).
+            const nouvelles = Array.from(input.files || []);
+            zone.querySelector('.js-photo-info').textContent = nouvelles.length ? 'Préparation des photos…' : '';
+            Promise.all(nouvelles.map(compresser)).then(function (resultats) {
+                let toutes = (input._photos || []).concat(resultats);
+                if (typeof DataTransfer !== 'undefined') {
+                    try { const dt = new DataTransfer(); toutes.forEach(r => dt.items.add(r)); input.files = dt.files; } catch (x) { toutes = nouvelles; }
+                } else {
+                    toutes = nouvelles;
+                }
+                input._photos = toutes;
+                afficher(zone, toutes);
+            });
+            return;
+        }
         const file = input.files && input.files[0];
         if (!file) { afficher(zone, null); return; }
         zone.querySelector('.js-photo-info').textContent = 'Préparation de la photo…';

@@ -16,7 +16,10 @@
     .num { text-align: right; white-space: nowrap; }
     .totaux td { padding: 4px 6px; }
     .code { font-size: 22px; font-weight: bold; letter-spacing: 4px; }
-    .photos img { width: 120px; height: 120px; object-fit: cover; border-radius: 4px; }
+    .photos { page-break-inside: auto; }
+    .photos tr { page-break-inside: avoid; }
+    .photos td { width: 50%; text-align: center; vertical-align: top; padding: 6px; }
+    .photos img { max-width: 300px; max-height: 225px; border: 1px solid #ddd; border-radius: 4px; }
     .petit { font-size: 9px; color: #777; }
 </style>
 </head>
@@ -108,12 +111,15 @@
 </table>
 {% if photos %}
 <br>
-<div class="titre">Photos des articles</div>
-<table class="photos"><tr>
-    {% for p in photos|slice(0, 4) %}
-        <td style="width:25%;text-align:center;vertical-align:top"><img src="{{ p.uri }}" alt=""><div class="petit">{{ p.legende }}</div></td>
+<div class="titre">Photos ({{ photos|length }})</div>
+<table class="photos">
+    {% for ligne in photos|batch(2) %}
+    <tr>
+        {% for p in ligne %}<td><img src="{{ p.uri }}" alt=""><div class="petit">{{ p.legende }}</div></td>{% endfor %}
+        {% if ligne|length < 2 %}<td></td>{% endif %}
+    </tr>
     {% endfor %}
-</tr></table>
+</table>
 {% endif %}
 <br>
 <table><tr>

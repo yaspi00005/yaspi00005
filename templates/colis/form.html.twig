@@ -47,6 +47,8 @@
                 {{ form_row(form.typeExpedition) }}
                 {{ form_row(form.observations) }}
                 {% include 'partials/_photo.html.twig' with {field: form.photoFile, actuelle: colis.id and colis.photo ? path('colis_photo', {id: colis.id}) : null} %}
+                {% include 'partials/_photo.html.twig' with {field: form.photosFiles} %}
+                {% if colis.id and colis.photos|length %}<p class="fs-13 text-muted">{{ colis.photos|length }} autre(s) photo(s) déjà enregistrée(s) : gérez-les depuis la fiche du colis.</p>{% endif %}
             </div>
         </div>
     </div>

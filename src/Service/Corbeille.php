@@ -117,7 +117,7 @@ final class Corbeille
     /** Suppression définitive (avec les photos) d'un colis de la corbeille. */
     public function supprimerDefinitivement(Colis $colis): void
     {
-        $fichiers = array_filter([$colis->getPhoto(), ...$colis->getArticles()->map(fn ($a) => $a->getPhoto())->toArray()]);
+        $fichiers = $colis->getFichiersPhotos();
         $this->avecCorbeille(function () use ($colis) {
             $this->em->remove($colis);
             $this->em->flush();

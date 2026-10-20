@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Colis;
+use App\Entity\PhotoColis;
 use App\Entity\User;
 use App\Enum\ModePaiement;
 use App\Enum\StatutColis;
@@ -32,10 +33,14 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Component\Validator\Constraints\Image;
+use Symfony\Component\Validator\Constraints\All;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/colis')]
@@ -269,6 +274,42 @@ class ColisController extends AbstractController
         return $this->versFiche($colis, $request);
     }
 
+    /** Photos ajoutées depuis la fiche (plusieurs à la fois). */
+    #[Route('/{id}/photos', name: 'colis_photos_ajouter', requirements: ['id' => self::ID], methods: ['POST'])]
+    public function ajouterPhotosFiche(Request $request, Colis $colis, EntityManagerInterface $em, ValidatorInterface $validator): Response
+    {
+        $this->denyAccessUnlessGranted(ColisVoter::MODIFIER, $colis);
+        $this->verifierCsrf($request, 'photos-colis-'.$colis->getId());
+        $fichiers = array_values(array_filter((array) $request->files->get('photos'), fn ($f) => $f instanceof UploadedFile));
+        $erreurs = $validator->validate($fichiers, new All([new Image(maxSize: '8M')]));
+        if (!$fichiers || \count($erreurs) > 0) {
+            $this->addFlash('danger', $fichiers ? 'Envoyez des images (JPEG, PNG, WebP) de 8 Mo au plus.' : 'Choisissez au moins une photo.');
+        } else {
+            $ajoutees = $this->ajouterPhotos($colis, $fichiers);
+            $em->flush();
+            $this->addFlash($ajoutees ? 'success' : 'warning', $ajoutees
+                ? $ajoutees.' photo(s) ajoutée(s).'.($ajoutees < \count($fichiers) ? ' Limite de '.Colis::MAX_PHOTOS.' photos atteinte.' : '')
+                : 'Limite de '.Colis::MAX_PHOTOS.' photos atteinte : supprimez-en avant d\'en ajouter.');
+        }
+
+        return $this->versFiche($colis, $request);
+    }
+
+    #[Route('/photos/{id}/supprimer', name: 'colis_photo_supprimer', requirements: ['id' => self::ID], methods: ['POST'])]
+    public function supprimerPhoto(Request $request, PhotoColis $photo, EntityManagerInterface $em): Response
+    {
+        $colis = $photo->getColis();
+        $this->denyAccessUnlessGranted(ColisVoter::MODIFIER, $colis);
+        $this->verifierCsrf($request, 'supprimer-photo-'.$photo->getId());
+        $fichier = $photo->getFichier();
+        $colis->removePhoto($photo);
+        $em->flush();
+        $this->photos->supprimer($fichier);
+        $this->addFlash('success', 'Photo supprimée.');
+
+        return $this->versFiche($colis, $request);
+    }
+
     #[Route('/{id}/encaisser', name: 'colis_encaisser', requirements: ['id' => self::ID], methods: ['POST'])]
     public function encaisser(Request $request, Colis $colis): Response
     {
@@ -402,6 +443,7 @@ class ColisController extends AbstractController
             $colis->setPhoto($this->photos->upload($fichier));
             $this->photos->supprimer($ancienne);
         }
+        $this->ajouterPhotos($form->getData(), (array) $form->get('photosFiles')->getData());
         foreach ($form->get('articles') as $articleForm) {
             $fichier = $articleForm->get('photoFile')->getData();
             if ($fichier) {
@@ -411,6 +453,27 @@ class ColisController extends AbstractController
                 $this->photos->supprimer($ancienne);
             }
         }
+    }
+
+    /**
+     * Photos supplémentaires du colis, dans la limite de Colis::MAX_PHOTOS.
+     *
+     * @param array<mixed> $fichiers
+     *
+     * @return int nombre de photos ajoutées
+     */
+    private function ajouterPhotos(Colis $colis, array $fichiers): int
+    {
+        $ajoutees = 0;
+        foreach ($fichiers as $fichier) {
+            if (!$fichier instanceof UploadedFile || $colis->getPhotos()->count() >= Colis::MAX_PHOTOS) {
+                continue;
+            }
+            $colis->addPhoto(new PhotoColis($this->photos->upload($fichier)));
+            ++$ajoutees;
+        }
+
+        return $ajoutees;
     }
 
     private function verifierCsrf(Request $request, string $id): void

@@ -19,6 +19,8 @@ use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints\All;
+use Symfony\Component\Validator\Constraints\Count;
 use Symfony\Component\Validator\Constraints\Image;
 
 class ColisType extends AbstractType
@@ -70,6 +72,17 @@ class ColisType extends AbstractType
                 'required' => false,
                 'attr' => ['accept' => 'image/*'],
                 'constraints' => [new Image(maxSize: '8M', mimeTypesMessage: 'Envoyez une image (JPEG, PNG, WebP).')],
+            ])
+            ->add('photosFiles', FileType::class, [
+                'label' => 'Autres photos (plusieurs possibles)',
+                'mapped' => false,
+                'required' => false,
+                'multiple' => true,
+                'attr' => ['accept' => 'image/*'],
+                'constraints' => [
+                    new Count(max: Colis::MAX_PHOTOS, maxMessage: Colis::MAX_PHOTOS.' photos au maximum par colis.'),
+                    new All([new Image(maxSize: '8M', mimeTypesMessage: 'Envoyez une image (JPEG, PNG, WebP).')]),
+                ],
             ])
             ->add('articles', CollectionType::class, [
                 'label' => false,

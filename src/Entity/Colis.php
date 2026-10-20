@@ -118,6 +118,11 @@ class Colis
     #[Assert\Valid]
     private Collection $articles;
 
+    /** @var Collection<int, PhotoColis> photos supplémentaires (en plus de la photo principale) */
+    #[ORM\OneToMany(targetEntity: PhotoColis::class, mappedBy: 'colis', cascade: ['persist', 'remove'], orphanRemoval: true)]
+    #[ORM\OrderBy(['id' => 'ASC'])]
+    private Collection $photos;
+
     /** @var Collection<int, Paiement> */
     #[ORM\OneToMany(targetEntity: Paiement::class, mappedBy: 'colis', cascade: ['remove'])]
     #[ORM\OrderBy(['date' => 'ASC'])]
@@ -133,6 +138,7 @@ class Colis
         $this->dateReception = new \DateTimeImmutable();
         $this->updatedAt = new \DateTimeImmutable();
         $this->articles = new ArrayCollection();
+        $this->photos = new ArrayCollection();
         $this->paiements = new ArrayCollection();
         $this->historique = new ArrayCollection();
     }
@@ -410,6 +416,42 @@ class Colis
     }
 
     /** @return Collection<int, Article> */
+    /** Nombre maximal de photos supplémentaires par colis. */
+    public const MAX_PHOTOS = 12;
+
+    /** @return Collection<int, PhotoColis> */
+    public function getPhotos(): Collection
+    {
+        return $this->photos;
+    }
+
+    public function addPhoto(PhotoColis $photo): static
+    {
+        if (!$this->photos->contains($photo)) {
+            $this->photos->add($photo);
+            $photo->setColis($this);
+        }
+
+        return $this;
+    }
+
+    public function removePhoto(PhotoColis $photo): static
+    {
+        $this->photos->removeElement($photo);
+
+        return $this;
+    }
+
+    /** @return list<string> tous les fichiers photo du colis : principale, supplémentaires, articles */
+    public function getFichiersPhotos(): array
+    {
+        return array_values(array_filter([
+            $this->photo,
+            ...$this->photos->map(fn (PhotoColis $p) => $p->getFichier())->toArray(),
+            ...$this->articles->map(fn (Article $a) => $a->getPhoto())->toArray(),
+        ]));
+    }
+
     public function getArticles(): Collection
     {
         return $this->articles;

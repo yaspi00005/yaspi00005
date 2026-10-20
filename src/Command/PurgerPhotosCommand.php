@@ -5,6 +5,7 @@ namespace App\Command;
 use App\Entity\Article;
 use App\Entity\Colis;
 use App\Entity\Journal;
+use App\Entity\PhotoColis;
 use App\Enum\StatutColis;
 use App\Journal\Journaliseur;
 use App\Service\PhotoUploader;
@@ -54,7 +55,8 @@ final class PurgerPhotosCommand extends Command
             ->select('c')->from(Colis::class, 'c')
             ->where('c.statut = :remis')
             ->andWhere('COALESCE(c.dateRecuperation, c.dateReception) < :limite')
-            ->andWhere('c.photo IS NOT NULL OR EXISTS (SELECT a.id FROM '.Article::class.' a WHERE a.colis = c AND a.photo IS NOT NULL)')
+            ->andWhere('c.photo IS NOT NULL OR EXISTS (SELECT a.id FROM '.Article::class.' a WHERE a.colis = c AND a.photo IS NOT NULL)'
+                .' OR EXISTS (SELECT p.id FROM '.PhotoColis::class.' p WHERE p.colis = c)')
             ->setParameter('remis', StatutColis::Recupere)
             ->setParameter('limite', $limite)
             ->orderBy('c.id');
@@ -67,7 +69,7 @@ final class PurgerPhotosCommand extends Command
                 /** @var list<Colis> $lot */
                 $lot = (clone $qb)->setMaxResults(100)->setFirstResult($apercu ? $colisTraites : 0)->getQuery()->getResult();
                 foreach ($lot as $colis) {
-                    $fichiers = array_values(array_filter([$colis->getPhoto(), ...$colis->getArticles()->map(fn ($a) => $a->getPhoto())->toArray()]));
+                    $fichiers = $colis->getFichiersPhotos();
                     $photosSupprimees += \count($fichiers);
                     ++$colisTraites;
                     if ($apercu) {
@@ -77,6 +79,9 @@ final class PurgerPhotosCommand extends Command
                     $colis->setPhoto(null);
                     foreach ($colis->getArticles() as $article) {
                         $article->setPhoto(null);
+                    }
+                    foreach ($colis->getPhotos() as $photo) {
+                        $colis->removePhoto($photo);
                     }
                     $this->em->flush();
                     $this->journal->ecrire($this->em, Journal::SUPPRESSION,

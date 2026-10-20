@@ -65,4 +65,46 @@ final class PhotoColisTest extends WebTestCase
         $photos->supprimer($colis->getPhoto());
         $photos->supprimer($colis->getArticles()->first()->getPhoto());
     }
+
+    public function testPlusieursPhotosSurLeColisEtLeRecu(): void
+    {
+        $client = static::createClient();
+        $client->loginUser(static::getContainer()->get(UserRepository::class)->findOneBy(['username' => 'admin']));
+        $colis = static::getContainer()->get(ColisRepository::class)->findOneBy([], ['id' => 'DESC']);
+        $id = static::getContainer()->get(IdChiffreur::class)->encode($colis->getId());
+
+        // Trois photos d'un coup depuis la fiche.
+        $crawler = $client->request('GET', "/colis/$id");
+        $form = $crawler->filter('form[action$="/photos"]')->form();
+        $client->request('POST', $form->getUri(), ['_token' => $form['_token']->getValue()], ['photos' => [$this->image(), $this->image(), $this->image()]]);
+        $this->assertResponseRedirects();
+        $client->followRedirect();
+        $this->assertSelectorTextContains('.alert-success', '3 photo(s) ajoutée(s)');
+        $colis = static::getContainer()->get(ColisRepository::class)->find($colis->getId());
+        $this->assertCount(3, $colis->getPhotos());
+
+        // Servies aux utilisateurs autorisés ; un fichier qui n'est pas une image est refusé.
+        $photo = $colis->getPhotos()->first();
+        $hidPhoto = static::getContainer()->get(IdChiffreur::class)->encode($photo->getId());
+        $client->request('GET', "/photos-colis/$hidPhoto");
+        $this->assertResponseIsSuccessful();
+        $texte = tempnam(sys_get_temp_dir(), 'txt');
+        file_put_contents($texte, 'pas une image');
+        $client->request('POST', $form->getUri(), ['_token' => $form['_token']->getValue()], ['photos' => [new UploadedFile($texte, 'a.png', 'image/png', null, true)]]);
+        $client->followRedirect();
+        $this->assertSelectorTextContains('.alert-danger', 'Envoyez des images');
+
+        // Le reçu PDF les contient (plus lourd qu'un reçu sans photo).
+        $client->request('GET', "/colis/$id/recu.pdf");
+        $this->assertResponseIsSuccessful();
+        $this->assertStringContainsString('/Image', (string) $client->getResponse()->getContent());
+
+        // Suppression d'une photo : fichier retiré du serveur.
+        $chemin = static::getContainer()->get(PhotoUploader::class)->chemin($photo->getFichier());
+        $this->assertFileExists($chemin);
+        $crawler = $client->request('GET', "/colis/$id");
+        $client->submit($crawler->filter('form[action$="/photos/'.$hidPhoto.'/supprimer"]')->form());
+        $this->assertFileDoesNotExist($chemin);
+        $this->assertCount(2, static::getContainer()->get(ColisRepository::class)->find($colis->getId())->getPhotos());
+    }
 }

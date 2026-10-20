@@ -1,11 +1,11 @@
-{# Photo prise avec l'appareil photo du téléphone (ou choisie dans la galerie).
+{# Photo prise avec l'appareil photo du téléphone (ou choisie dans la galerie). Champ « multiple » : plusieurs photos.
    Paramètres : field (champ FileType), actuelle (URL de la photo déjà enregistrée, facultatif). #}
 <div class="mb-3 js-photo">
     <label class="form-label d-block" for="{{ field.vars.id }}">{{ field.vars.label }}</label>
     <div class="d-flex flex-wrap align-items-center gap-2">
         <button type="button" class="btn btn-primary btn-sm js-photo-camera"><i class="fas fa-camera me-1"></i> Prendre une photo</button>
         <button type="button" class="btn btn-outline-primary btn-sm js-photo-galerie"><i class="fas fa-images me-1"></i> Galerie</button>
-        <button type="button" class="btn btn-light btn-sm js-photo-retirer d-none" title="Retirer la nouvelle photo"><i class="fas fa-times"></i></button>
+        <button type="button" class="btn btn-light btn-sm js-photo-retirer d-none" title="{{ field.vars.full_name ends with '[]' ? 'Retirer les nouvelles photos' : 'Retirer la nouvelle photo' }}"><i class="fas fa-times"></i></button>
         <span class="fs-12 text-muted js-photo-info"></span>
     </div>
     {{ form_widget(field, {attr: {class: 'visually-hidden js-photo-input', accept: 'image/*'}}) }}
