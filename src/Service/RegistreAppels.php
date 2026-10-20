@@ -50,13 +50,16 @@ final class RegistreAppels
     /** Demande faite sur sotrama.net : elle entre aussi dans le registre, source « Site web ». */
     public function depuisDemandeEnLigne(Ramassage $ramassage, array $d, ?\App\Entity\Expedition $depart): Appel
     {
+        // La demande du client n'est jamais perdue ; si son numéro est déjà en cours, l'équipe est prévenue.
+        $existant = $this->appels->enCoursAuTelephone($d['telephone']);
+        $avertissement = $existant ? \sprintf("⚠ Numéro déjà dans le registre (appel de %s du %s) : regroupez les deux appels.\n", $existant->getNomComplet(), $existant->getDateAppel()->format('d/m/Y')) : '';
         $appel = (new Appel())
             ->setSource(Appel::SOURCE_SITE)
             ->setClient($ramassage->getClient())
             ->setPrenom($d['prenom'])->setNom($d['nom'])->setTelephone($d['telephone'])
             ->setCodePostal($d['code_postal'])->setVille($d['ville'])->setAdresse($d['adresse'])
             ->setExpedition($depart)
-            ->setCommentaire(trim(($d['colis'] ?? '')."\n".($d['message'] ?? '')) ?: null)
+            ->setCommentaire(trim($avertissement.($d['colis'] ?? '')."\n".($d['message'] ?? '')) ?: null)
             ->setRamassage($ramassage);
         $this->em->persist($appel);
 

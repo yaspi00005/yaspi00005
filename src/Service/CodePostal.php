@@ -80,6 +80,42 @@ final class CodePostal
         });
     }
 
+    /**
+     * Codes postaux d'une ville française (registre des appels : on tape la ville, le code postal se remplit).
+     *
+     * @return list<array{ville: string, cp: string}> communes les plus peuplées d'abord (vide si inconnue ou panne)
+     */
+    public function codesPostaux(string $ville): array
+    {
+        $nom = trim(preg_replace('/\s+/', ' ', $ville));
+        if (mb_strlen($nom) < 2 || mb_strlen($nom) > 80) {
+            return [];
+        }
+
+        return $this->cache->get('cp_'.md5(u($nom)->ascii()->lower()->toString()), function (ItemInterface $item) use ($nom) {
+            try {
+                $communes = $this->httpClient->request('GET', 'https://geo.api.gouv.fr/communes', [
+                    'query' => ['nom' => $nom, 'fields' => 'nom,codesPostaux', 'boost' => 'population', 'limit' => 6, 'format' => 'json'],
+                    'timeout' => 4,
+                ])->toArray();
+                $item->expiresAfter(30 * 86400);
+            } catch (\Throwable $e) {
+                $this->logger->warning('Recherche de code postal par ville indisponible : '.$e->getMessage());
+                $item->expiresAfter(60);
+
+                return [];
+            }
+            $resultats = [];
+            foreach ($communes as $c) {
+                foreach ($c['codesPostaux'] ?? [] as $cp) {
+                    $resultats[] = ['ville' => (string) $c['nom'], 'cp' => (string) $cp];
+                }
+            }
+
+            return \array_slice($resultats, 0, 30);
+        });
+    }
+
     /** @return list<string> */
     private function france(string $cp): array
     {

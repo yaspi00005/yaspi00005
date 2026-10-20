@@ -57,6 +57,9 @@ final class RegistreAppelsTest extends WebTestCase
         $this->assertResponseRedirects('/appels');
         $this->client->followRedirect();
         $this->assertSelectorTextContains('.alert-success', 'Ramassage au planning le');
+        // Affecté à un camion : il sort de la liste « À traiter » et se retrouve sous son camion.
+        $this->assertSelectorTextNotContains('#registre-liste', 'Mamadou TRAORÉ');
+        $this->client->request('GET', '/appels', ['camion' => static::getContainer()->get(IdChiffreur::class)->encode($boxer->getId())]);
         $this->assertSelectorTextContains('#registre-liste', 'Mamadou TRAORÉ');
 
         $appel = $this->appel();
@@ -126,7 +129,9 @@ final class RegistreAppelsTest extends WebTestCase
     public function testClientChoisiDansLaBase(): void
     {
         $this->connecter('ramassage');
-        $connu = static::getContainer()->get(ClientRepository::class)->findOneBy([], ['nom' => 'DESC']);
+        // Un client sans appel en cours (sinon son numéro serait refusé comme doublon).
+        $appels = static::getContainer()->get(AppelRepository::class);
+        $connu = current(array_filter(static::getContainer()->get(ClientRepository::class)->findBy([], ['nom' => 'DESC']), fn ($c) => !$appels->enCoursAuTelephone($c->getTelephone())));
         $avant = static::getContainer()->get(ClientRepository::class)->count([]);
 
         // « Client de la base » sans choisir de client : refusé.
@@ -201,6 +206,59 @@ final class RegistreAppelsTest extends WebTestCase
 
         $this->client->request('GET', 'http://localhost/appels');
         $this->assertSelectorExists('#registre-liste .badge[title="Demande faite sur sotrama.net"]');
+    }
+
+    public function testNumeroDejaEnCoursRefuse(): void
+    {
+        $this->connecter('ramassage');
+        $crawler = $this->client->request('GET', '/appels');
+        $valeurs = ['appel[nom]' => 'Traoré', 'appel[prenom]' => 'Mamadou', 'appel[telephone]' => self::TELEPHONE,
+            'appel[codePostal]' => '77184', 'appel[ville]' => 'Émerainville', 'appel[commentaire]' => 'Premier appel'];
+        $this->client->submit($crawler->selectButton("Enregistrer l'appel")->form(), $valeurs);
+        $this->assertResponseRedirects('/appels');
+
+        // Même numéro écrit autrement : refusé tant que le premier appel est en cours.
+        $crawler = $this->client->request('GET', '/appels');
+        $this->client->submit($crawler->selectButton("Enregistrer l'appel")->form(), ['appel[telephone]' => '+33 7 58 31 92 46', 'appel[commentaire]' => 'Second appel'] + $valeurs);
+        $this->assertResponseStatusCodeSame(422);
+        $this->assertSelectorTextContains('body', 'Ce numéro est déjà dans le registre');
+        $this->assertNull(static::getContainer()->get(AppelRepository::class)->findOneBy(['commentaire' => 'Second appel']));
+
+        // Modifier l'appel existant reste possible.
+        $hid = static::getContainer()->get(IdChiffreur::class)->encode($this->appel()->getId());
+        $crawler = $this->client->request('GET', '/appels/'.$hid);
+        $this->client->submit($crawler->selectButton('Enregistrer')->form(), ['appel[commentaire]' => 'Premier appel modifié']);
+        $this->assertResponseRedirects('/appels');
+    }
+
+    public function testRamassageEffectueArchiveEtPdfDuCamion(): void
+    {
+        $this->connecter('ramassage');
+        $boxer = static::getContainer()->get(CamionRepository::class)->findOneBy(['nom' => 'Peugeot Boxer 2']);
+        $crawler = $this->client->request('GET', '/appels');
+        $this->client->submit($crawler->selectButton("Enregistrer l'appel")->form(), [
+            'appel[nom]' => 'Traoré', 'appel[prenom]' => 'Mamadou', 'appel[telephone]' => self::TELEPHONE,
+            'appel[codePostal]' => '77184', 'appel[ville]' => 'Émerainville', 'appel[camion]' => (string) $boxer->getId(),
+            'appel[dateRamassage]' => (new \DateTimeImmutable('+2 days'))->format('Y-m-d').'T10:00', 'appel[confirme]' => '1',
+        ]);
+        $this->assertResponseRedirects('/appels');
+
+        // PDF du camion : le client y figure.
+        $hidCamion = static::getContainer()->get(IdChiffreur::class)->encode($boxer->getId());
+        $this->client->request('GET', '/appels/camion/'.$hidCamion.'.pdf');
+        $this->assertResponseIsSuccessful();
+        $this->assertSame('application/pdf', $this->client->getResponse()->headers->get('Content-Type'));
+
+        // Ramassage effectué : l'appel passe aux archives.
+        static::getContainer()->get(Connection::class)->executeStatement('UPDATE ramassage SET statut = ? WHERE id = ?', [StatutRamassage::Effectue->value, $this->appel()->getRamassage()->getId()]);
+        $this->client->request('GET', '/appels', ['camion' => $hidCamion]);
+        $this->assertSelectorTextNotContains('#registre-liste', 'Mamadou TRAORÉ');
+        $this->client->request('GET', '/appels', ['vue' => 'archives']);
+        $this->assertSelectorTextContains('#registre-liste', 'Mamadou TRAORÉ');
+        $this->assertTrue($this->appel()->isArchive());
+
+        // Archivé : le même numéro peut à nouveau être noté.
+        $this->assertNull(static::getContainer()->get(AppelRepository::class)->enCoursAuTelephone(self::TELEPHONE));
     }
 
     private function connecter(string $login): void

@@ -4,7 +4,8 @@
     <div class="col-6 col-md"><div class="registre-compteur"><strong class="text-success">{{ compteurs.confirmes }}</strong><span>Confirmés ✅</span></div></div>
     <div class="col-6 col-md"><div class="registre-compteur"><strong class="text-warning">{{ compteurs.attente }}</strong><span>En attente ⏳</span></div></div>
     <div class="col-6 col-md"><div class="registre-compteur"><strong class="text-info">{{ compteurs.aPlanifier }}</strong><span>À planifier 📅</span></div></div>
-    <div class="col-12 col-md"><div class="registre-compteur"><strong>{{ compteurs.estimation|money }}</strong><span>Estimations</span></div></div>
+    <div class="col-6 col-md"><div class="registre-compteur"><strong class="{{ compteurs.sansCamion ? 'text-danger' : 'text-success' }}">{{ compteurs.sansCamion }}</strong><span>Sans camion 🚚</span></div></div>
+    <div class="col-6 col-md"><div class="registre-compteur"><strong>{{ compteurs.estimation|money }}</strong><span>Estimations</span></div></div>
 </div>
 {% macro confirmer(a) %}
     <form method="post" action="{{ path('appel_confirmer', {id: a.id}) }}" class="d-inline">

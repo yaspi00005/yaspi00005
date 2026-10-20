@@ -3,13 +3,17 @@
 namespace App\Controller;
 
 use App\Entity\Appel;
+use App\Entity\Camion;
 use App\Entity\User;
 use App\Form\AppelType;
 use App\Repository\AppelRepository;
 use App\Repository\CamionRepository;
 use App\Repository\ColisRepository;
 use App\Repository\ExpeditionRepository;
+use App\Repository\UserRepository;
 use App\Security\IdChiffreur;
+use App\Service\CodePostal;
+use App\Service\DocumentService;
 use App\Service\Doublons;
 use App\Service\ExportExcel;
 use App\Service\RegistreAppels;
@@ -17,12 +21,16 @@ use App\Util\Csv;
 use App\Util\Pagination;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormInterface;
+use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+
+use function Symfony\Component\String\u;
 
 /** Registre des appels des clients et suivi logistique (camions, chauffeurs, conteneurs). */
 #[Route('/appels')]
@@ -35,11 +43,12 @@ class AppelController extends AbstractController
     public function __construct(
         private readonly RegistreAppels $registre,
         private readonly IdChiffreur $chiffreur,
+        private readonly AppelRepository $appels,
     ) {
     }
 
     #[Route('', name: 'appel_index', methods: ['GET', 'POST'])]
-    public function index(Request $request, AppelRepository $appels, CamionRepository $camions, ExpeditionRepository $expeditions, ExportExcel $excel): Response
+    public function index(Request $request, AppelRepository $appels, CamionRepository $camions, ExpeditionRepository $expeditions, ExportExcel $excel, UserRepository $utilisateurs): Response
     {
         $appel = (new Appel())->setUtilisateur($this->getUser());
         $form = $this->createForm(AppelType::class, $appel, ['action' => $this->generateUrl('appel_index')]);
@@ -53,6 +62,10 @@ class AppelController extends AbstractController
             'camion' => $this->chiffreur->decodeOptionnel($request->query->get('camion')),
             'chauffeur' => $this->chiffreur->decodeOptionnel($request->query->get('chauffeur')),
             'expedition' => $this->chiffreur->decodeOptionnel($request->query->get('expedition')),
+            'du' => $request->query->getString('du'),
+            'au' => $request->query->getString('au'),
+            'utilisateur' => $this->chiffreur->decodeOptionnel($request->query->get('utilisateur')),
+            'source' => $request->query->getString('source'),
         ];
         $qb = $appels->filtreQb($filtres);
 
@@ -75,7 +88,8 @@ class AppelController extends AbstractController
 
         $donnees = [
             'appels' => Pagination::depuisRequete($qb, $request, 50),
-            'compteurs' => $appels->compteurs($appels->filtreQb(['camion' => $filtres['camion'], 'chauffeur' => $filtres['chauffeur'], 'expedition' => $filtres['expedition'], 'q' => $filtres['q']])),
+            // Compteurs : appels en cours (hors archives), avec les mêmes filtres sauf l'onglet.
+            'compteurs' => $appels->compteurs($appels->filtreQb(['vue' => 'archives' === $filtres['vue'] ? 'archives' : 'en_cours'] + $filtres)),
             'filtres' => $filtres,
             'synchro' => new \DateTimeImmutable(),
         ];
@@ -92,6 +106,7 @@ class AppelController extends AbstractController
             'camions' => $camionsActifs,
             'chauffeurs' => array_values(array_unique(array_filter(array_map(fn ($c) => $c->getChauffeur(), $camionsActifs)), \SORT_REGULAR)),
             'expeditions' => $expeditions->findBy(['statut' => \App\Enum\StatutExpedition::EnPreparation], ['dateDepart' => 'ASC']),
+            'utilisateurs' => $utilisateurs->findBy(['actif' => true], ['prenom' => 'ASC']),
         ]);
     }
 
@@ -111,6 +126,29 @@ class AppelController extends AbstractController
             'colis' => $colis->count(['client' => $client]),
             'fiche' => $this->generateUrl('client_show', ['id' => $client->getId()]),
         ]]);
+    }
+
+    /** Ville saisie → codes postaux possibles (France). */
+    #[Route('/codes-postaux.json', name: 'appel_codes_postaux', methods: ['GET'])]
+    public function codesPostaux(Request $request, CodePostal $codePostal): JsonResponse
+    {
+        return $this->json(['communes' => $codePostal->codesPostaux($request->query->getString('ville'))]);
+    }
+
+    /** Liste des clients affectés à un camion (appels en cours), en PDF, pour la tournée. */
+    #[Route('/camion/{id}.pdf', name: 'appel_camion_pdf', requirements: ['id' => self::ID], methods: ['GET'])]
+    public function pdfCamion(Camion $camion, DocumentService $documents): Response
+    {
+        $pdf = $documents->pdf('pdf/camion_appels.html.twig', [
+            'camion' => $camion,
+            'appels' => $this->appels->enCoursDuCamion($camion->getId()),
+            'genereLe' => new \DateTimeImmutable(),
+        ], 'landscape');
+
+        return new Response($pdf, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => HeaderUtils::makeDisposition(HeaderUtils::DISPOSITION_INLINE, 'clients-camion-'.u($camion->getNom())->ascii()->lower()->replaceMatches('/[^a-z0-9]+/', '-')->trim('-').'.pdf'),
+        ]);
     }
 
     #[Route('/{id}', name: 'appel_edit', requirements: ['id' => self::ID], methods: ['GET', 'POST'])]
@@ -160,6 +198,12 @@ class AppelController extends AbstractController
     private function traiter(Request $request, FormInterface $form, Appel $appel, string $message): ?Response
     {
         $form->handleRequest($request);
+        // Un même numéro ne peut figurer qu'une fois parmi les appels en cours.
+        if ($form->isSubmitted() && ($existant = $this->appels->enCoursAuTelephone($appel->getTelephone(), $appel->getId()))) {
+            $form->get('telephone')->addError(new FormError(\sprintf('Ce numéro est déjà dans le registre : appel de %s du %s%s. Modifiez cet appel plutôt que d\'en créer un nouveau.',
+                $existant->getNomComplet(), $existant->getDateAppel()->format('d/m/Y'), $existant->getCamion() ? ' (camion '.$existant->getCamion()->getNom().')' : '')));
+            $this->addFlash('danger', 'Numéro déjà présent dans le registre : '.$existant->getNomComplet().' ('.$existant->getTelephone().').');
+        }
         if (!$form->isSubmitted() || !$form->isValid()) {
             return null;
         }

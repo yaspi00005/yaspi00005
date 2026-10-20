@@ -44,4 +44,20 @@ final class VillesCodePostalTest extends WebTestCase
         $client->request('GET', '/clients/villes.json', ['pays' => 'France', 'cp' => '75018']);
         $this->assertResponseStatusCodeSame(403);
     }
+
+    public function testCodePostalDeduitDeLaVille(): void
+    {
+        $client = static::createClient();
+        static::getContainer()->set(CodePostal::class, new CodePostal(
+            new MockHttpClient(new MockResponse(json_encode([['nom' => 'Émerainville', 'codesPostaux' => ['77184']], ['nom' => 'Paris', 'codesPostaux' => ['75001', '75002']]]))),
+            new ArrayAdapter(),
+            new NullLogger(),
+        ));
+        $client->loginUser(static::getContainer()->get(UserRepository::class)->findOneBy(['username' => 'ramassage']));
+
+        $client->request('GET', '/appels/codes-postaux.json', ['ville' => 'emerainville']);
+        $this->assertResponseIsSuccessful();
+        $this->assertSame(['ville' => 'Émerainville', 'cp' => '77184'], json_decode((string) $client->getResponse()->getContent(), true)['communes'][0]);
+        $this->assertCount(3, json_decode((string) $client->getResponse()->getContent(), true)['communes']);
+    }
 }

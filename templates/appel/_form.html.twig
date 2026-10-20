@@ -1,5 +1,5 @@
 {# Formulaire d'un appel (nouveau ou modification). Paramètres : form, bouton #}
-{{ form_start(form, {attr: {'data-villes-url': path('client_villes'), 'data-client-url': path('appel_client'), class: 'js-form-appel'}}) }}
+{{ form_start(form, {attr: {'data-villes-url': path('client_villes'), 'data-client-url': path('appel_client'), 'data-codes-postaux-url': path('appel_codes_postaux'), class: 'js-form-appel'}}) }}
 <input type="hidden" class="js-cp-pays" value="France">
 <datalist id="villes-cp"></datalist>
 <div class="row">

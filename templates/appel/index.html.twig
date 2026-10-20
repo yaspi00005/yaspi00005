@@ -23,10 +23,18 @@
             {% if is_granted('ROLE_ADMIN') %}<a href="{{ path('admin_camion_index') }}" class="btn btn-outline-primary btn-sm btn-rounded"><i class="fas fa-truck me-1"></i> Camions</a>{% endif %}
             <a href="{{ path('ramassage_index') }}" class="btn btn-outline-primary btn-sm btn-rounded"><i class="fas fa-calendar-alt me-1"></i> Planning</a>
             <a href="?{{ app.request.query.all|merge({export: 'csv', page: null})|url_encode }}" class="btn btn-outline-primary btn-sm btn-rounded"><i class="fas fa-file-excel me-1"></i> Export Excel</a>
+            {% if camions %}
+            <div class="dropdown">
+                <button class="btn btn-outline-primary btn-sm btn-rounded dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="fas fa-file-pdf me-1"></i> PDF par camion</button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    {% for c in camions %}<li><a class="dropdown-item" href="{{ path('appel_camion_pdf', {id: c.id}) }}" target="_blank"><span class="pastille-camion" style="background: {{ c.couleur }}"></span>{{ c.nom }}{% if c.chauffeur %} — {{ c.chauffeur.prenom }}{% endif %}</a></li>{% endfor %}
+                </ul>
+            </div>
+            {% endif %}
         </div>
     </div>
     <div class="card-body">
-        {% set base = {q: filtres.q ?: null, expedition: filtres.expedition ? hid(filtres.expedition) : null} %}
+        {% set base = {q: filtres.q ?: null, expedition: filtres.expedition ? hid(filtres.expedition) : null, du: filtres.du ?: null, au: filtres.au ?: null, utilisateur: filtres.utilisateur ? hid(filtres.utilisateur) : null, source: filtres.source ?: null} %}
         <div class="registre-onglets mb-3" role="tablist" aria-label="Filtrer les appels">
             {% for cle, libelle in vues %}
                 {% set actif = filtres.vue == cle and not filtres.camion and not filtres.chauffeur %}
@@ -45,12 +53,31 @@
             {% if filtres.vue != 'tous' %}<input type="hidden" name="vue" value="{{ filtres.vue }}">{% endif %}
             {% if filtres.camion %}<input type="hidden" name="camion" value="{{ hid(filtres.camion) }}">{% endif %}
             {% if filtres.chauffeur %}<input type="hidden" name="chauffeur" value="{{ hid(filtres.chauffeur) }}">{% endif %}
-            <div class="col-md-7"><input type="search" name="q" value="{{ filtres.q }}" class="form-control" placeholder="Recherche (nom, ville, téléphone, code postal, commentaire…)" aria-label="Rechercher"></div>
-            <div class="col-md-5">
+            <div class="col-md-4"><input type="search" name="q" value="{{ filtres.q }}" class="form-control" placeholder="Recherche (nom, ville, téléphone, code postal, commentaire…)" aria-label="Rechercher"></div>
+            <div class="col-6 col-md-2"><input type="date" name="du" value="{{ filtres.du }}" class="form-control" title="Appel reçu depuis le" aria-label="Appel reçu depuis le"></div>
+            <div class="col-6 col-md-2"><input type="date" name="au" value="{{ filtres.au }}" class="form-control" title="Appel reçu jusqu'au" aria-label="Appel reçu jusqu'au"></div>
+            <div class="col-6 col-md-2">
+                <select name="utilisateur" class="form-control form-select" aria-label="Pris par" data-envoi-auto>
+                    <option value="">Tous les utilisateurs</option>
+                    {% for u in utilisateurs %}<option value="{{ hid(u.id) }}" {{ filtres.utilisateur == u.id ? 'selected' }}>{{ u.nomComplet }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="col-6 col-md-2">
+                <select name="source" class="form-control form-select" aria-label="Origine" data-envoi-auto>
+                    <option value="">Téléphone et site</option>
+                    <option value="telephone" {{ filtres.source == 'telephone' ? 'selected' }}>📞 Par téléphone</option>
+                    <option value="site" {{ filtres.source == 'site' ? 'selected' }}>🌐 Demande en ligne</option>
+                </select>
+            </div>
+            <div class="col-md-10">
                 <select name="expedition" class="form-control form-select" aria-label="Conteneur" data-envoi-auto>
                     <option value="">Tous les conteneurs</option>
                     {% for e in expeditions %}<option value="{{ hid(e.id) }}" {{ filtres.expedition == e.id ? 'selected' }}>{{ e.destination.ville }} — départ le {{ e.dateDepart|date('d/m/Y') }}</option>{% endfor %}
                 </select>
+            </div>
+            <div class="col-md-2 d-flex gap-1">
+                <button class="btn btn-primary w-100" type="submit" aria-label="Filtrer"><i class="fas fa-filter"></i></button>
+                <a href="{{ path('appel_index') }}" class="btn btn-light" title="Réinitialiser" aria-label="Réinitialiser"><i class="fas fa-times"></i></a>
             </div>
         </form>
         <div id="registre-liste" data-rafraichir="30">

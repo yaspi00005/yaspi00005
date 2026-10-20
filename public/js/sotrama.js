@@ -746,3 +746,60 @@
     }
     majour();
 })();
+
+/* ---------- Registre des appels : code postal déduit de la ville ---------- */
+(function () {
+    'use strict';
+    const form = document.querySelector('.js-form-appel');
+    if (!form || !form.dataset.codesPostauxUrl) { return; }
+    const cp = form.querySelector('.js-cp-code');
+    const ville = form.querySelector('.js-cp-ville');
+    if (!cp || !ville) { return; }
+    const liste = document.createElement('datalist');
+    liste.id = 'codes-postaux-ville';
+    form.appendChild(liste);
+    cp.setAttribute('list', liste.id);
+    const aide = document.createElement('div');
+    aide.className = 'form-text';
+    cp.insertAdjacentElement('afterend', aide);
+    const simple = s => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+    let derniere = '', requete = 0;
+
+    const chercher = function () {
+        const nom = ville.value.trim();
+        // Code postal déjà tapé à la main : on ne l'écrase pas.
+        if (nom.length < 2 || simple(nom) === derniere || (cp.value.trim() && !cp.dataset.auto)) { return; }
+        derniere = simple(nom);
+        const numero = ++requete;
+        fetch(form.dataset.codesPostauxUrl + '?' + new URLSearchParams({ ville: nom }), { credentials: 'same-origin' })
+            .then(r => r.ok ? r.json() : { communes: [] })
+            .then(function (d) {
+                if (numero !== requete) { return; }
+                let communes = d.communes || [];
+                const exactes = communes.filter(c => simple(c.ville) === simple(nom));
+                if (exactes.length) { communes = exactes; }
+                liste.innerHTML = '';
+                communes.forEach(function (c) { const o = document.createElement('option'); o.value = c.cp; o.label = c.ville; liste.appendChild(o); });
+                const codes = [...new Set(communes.map(c => c.cp))];
+                if (codes.length === 1) {
+                    cp.value = codes[0]; cp.dataset.auto = '1';
+                    if (exactes.length) { ville.value = communes[0].ville; }
+                    aide.textContent = 'Code postal trouvé pour ' + communes[0].ville + '.';
+                    aide.className = 'form-text text-success';
+                } else if (codes.length > 1) {
+                    if (cp.dataset.auto) { cp.value = ''; }
+                    aide.textContent = codes.length + ' codes postaux possibles : choisissez dans la liste.';
+                    aide.className = 'form-text text-warning';
+                    cp.focus();
+                    if (typeof cp.showPicker === 'function') { try { cp.showPicker(); } catch (e) { /* non pris en charge */ } }
+                } else {
+                    aide.textContent = 'Ville introuvable : saisissez le code postal.';
+                    aide.className = 'form-text text-warning';
+                }
+            })
+            .catch(() => { aide.textContent = ''; });
+    };
+    ville.addEventListener('change', chercher);
+    ville.addEventListener('blur', chercher);
+    cp.addEventListener('input', function () { delete cp.dataset.auto; aide.textContent = ''; });
+})();

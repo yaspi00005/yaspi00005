@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<style>
+    @page { margin: 26px 30px 40px; }
+    body { font-family: 'DejaVu Sans', sans-serif; font-size: 10px; color: #222; }
+    .vert { color: #00A15D; }
+    h1 { font-size: 18px; margin: 0; }
+    .petit { font-size: 9px; color: #777; }
+    table { width: 100%; border-collapse: collapse; }
+    .liste th { background: #00A15D; color: #fff; padding: 6px; text-align: left; font-size: 9px; }
+    .liste td { border-bottom: 1px solid #e5e5e5; padding: 6px; vertical-align: top; }
+    .liste tr.zone td { background: #f2f8f5; font-weight: bold; color: #00A15D; border-bottom: 1px solid #cfe6da; }
+    .num { text-align: right; white-space: nowrap; }
+    .coche { width: 14px; height: 14px; border: 1px solid #999; display: inline-block; }
+    .total td { font-weight: bold; border-top: 2px solid #00A15D; padding: 6px; }
+    .pied { position: fixed; bottom: -26px; left: 0; right: 0; font-size: 8px; color: #999; }
+</style>
+</head>
+<body>
+<div class="pied">{{ app_nom }} — Clients du camion {{ camion.nom }} — édité le {{ genereLe|date('d/m/Y à H:i') }}{% if app.user %} par {{ app.user.nomComplet }}{% endif %}</div>
+<table>
+    <tr>
+        <td>
+            {% if logo_data_uri() %}<img src="{{ logo_data_uri() }}" alt="" style="height:62px;float:left;margin-right:12px">{% endif %}
+            <h1 class="vert">{{ app_nom }}</h1>
+            <div style="font-size:14px;font-weight:bold;margin-top:4px">Clients du camion {{ camion.nom }}{% if camion.chauffeur %} — chauffeur {{ camion.chauffeur.nomComplet }}{% endif %}</div>
+            <div class="petit">Appels en cours affectés à ce camion (hors archives), classés par code postal</div>
+        </td>
+        <td style="text-align:right;vertical-align:top">
+            <strong style="font-size:14px">{{ appels|length }}</strong> client{{ appels|length > 1 ? 's' }}<br>
+            <span class="petit">{{ appels|filter(a => a.confirme)|length }} confirmé(s)</span>
+        </td>
+    </tr>
+</table>
+<br>
+<table class="liste">
+    <thead>
+        <tr>
+            <th style="width:17%">Client</th>
+            <th style="width:12%">Téléphone</th>
+            <th style="width:27%">Adresse</th>
+            <th style="width:10%">Ramassage</th>
+            <th style="width:8%" class="num">Estimation</th>
+            <th style="width:20%">Commentaire</th>
+            <th style="width:6%">Fait</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% set zone = null %}
+    {% for a in appels %}
+        {% if a.codePostal|slice(0, 2) != zone %}
+            {% set zone = a.codePostal|slice(0, 2) %}
+            <tr class="zone"><td colspan="7">Département {{ zone }}</td></tr>
+        {% endif %}
+        <tr>
+            <td><strong>{{ a.nomComplet }}</strong>{% if not a.confirme %}<br><span class="petit">non confirmé</span>{% endif %}</td>
+            <td>{{ a.telephone|tel }}</td>
+            <td>{{ a.adresse ? a.adresse ~ ', ' }}{{ a.codePostal }} {{ a.ville }}</td>
+            <td>{{ a.ramassage ? a.ramassage.datePrevue|date('d/m H:i') : '—' }}</td>
+            <td class="num">{{ a.estimation is not null ? a.estimation|money : '—' }}</td>
+            <td>{{ a.commentaire|u.truncate(120, '…') }}</td>
+            <td><span class="coche"></span></td>
+        </tr>
+    {% else %}
+        <tr><td colspan="7" style="text-align:center;padding:30px;color:#999">Aucun client affecté à ce camion.</td></tr>
+    {% endfor %}
+    {% if appels %}
+        <tr class="total"><td colspan="4">Total</td><td class="num">{{ appels|reduce((t, a) => t + (a.estimation ?? 0), 0)|money }}</td><td colspan="2"></td></tr>
+    {% endif %}
+    </tbody>
+</table>
+</body>
+</html>
