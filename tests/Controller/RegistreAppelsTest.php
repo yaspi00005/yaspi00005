@@ -292,6 +292,14 @@ final class RegistreAppelsTest extends WebTestCase
         $this->assertLessThan(array_search($second->getNom(), $avant, true), array_search($second->getNom(), $apres, true));
         $this->assertNotNull(static::getContainer()->get(AppelRepository::class)->find($second->getId())->getOrdreTournee());
 
+        // Flèches du tableau : appel en arrière-plan (sans recharger la page), réponse JSON.
+        $crawler = $this->client->request('GET', '/appels', ['camion' => $hidCamion]);
+        $tokenBas = $crawler->filter('form[action$="/'.$hid.'/deplacer"] input[name="_token"]')->first()->attr('value');
+        $this->client->xmlHttpRequest('POST', '/appels/'.$hid.'/deplacer', ['_token' => $tokenBas, 'sens' => 'bas']);
+        $this->assertResponseIsSuccessful();
+        $this->assertSame(['ok' => true], json_decode((string) $this->client->getResponse()->getContent(), true));
+        $this->assertSame($avant, $tournee(), 'Redescendu : ordre de départ');
+
         // Le PDF du camion reprend cet ordre.
         $this->client->request('GET', '/appels/camion/'.$hidCamion.'.pdf');
         $this->assertResponseIsSuccessful();

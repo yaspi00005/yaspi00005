@@ -170,3 +170,7 @@ ol.etapes li { margin-bottom: .35rem; }
 .a-traiter-badge { position: absolute; top: -6px; right: -8px; font-size: .65rem; }
 .a-traiter-menu { min-width: 300px; max-width: 360px; }
 .a-traiter-menu .dropdown-item { white-space: normal; }
+
+/* Registre : ligne qui vient de changer de place dans la tournée */
+@keyframes ligne-deplacee { from { background: rgba(0, 161, 93, .18); } to { background: transparent; } }
+.ligne-deplacee, .ligne-deplacee > td { animation: ligne-deplacee 1.2s ease-out; }

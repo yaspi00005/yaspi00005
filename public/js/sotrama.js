@@ -659,9 +659,9 @@
     const liste = document.querySelector('[data-rafraichir]');
     if (liste) {
         const delai = (parseInt(liste.dataset.rafraichir, 10) || 30) * 1000;
-        const rafraichir = function () {
-            // Pas pendant une saisie dans le tableau, ni quand l'onglet est caché.
-            if (document.hidden || liste.contains(document.activeElement)) { return; }
+        const rafraichir = function (force) {
+            // Pas pendant une saisie dans le tableau, ni quand l'onglet est caché (sauf après un changement d'ordre).
+            if (force !== true && (document.hidden || liste.contains(document.activeElement))) { return; }
             fetch(window.location.href, { headers: { 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' })
                 .then(r => r.ok && !r.redirected ? r.text() : Promise.reject())
                 .then(html => { liste.innerHTML = html; })
@@ -669,6 +669,25 @@
         };
         setInterval(rafraichir, delai);
         document.addEventListener('visibilitychange', function () { if (!document.hidden) { rafraichir(); } });
+
+        // Ordre de passage du camion : flèches ↑ ↓ sans recharger la page. La ligne bouge tout de suite,
+        // puis la liste est relue (numéros et flèches à jour).
+        liste.addEventListener('submit', function (e) {
+            const f = e.target.closest('.js-deplacer-appel');
+            if (!f) { return; }
+            e.preventDefault();
+            const ligne = f.closest('tr, .registre-fiche');
+            const haut = (f.querySelector('[name="sens"]') || {}).value === 'haut';
+            const voisine = ligne && (haut ? ligne.previousElementSibling : ligne.nextElementSibling);
+            if (ligne && voisine && voisine.tagName === ligne.tagName) {
+                haut ? voisine.before(ligne) : voisine.after(ligne);
+                ligne.classList.remove('ligne-deplacee'); void ligne.offsetWidth; ligne.classList.add('ligne-deplacee');
+            }
+            fetch(f.action, { method: 'POST', body: new FormData(f), headers: { 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' })
+                .then(r => r.ok ? r.json() : Promise.reject())
+                .catch(() => { if (window.toastr) { toastr.error("L'ordre n'a pas pu être enregistré. Réessayez."); } })
+                .finally(() => rafraichir(true));
+        });
     }
 
     // Client : choisi dans la base ou nouveau client.

@@ -15,7 +15,7 @@
     </form>
 {% endmacro %}
 {% macro deplacer(a, sens) %}
-    <form method="post" action="{{ path('appel_deplacer', {id: a.id}) }}" class="d-inline">
+    <form method="post" action="{{ path('appel_deplacer', {id: a.id}) }}" class="d-inline js-deplacer-appel">
         <input type="hidden" name="_token" value="{{ csrf_token('deplacer-appel-' ~ a.id) }}">
         <input type="hidden" name="sens" value="{{ sens }}">
         <input type="hidden" name="retour" value="{{ app.request.pathInfo }}?{{ app.request.query.all|url_encode }}">

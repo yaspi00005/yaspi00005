@@ -181,8 +181,13 @@ class AppelController extends AbstractController
     #[Route('/{id}/deplacer', name: 'appel_deplacer', requirements: ['id' => self::ID], methods: ['POST'])]
     public function deplacer(Request $request, Appel $appel): Response
     {
-        if ($this->isCsrfTokenValid('deplacer-appel-'.$appel->getId(), $request->getPayload()->getString('_token'))) {
+        $valide = $this->isCsrfTokenValid('deplacer-appel-'.$appel->getId(), $request->getPayload()->getString('_token'));
+        if ($valide) {
             $this->registre->deplacer($appel, 'haut' === $request->getPayload()->getString('sens'));
+        }
+        // Flèches du tableau : le script met la liste à jour sans recharger la page.
+        if ($request->isXmlHttpRequest()) {
+            return $this->json(['ok' => $valide], $valide ? 200 : 403);
         }
 
         return $this->redirect($this->retour($request));
