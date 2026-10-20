@@ -63,6 +63,8 @@ final class ATraiter
                 $this->urls->generate('appel_index', ['vue' => 'non_confirmes']), 'fa-phone-slash', 'danger');
             $lignes[] = $this->ligne('Appel(s) confirmé(s) à planifier', $this->compter($this->appels->filtreQb(['vue' => 'a_planifier']), 'a'),
                 $this->urls->generate('appel_index', ['vue' => 'a_planifier']), 'fa-calendar-plus', 'warning');
+            $lignes[] = $this->ligne('Ramassage(s) passé(s) non effectué(s), à reprogrammer', $this->compter($this->appels->filtreQb(['vue' => 'a_reprogrammer']), 'a'),
+                $this->urls->generate('appel_index', ['vue' => 'a_reprogrammer']), 'fa-redo', 'danger');
             $lignes[] = $this->ligne('Client(s) sans camion', $this->compter($this->appels->filtreQb(['vue' => 'sans_camion']), 'a'),
                 $this->urls->generate('appel_index', ['vue' => 'sans_camion']), 'fa-truck', 'warning');
         }

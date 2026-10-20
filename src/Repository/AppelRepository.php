@@ -17,13 +17,14 @@ class AppelRepository extends ServiceEntityRepository
 {
     /**
      * Onglets. « Tous » : tous les appels en cours (non traités). « Sans camion » : ceux qu'il reste à affecter.
-     * « Archives » : date du ramassage passée, ou ramassage effectué ou annulé.
+     * « À reprogrammer » : date du ramassage passée sans ramassage effectué. « Archives » : ramassage effectué ou annulé.
      */
     public const VUES = [
         'tous' => '📋 Tous les appels en cours',
         'sans_camion' => '🚚 Sans camion',
         'non_confirmes' => '🚨 Non confirmés',
         'a_planifier' => '📅 À planifier',
+        'a_reprogrammer' => '⏰ À reprogrammer',
         'archives' => '🗄️ Archives',
     ];
 
@@ -35,8 +36,8 @@ class AppelRepository extends ServiceEntityRepository
     ];
 
     /** Condition DQL d'un appel archivé (même règle que Appel::isArchive()). */
-    /** L'expédition ou le conteneur peut être parti : l'appel reste en cours tant que son ramassage n'est pas passé. */
-    private const ARCHIVE = '(r.id IS NOT NULL AND (r.statut IN (:ramassagesFinis) OR r.datePrevue < :aujourdhui))';
+    /** Seul un ramassage effectué ou annulé archive l'appel ; passé sans être fait, il reste à reprogrammer. */
+    private const ARCHIVE = '(r.id IS NOT NULL AND r.statut IN (:ramassagesFinis))';
 
     public function __construct(ManagerRegistry $registry)
     {
@@ -64,13 +65,13 @@ class AppelRepository extends ServiceEntityRepository
             $qb->andWhere($condition)->setParameter('q', '%'.addcslashes($q, '%_').'%');
         }
         $vue = $filtres['vue'] ?? 'tous';
-        $qb->setParameter('ramassagesFinis', [StatutRamassage::Effectue, StatutRamassage::Annule])
-            ->setParameter('aujourdhui', new \DateTimeImmutable('today'));
+        $qb->setParameter('ramassagesFinis', [StatutRamassage::Effectue, StatutRamassage::Annule]);
         $qb->andWhere('archives' === $vue ? self::ARCHIVE : 'NOT '.self::ARCHIVE);
         match ($vue) {
             'non_confirmes' => $qb->andWhere('a.confirme = false'),
             'a_planifier' => $qb->andWhere('a.confirme = true AND a.ramassage IS NULL'),
             'sans_camion' => $qb->andWhere('a.camion IS NULL'),
+            'a_reprogrammer' => $qb->andWhere('r.id IS NOT NULL AND r.datePrevue < :aujourdhui')->setParameter('aujourdhui', new \DateTimeImmutable('today')),
             default => null, // 'tous', 'en_cours' et 'archives'
         };
         if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $filtres['du'] ?? '')) {

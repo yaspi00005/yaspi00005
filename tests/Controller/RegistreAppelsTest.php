@@ -341,7 +341,7 @@ final class RegistreAppelsTest extends WebTestCase
         static::getContainer()->get(Connection::class)->executeStatement('DELETE FROM appel WHERE telephone IN (?, ?)', ['07 58 31 92 48', '07 58 31 92 49']);
     }
 
-    public function testDateDeRamassagePasseeArchiveLAppel(): void
+    public function testRamassagePasseNonFaitResteAReprogrammer(): void
     {
         $this->connecter('ramassage');
         $crawler = $this->client->request('GET', '/appels');
@@ -351,19 +351,26 @@ final class RegistreAppelsTest extends WebTestCase
             'appel[dateRamassage]' => (new \DateTimeImmutable('+1 day'))->format('Y-m-d').'T10:00',
         ]);
         $this->assertResponseRedirects('/appels');
-        $this->assertFalse($this->appel()->isArchive(), 'Ramassage à venir : en cours');
+        $this->assertFalse($this->appel()->isAReprogrammer());
 
-        // Aujourd'hui : toujours en cours ; la veille : archivé.
+        // Date passée sans ramassage effectué : toujours affiché, « À reprogrammer ».
         $db = static::getContainer()->get(Connection::class);
         $id = $this->appel()->getRamassage()->getId();
-        $db->executeStatement('UPDATE ramassage SET date_prevue = ? WHERE id = ?', [(new \DateTimeImmutable('today 08:00'))->format('Y-m-d H:i:s'), $id]);
-        $this->assertNotNull(static::getContainer()->get(AppelRepository::class)->enCoursAuTelephone(self::TELEPHONE));
         $db->executeStatement('UPDATE ramassage SET date_prevue = ? WHERE id = ?', [(new \DateTimeImmutable('yesterday 10:00'))->format('Y-m-d H:i:s'), $id]);
-        $this->assertNull(static::getContainer()->get(AppelRepository::class)->enCoursAuTelephone(self::TELEPHONE));
-        $this->client->request('GET', '/appels', ['vue' => 'archives']);
+        $this->assertFalse($this->appel()->isArchive());
+        $this->assertTrue($this->appel()->isAReprogrammer());
+        $this->client->request('GET', '/appels');
         $this->assertSelectorTextContains('#registre-liste', 'Mamadou TRAORÉ');
+        $this->assertSelectorTextContains('#registre-liste', 'À reprogrammer');
+        $this->client->request('GET', '/appels', ['vue' => 'a_reprogrammer']);
+        $this->assertSelectorTextContains('#registre-liste', 'Mamadou TRAORÉ');
+
+        // Ramassage effectué : archivé.
+        $db->executeStatement('UPDATE ramassage SET statut = ? WHERE id = ?', [StatutRamassage::Effectue->value, $id]);
         $this->client->request('GET', '/appels');
         $this->assertSelectorTextNotContains('#registre-liste', 'Mamadou TRAORÉ');
+        $this->client->request('GET', '/appels', ['vue' => 'archives']);
+        $this->assertSelectorTextContains('#registre-liste', 'Mamadou TRAORÉ');
     }
 
     public function testLeTotalCorrespondAuxLignesDuTableau(): void

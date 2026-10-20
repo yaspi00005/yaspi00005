@@ -335,13 +335,16 @@ class Appel
     }
 
     /** État affiché dans le registre : [libellé, couleur du badge]. */
-    /** Archivé : date du ramassage passée, ou ramassage effectué ou annulé (même règle que AppelRepository::ARCHIVE). */
+    /** Archivé : ramassage effectué ou annulé (même règle que AppelRepository::ARCHIVE). */
     public function isArchive(): bool
     {
-        $r = $this->ramassage;
+        return null !== $this->ramassage && \in_array($this->ramassage->getStatut(), [\App\Enum\StatutRamassage::Effectue, \App\Enum\StatutRamassage::Annule], true);
+    }
 
-        return null !== $r && (\in_array($r->getStatut(), [\App\Enum\StatutRamassage::Effectue, \App\Enum\StatutRamassage::Annule], true)
-            || $r->getDatePrevue() < new \DateTimeImmutable('today'));
+    /** Date de ramassage passée sans que le ramassage soit fait : à reprendre au prochain passage. */
+    public function isAReprogrammer(): bool
+    {
+        return !$this->isArchive() && null !== $this->ramassage && $this->ramassage->getDatePrevue() < new \DateTimeImmutable('today');
     }
 
     public function getOrdreTournee(): ?int
@@ -374,6 +377,7 @@ class Appel
         return match (true) {
             null !== $r && \App\Enum\StatutRamassage::Effectue === $r->getStatut() => ['Ramassé', 'success'],
             null !== $r && \App\Enum\StatutRamassage::Annule === $r->getStatut() => ['Ramassage annulé', 'danger'],
+            $this->isAReprogrammer() => ['⏰ À reprogrammer (prévu le '.$r->getDatePrevue()->format('d/m').')', 'danger'],
             null !== $r => ['Planifié le '.$r->getDatePrevue()->format('d/m'), 'info'],
             $this->confirme => ['À planifier', 'warning'],
             default => ['Non confirmé', 'light'],
