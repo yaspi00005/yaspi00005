@@ -57,10 +57,12 @@ final class RegistreAppelsTest extends WebTestCase
         $this->assertResponseRedirects('/appels');
         $this->client->followRedirect();
         $this->assertSelectorTextContains('.alert-success', 'Ramassage au planning le');
-        // Affecté à un camion : il sort de la liste « À traiter » et se retrouve sous son camion.
-        $this->assertSelectorTextNotContains('#registre-liste', 'Mamadou TRAORÉ');
+        // Affecté à un camion : visible dans « Tous les appels en cours » et sous son camion, pas dans « Sans camion ».
+        $this->assertSelectorTextContains('#registre-liste', 'Mamadou TRAORÉ');
         $this->client->request('GET', '/appels', ['camion' => static::getContainer()->get(IdChiffreur::class)->encode($boxer->getId())]);
         $this->assertSelectorTextContains('#registre-liste', 'Mamadou TRAORÉ');
+        $this->client->request('GET', '/appels', ['vue' => 'sans_camion']);
+        $this->assertSelectorTextNotContains('#registre-liste', 'Mamadou TRAORÉ');
 
         $appel = $this->appel();
         $this->assertSame(25000, $appel->getEstimation());
@@ -362,6 +364,14 @@ final class RegistreAppelsTest extends WebTestCase
         $this->assertSelectorTextContains('#registre-liste', 'Mamadou TRAORÉ');
         $this->client->request('GET', '/appels');
         $this->assertSelectorTextNotContains('#registre-liste', 'Mamadou TRAORÉ');
+    }
+
+    public function testLeTotalCorrespondAuxLignesDuTableau(): void
+    {
+        $this->connecter('admin');
+        $crawler = $this->client->request('GET', '/appels', ['par' => 500]);
+        $total = (int) $crawler->filter('.registre-compteur strong')->first()->text();
+        $this->assertSame($total, $crawler->filter('.registre-table tbody tr')->reduce(fn ($tr) => !$tr->filter('.empty-state')->count())->count());
     }
 
     private function connecter(string $login): void

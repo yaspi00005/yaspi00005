@@ -4,7 +4,6 @@ namespace App\Repository;
 
 use App\Entity\Appel;
 use App\Entity\Ramassage;
-use App\Enum\StatutExpedition;
 use App\Enum\StatutRamassage;
 use App\Service\Doublons;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
@@ -17,12 +16,12 @@ use Doctrine\Persistence\ManagerRegistry;
 class AppelRepository extends ServiceEntityRepository
 {
     /**
-     * « À traiter » : appels en cours sans camion (un appel affecté à un camion sort de cette liste et se retrouve
-     * avec le bouton de son camion). « Archives » : date du ramassage passée, ramassage effectué ou annulé,
-     * ou conteneur parti.
+     * Onglets. « Tous » : tous les appels en cours (non traités). « Sans camion » : ceux qu'il reste à affecter.
+     * « Archives » : date du ramassage passée, ou ramassage effectué ou annulé.
      */
     public const VUES = [
-        'tous' => '📋 À traiter (sans camion)',
+        'tous' => '📋 Tous les appels en cours',
+        'sans_camion' => '🚚 Sans camion',
         'non_confirmes' => '🚨 Non confirmés',
         'a_planifier' => '📅 À planifier',
         'archives' => '🗄️ Archives',
@@ -36,7 +35,8 @@ class AppelRepository extends ServiceEntityRepository
     ];
 
     /** Condition DQL d'un appel archivé (même règle que Appel::isArchive()). */
-    private const ARCHIVE = '((r.id IS NOT NULL AND (r.statut IN (:ramassagesFinis) OR r.datePrevue < :aujourdhui)) OR (e.id IS NOT NULL AND e.statut <> :enPreparation) OR (e.id IS NULL AND a.dateConteneur IS NOT NULL AND a.dateConteneur < :aujourdhui))';
+    /** L'expédition ou le conteneur peut être parti : l'appel reste en cours tant que son ramassage n'est pas passé. */
+    private const ARCHIVE = '(r.id IS NOT NULL AND (r.statut IN (:ramassagesFinis) OR r.datePrevue < :aujourdhui))';
 
     public function __construct(ManagerRegistry $registry)
     {
@@ -65,15 +65,13 @@ class AppelRepository extends ServiceEntityRepository
         }
         $vue = $filtres['vue'] ?? 'tous';
         $qb->setParameter('ramassagesFinis', [StatutRamassage::Effectue, StatutRamassage::Annule])
-            ->setParameter('enPreparation', StatutExpedition::EnPreparation)
             ->setParameter('aujourdhui', new \DateTimeImmutable('today'));
         $qb->andWhere('archives' === $vue ? self::ARCHIVE : 'NOT '.self::ARCHIVE);
         match ($vue) {
             'non_confirmes' => $qb->andWhere('a.confirme = false'),
             'a_planifier' => $qb->andWhere('a.confirme = true AND a.ramassage IS NULL'),
-            // Liste principale : ce qu'il reste à affecter. Avec un camion ou un chauffeur choisi, on voit ses appels.
-            'tous' => ($filtres['camion'] ?? null) || ($filtres['chauffeur'] ?? null) ? null : $qb->andWhere('a.camion IS NULL'),
-            default => null, // 'en_cours' (compteurs) et 'archives'
+            'sans_camion' => $qb->andWhere('a.camion IS NULL'),
+            default => null, // 'tous', 'en_cours' et 'archives'
         };
         if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $filtres['du'] ?? '')) {
             $qb->andWhere('a.dateAppel >= :du')->setParameter('du', new \DateTimeImmutable($filtres['du']));
