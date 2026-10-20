@@ -100,16 +100,6 @@ class AppelType extends AbstractType
                 'invalid_message' => 'Saisissez un montant valide (ex. : 150).',
                 'attr' => ['step' => '1', 'min' => '0', 'placeholder' => 'Ex. : 150'],
             ])
-            ->add('montantPaye', MoneyType::class, [
-                'label' => 'Déjà payé (€)',
-                'required' => false,
-                'divisor' => 100,
-                'currency' => false,
-                'html5' => true,
-                'invalid_message' => 'Saisissez un montant valide (ex. : 50).',
-                'help' => 'Laisser vide si rien n\'est payé.',
-                'attr' => ['step' => '0.01', 'min' => '0', 'placeholder' => 'Ex. : 50'],
-            ])
             ->add('commentaire', TextareaType::class, ['label' => "Commentaire / objet de l'appel", 'required' => false, 'attr' => ['rows' => 2, 'placeholder' => 'Détails de la demande…']])
             ->add('dateRamassage', DateTimeType::class, [
                 'label' => 'Date et heure du ramassage',

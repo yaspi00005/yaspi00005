@@ -261,30 +261,28 @@ final class RegistreAppelsTest extends WebTestCase
         $this->assertNull(static::getContainer()->get(AppelRepository::class)->enCoursAuTelephone(self::TELEPHONE));
     }
 
-    public function testOrdreDePassageDuCamionEtMontantPaye(): void
+    public function testOrdreDePassageDuCamion(): void
     {
         $this->connecter('ramassage');
         $boxer = static::getContainer()->get(CamionRepository::class)->findOneBy(['nom' => 'Peugeot Boxer 2']);
         $hidCamion = static::getContainer()->get(IdChiffreur::class)->encode($boxer->getId());
         $tournee = fn () => array_map(fn (Appel $a) => $a->getNom(), static::getContainer()->get(AppelRepository::class)->enCoursDuCamion($boxer->getId()));
 
-        // Deux clients pour le camion (le second a payé un acompte).
-        foreach ([['Premier', '07 58 31 92 46', null], ['Second', '07 58 31 92 47', '40']] as [$nom, $tel, $paye]) {
+        // Deux clients pour le camion.
+        foreach ([['Premier', '07 58 31 92 46'], ['Second', '07 58 31 92 47']] as [$nom, $tel]) {
             $crawler = $this->client->request('GET', '/appels');
             $this->client->submit($crawler->selectButton("Enregistrer l'appel")->form(), [
                 'appel[nom]' => $nom, 'appel[telephone]' => $tel, 'appel[codePostal]' => '75010', 'appel[ville]' => 'Paris',
-                'appel[camion]' => (string) $boxer->getId(), 'appel[estimation]' => '100', 'appel[montantPaye]' => (string) $paye,
+                'appel[camion]' => (string) $boxer->getId(), 'appel[estimation]' => '100',
             ]);
             $this->assertResponseRedirects('/appels');
         }
         $avant = $tournee();
         $second = static::getContainer()->get(AppelRepository::class)->findOneBy(['nom' => 'SECOND']) ?? static::getContainer()->get(AppelRepository::class)->findOneBy(['nom' => 'Second']);
-        $this->assertSame(4000, $second->getMontantPaye());
-        $this->assertSame(['Acompte', 'warning'], $second->getEtatPaiement());
 
         // Le second passe avant le premier : l'ordre est enregistré et la liste le suit.
         $crawler = $this->client->request('GET', '/appels', ['camion' => $hidCamion]);
-        $this->assertSelectorTextContains('#registre-liste', 'Acompte');
+        $this->assertSelectorNotExists('#registre-liste th:contains("Payé")');
         $hid = static::getContainer()->get(IdChiffreur::class)->encode($second->getId());
         $this->client->submit($crawler->filter('form[action$="/'.$hid.'/deplacer"] input[value="haut"]')->closest('form')->form());
         $apres = $tournee();

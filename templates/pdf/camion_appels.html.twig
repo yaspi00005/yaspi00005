@@ -13,7 +13,9 @@
     .liste td { border-bottom: 1px solid #e5e5e5; padding: 6px; vertical-align: top; }
     .liste tr.zone td { background: #f2f8f5; font-weight: bold; color: #00A15D; border-bottom: 1px solid #cfe6da; }
     .num { text-align: right; white-space: nowrap; }
-    .coche { width: 14px; height: 14px; border: 1px solid #999; display: inline-block; }
+    .coche { width: 12px; height: 12px; border: 1px solid #777; display: inline-block; vertical-align: middle; }
+    .a-remplir { white-space: nowrap; font-size: 9px; }
+    .ligne-vide { display: block; border-bottom: 1px solid #999; height: 14px; margin-top: 8px; }
     .total td { font-weight: bold; border-top: 2px solid #00A15D; padding: 6px; }
     .pied { position: fixed; bottom: -26px; left: 0; right: 0; font-size: 8px; color: #999; }
 </style>
@@ -39,13 +41,14 @@
     <thead>
         <tr>
             <th style="width:4%">N°</th>
-            <th style="width:16%">Client</th>
-            <th style="width:11%">Téléphone</th>
-            <th style="width:24%">Adresse</th>
-            <th style="width:9%">Ramassage</th>
-            <th style="width:8%" class="num">Estimation</th>
-            <th style="width:9%">Payé</th>
-            <th style="width:15%">Commentaire</th>
+            <th style="width:15%">Client</th>
+            <th style="width:10%">Téléphone</th>
+            <th style="width:21%">Adresse</th>
+            <th style="width:8%">Ramassage</th>
+            <th style="width:7%" class="num">Estimation</th>
+            <th style="width:10%">Payé ?</th>
+            <th style="width:9%">Montant reçu</th>
+            <th style="width:12%">Commentaire</th>
             <th style="width:4%">Fait</th>
         </tr>
     </thead>
@@ -58,15 +61,16 @@
             <td>{{ a.adresse ? a.adresse ~ ', ' }}{{ a.codePostal }} {{ a.ville }}</td>
             <td>{{ a.ramassage ? a.ramassage.datePrevue|date('d/m H:i') : '—' }}</td>
             <td class="num">{{ a.estimation is not null ? a.estimation|money : '—' }}</td>
-            <td>{{ a.etatPaiement[0] }}{% if a.montantPaye %}<br><strong>{{ a.montantPaye|money }}</strong>{% endif %}</td>
+            <td class="a-remplir"><span class="coche"></span> Oui &nbsp; <span class="coche"></span> Non</td>
+            <td><span class="ligne-vide"></span></td>
             <td>{{ a.commentaire|u.truncate(120, '…') }}</td>
             <td><span class="coche"></span></td>
         </tr>
     {% else %}
-        <tr><td colspan="9" style="text-align:center;padding:30px;color:#999">Aucun client affecté à ce camion.</td></tr>
+        <tr><td colspan="10" style="text-align:center;padding:30px;color:#999">Aucun client affecté à ce camion.</td></tr>
     {% endfor %}
     {% if appels %}
-        <tr class="total"><td colspan="5">Total</td><td class="num">{{ appels|reduce((t, a) => t + (a.estimation ?? 0), 0)|money }}</td><td>{{ appels|reduce((t, a) => t + (a.montantPaye ?? 0), 0)|money }}</td><td colspan="2"></td></tr>
+        <tr class="total"><td colspan="5">Total</td><td class="num">{{ appels|reduce((t, a) => t + (a.estimation ?? 0), 0)|money }}</td><td>Total reçu :</td><td><span class="ligne-vide"></span></td><td colspan="2"></td></tr>
     {% endif %}
     </tbody>
 </table>

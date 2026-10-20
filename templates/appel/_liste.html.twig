@@ -22,7 +22,6 @@
         <button class="btn btn-light btn-xs" title="{{ sens == 'haut' ? 'Passer avant' : 'Passer après' }}" aria-label="{{ sens == 'haut' ? 'Passer avant' : 'Passer après' }} {{ a.nomComplet }}"><i class="fas fa-arrow-{{ sens == 'haut' ? 'up' : 'down' }}"></i></button>
     </form>
 {% endmacro %}
-{% macro paye(a) %}{% set p = a.etatPaiement %}<span class="badge badge-{{ p[1] }} light">{{ p[0] }}{% if a.montantPaye %} {{ a.montantPaye|money }}{% endif %}</span>{% endmacro %}
 {% import _self as m %}
 {# Camion choisi : ordre de passage, modifiable avec les flèches (repris dans le PDF du camion). #}
 {% set tournee = filtres.camion and filtres.vue != 'archives' %}
@@ -43,7 +42,6 @@
                 {% if a.dateConteneurPrevue %}📦 {{ a.dateConteneurPrevue|date('d/m') }} · {% endif %}
                 {% if tournee %}<strong>N° {{ appels.premier + loop.index0 }}</strong> · {% endif %}
                 {% if a.estimation is not null %}{{ a.estimation|money }} · {% endif %}
-                {{ m.paye(a) }}
                 <span class="badge badge-{{ etat[1] }} light">{{ etat[0] }}</span>
             </small>
             {% if a.commentaire %}<small class="d-block text-muted mt-1">{{ a.commentaire|u.truncate(100, '…') }}</small>{% endif %}
@@ -56,7 +54,7 @@
 <div class="table-responsive d-none d-md-block">
     <table class="table table-hover registre-table mb-0">
         <thead>
-            <tr>{% if tournee %}<th>N°</th>{% endif %}<th>Date appel</th><th>Conteneur</th><th>Camion</th><th>Nom</th><th>Téléphone</th><th>CP</th><th>Ville</th><th>Adresse</th><th class="num">Estimation</th><th>Payé</th><th>Utilisateur</th><th>Confirmé</th><th>Ramassage</th><th>Commentaire</th><th></th></tr>
+            <tr>{% if tournee %}<th>N°</th>{% endif %}<th>Date appel</th><th>Conteneur</th><th>Camion</th><th>Nom</th><th>Téléphone</th><th>CP</th><th>Ville</th><th>Adresse</th><th class="num">Estimation</th><th>Utilisateur</th><th>Confirmé</th><th>Ramassage</th><th>Commentaire</th><th></th></tr>
         </thead>
         <tbody>
         {% for a in appels %}
@@ -72,7 +70,6 @@
                 <td>{{ a.ville }}</td>
                 <td>{{ a.adresse ?: '—' }}</td>
                 <td class="num">{{ a.estimation is not null ? a.estimation|money : '—' }}</td>
-                <td class="text-nowrap">{{ m.paye(a) }}</td>
                 <td>{{ a.utilisateur ? a.utilisateur.prenom : (a.source == 'site' ? 'Site web' : '—') }}</td>
                 <td>{{ m.confirmer(a) }}</td>
                 <td>{% if a.ramassage %}<a href="{{ path('ramassage_edit', {id: a.ramassage.id}) }}" class="badge badge-{{ etat[1] }} light">{{ etat[0] }}</a>{% else %}<span class="badge badge-{{ etat[1] }} light">{{ etat[0] }}</span>{% endif %}</td>
@@ -80,7 +77,7 @@
                 <td class="text-end"><a href="{{ path('appel_edit', {id: a.id}) }}" class="btn btn-primary shadow btn-xs sharp" title="Modifier" aria-label="Modifier l'appel de {{ a.nomComplet }}"><i class="fas fa-pencil-alt"></i></a></td>
             </tr>
         {% else %}
-            <tr><td colspan="16"><div class="empty-state"><i class="fas fa-phone-alt"></i>Aucun appel{{ filtres.q or filtres.vue != 'tous' or filtres.camion or filtres.chauffeur or filtres.expedition ? ' pour ces critères' }}.</div></td></tr>
+            <tr><td colspan="15"><div class="empty-state"><i class="fas fa-phone-alt"></i>Aucun appel{{ filtres.q or filtres.vue != 'tous' or filtres.camion or filtres.chauffeur or filtres.expedition ? ' pour ces critères' }}.</div></td></tr>
         {% endfor %}
         </tbody>
     </table>

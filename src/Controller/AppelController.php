@@ -71,15 +71,14 @@ class AppelController extends AbstractController
 
         if ('csv' === $request->query->get('export')) {
             return $excel->reponse('registre-appels-'.date('Y-m-d').'.xlsx', 'Registre des appels',
-                ['Date appel', 'Date conteneur', 'Camion', 'Ordre de passage', 'Nom', 'Téléphone', 'Code postal', 'Ville', 'Adresse', 'Estimation', 'Payé', 'Utilisateur', 'Confirmé', 'État', 'Commentaire'],
+                ['Date appel', 'Date conteneur', 'Camion', 'Ordre de passage', 'Nom', 'Téléphone', 'Code postal', 'Ville', 'Adresse', 'Estimation', 'Utilisateur', 'Confirmé', 'État', 'Commentaire'],
                 (function () use ($qb) {
                     foreach ($qb->getQuery()->toIterable() as $a) {
                         /* @var Appel $a */
                         yield [
                             $a->getDateAppel()->format('d/m/Y'), $a->getDateConteneurPrevue()?->format('d/m/Y'), $a->getCamion()?->getNom(), $a->getOrdreTournee(),
                             $a->getNomComplet(), $a->getTelephone(), $a->getCodePostal(), $a->getVille(), $a->getAdresse(),
-                            null !== $a->getEstimation() ? Csv::montant($a->getEstimation()) : null,
-                            $a->getMontantPaye() ? Csv::montant($a->getMontantPaye()) : null, $a->getUtilisateur()?->getPrenom(),
+                            null !== $a->getEstimation() ? Csv::montant($a->getEstimation()) : null, $a->getUtilisateur()?->getPrenom(),
                             $a->isConfirme() ? 'Oui' : 'Non', $a->getEtat()[0], $a->getCommentaire(),
                         ];
                     }
