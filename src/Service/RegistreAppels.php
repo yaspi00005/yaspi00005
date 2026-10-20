@@ -48,6 +48,27 @@ final class RegistreAppels
     }
 
     /** Demande faite sur sotrama.net : elle entre aussi dans le registre, source « Site web ». */
+    /**
+     * Fait monter ou descendre un client dans l'ordre de passage de son camion ; toute la tournée est renumérotée
+     * 1, 2, 3… (les clients pas encore placés prennent leur place en fin de liste).
+     */
+    public function deplacer(Appel $appel, bool $versLeHaut): void
+    {
+        if (!$appel->getCamion()) {
+            return;
+        }
+        $tournee = $this->appels->enCoursDuCamion($appel->getCamion()->getId());
+        $i = array_search($appel, $tournee, true);
+        $j = false === $i ? false : ($versLeHaut ? $i - 1 : $i + 1);
+        if (false !== $j && isset($tournee[$j])) {
+            [$tournee[$i], $tournee[$j]] = [$tournee[$j], $tournee[$i]];
+        }
+        foreach (array_values($tournee) as $n => $a) {
+            $a->setOrdreTournee($n + 1);
+        }
+        $this->em->flush();
+    }
+
     public function depuisDemandeEnLigne(Ramassage $ramassage, array $d, ?\App\Entity\Expedition $depart): Appel
     {
         // La demande du client n'est jamais perdue ; si son numéro est déjà en cours, l'équipe est prévenue.

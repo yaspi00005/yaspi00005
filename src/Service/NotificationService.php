@@ -44,6 +44,14 @@ final class NotificationService
                 $this->appNom, $colis->getNumeroSuivi(), $colis->getCodeRetrait(),
                 PaiementService::format($colis->getMontantRestant()), $lien,
             ),
+            StatutColis::ArriveDakar => \sprintf(
+                '%s : le colis %s pour vous est arrivé au port de Dakar ; il part ensuite par la route vers Bamako. Suivi : %s',
+                $this->appNom, $colis->getNumeroSuivi(), $lien,
+            ),
+            StatutColis::TransitBamako => \sprintf(
+                '%s : le colis %s pour vous est en route de Dakar vers Bamako. Suivi : %s',
+                $this->appNom, $colis->getNumeroSuivi(), $lien,
+            ),
             StatutColis::Expedie, StatutColis::EnTransit => \sprintf(
                 '%s : le colis %s pour vous est %s. Suivi : %s',
                 $this->appNom, $colis->getNumeroSuivi(), mb_strtolower($colis->getStatut()->label()), $lien,

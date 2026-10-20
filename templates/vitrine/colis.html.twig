@@ -9,9 +9,14 @@
     {s: 'en_preparation', l: 'Reçu', i: 'fa-box'},
     {s: 'expedie', l: 'Expédié', i: 'fa-shipping-fast'},
     {s: 'en_transit', l: 'En transit', i: 'fa-route'},
+    {s: 'arrive_dakar', l: 'Arrivé à Dakar', i: 'fa-anchor', dakar: true},
+    {s: 'transit_bamako', l: 'Transit Dakar → Bamako', i: 'fa-truck', dakar: true},
     {s: 'arrive', l: 'Arrivé', i: 'fa-map-marker-alt'},
     {s: 'recupere', l: 'Remis', i: 'fa-check'},
 ] %}
+{# Étapes de Dakar : conteneur (maritime) pour le Mali, débarqué à Dakar puis acheminé par la route. #}
+{% set viaDakar = (colis.expedition and colis.expedition.destination.value == 'mali' and colis.expedition.modeTransport.value == 'maritime') or colis.statut.value in ['arrive_dakar', 'transit_bamako'] %}
+{% set etapes = etapes|filter(e => not e.dakar|default(false) or viaDakar) %}
 {% set rangActuel = colis.statut.rang %}
 <section class="page-suivi">
     <div class="conteneur conteneur-etroit">

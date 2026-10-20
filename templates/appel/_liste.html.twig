@@ -14,7 +14,19 @@
         <button class="btn btn-xs {{ a.confirme ? 'btn-success' : 'btn-outline-danger' }}" title="{{ a.confirme ? 'Cliquer pour remettre en attente' : 'Cliquer pour confirmer' }}">{{ a.confirme ? 'Oui' : 'Non' }}</button>
     </form>
 {% endmacro %}
+{% macro deplacer(a, sens) %}
+    <form method="post" action="{{ path('appel_deplacer', {id: a.id}) }}" class="d-inline">
+        <input type="hidden" name="_token" value="{{ csrf_token('deplacer-appel-' ~ a.id) }}">
+        <input type="hidden" name="sens" value="{{ sens }}">
+        <input type="hidden" name="retour" value="{{ app.request.pathInfo }}?{{ app.request.query.all|url_encode }}">
+        <button class="btn btn-light btn-xs" title="{{ sens == 'haut' ? 'Passer avant' : 'Passer après' }}" aria-label="{{ sens == 'haut' ? 'Passer avant' : 'Passer après' }} {{ a.nomComplet }}"><i class="fas fa-arrow-{{ sens == 'haut' ? 'up' : 'down' }}"></i></button>
+    </form>
+{% endmacro %}
+{% macro paye(a) %}{% set p = a.etatPaiement %}<span class="badge badge-{{ p[1] }} light">{{ p[0] }}{% if a.montantPaye %} {{ a.montantPaye|money }}{% endif %}</span>{% endmacro %}
 {% import _self as m %}
+{# Camion choisi : ordre de passage, modifiable avec les flèches (repris dans le PDF du camion). #}
+{% set tournee = filtres.camion and filtres.vue != 'archives' %}
+{% if tournee %}<p class="text-muted small mb-2"><i class="fas fa-route me-1"></i> Ordre de passage du camion : utilisez les flèches ↑ ↓ pour le modifier. Il est repris dans le PDF du camion.</p>{% endif %}
 {# Téléphone : une fiche par appel (le tableau serait trop large). #}
 <div class="d-md-none">
     {% for a in appels %}
@@ -29,10 +41,13 @@
             <small class="d-block mt-1">
                 {% if a.camion %}<span class="pastille-camion" style="background: {{ a.camion.couleur }}"></span>{{ a.camion.nom }} · {% endif %}
                 {% if a.dateConteneurPrevue %}📦 {{ a.dateConteneurPrevue|date('d/m') }} · {% endif %}
+                {% if tournee %}<strong>N° {{ appels.premier + loop.index0 }}</strong> · {% endif %}
                 {% if a.estimation is not null %}{{ a.estimation|money }} · {% endif %}
+                {{ m.paye(a) }}
                 <span class="badge badge-{{ etat[1] }} light">{{ etat[0] }}</span>
             </small>
             {% if a.commentaire %}<small class="d-block text-muted mt-1">{{ a.commentaire|u.truncate(100, '…') }}</small>{% endif %}
+            {% if tournee %}<div class="mt-1">{% if not loop.first or appels.page > 1 %}{{ m.deplacer(a, 'haut') }}{% endif %}{% if not loop.last or appels.aSuivante %}{{ m.deplacer(a, 'bas') }}{% endif %}</div>{% endif %}
         </div>
     {% else %}
         <div class="empty-state"><i class="fas fa-phone-alt"></i>Aucun appel.</div>
@@ -41,12 +56,13 @@
 <div class="table-responsive d-none d-md-block">
     <table class="table table-hover registre-table mb-0">
         <thead>
-            <tr><th>Date appel</th><th>Conteneur</th><th>Camion</th><th>Nom</th><th>Téléphone</th><th>CP</th><th>Ville</th><th>Adresse</th><th class="num">Estimation</th><th>Utilisateur</th><th>Confirmé</th><th>Ramassage</th><th>Commentaire</th><th></th></tr>
+            <tr>{% if tournee %}<th>N°</th>{% endif %}<th>Date appel</th><th>Conteneur</th><th>Camion</th><th>Nom</th><th>Téléphone</th><th>CP</th><th>Ville</th><th>Adresse</th><th class="num">Estimation</th><th>Payé</th><th>Utilisateur</th><th>Confirmé</th><th>Ramassage</th><th>Commentaire</th><th></th></tr>
         </thead>
         <tbody>
         {% for a in appels %}
             {% set etat = a.etat %}
             <tr class="{{ a.confirme ? '' : 'non-confirme' }}">
+                {% if tournee %}<td class="text-nowrap"><strong class="me-1">{{ appels.premier + loop.index0 }}</strong>{% if not loop.first or appels.page > 1 %}{{ m.deplacer(a, 'haut') }}{% endif %}{% if not loop.last or appels.aSuivante %}{{ m.deplacer(a, 'bas') }}{% endif %}</td>{% endif %}
                 <td>{{ a.dateAppel|date('d/m/Y') }}{% if a.source == 'site' %} <span class="badge badge-primary light" title="Demande faite sur sotrama.net">Site</span>{% endif %}</td>
                 <td>{{ a.dateConteneurPrevue ? a.dateConteneurPrevue|date('d/m/Y') : '—' }}</td>
                 <td>{% if a.camion %}<span class="pastille-camion" style="background: {{ a.camion.couleur }}"></span>{{ a.camion.nom }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
@@ -56,6 +72,7 @@
                 <td>{{ a.ville }}</td>
                 <td>{{ a.adresse ?: '—' }}</td>
                 <td class="num">{{ a.estimation is not null ? a.estimation|money : '—' }}</td>
+                <td class="text-nowrap">{{ m.paye(a) }}</td>
                 <td>{{ a.utilisateur ? a.utilisateur.prenom : (a.source == 'site' ? 'Site web' : '—') }}</td>
                 <td>{{ m.confirmer(a) }}</td>
                 <td>{% if a.ramassage %}<a href="{{ path('ramassage_edit', {id: a.ramassage.id}) }}" class="badge badge-{{ etat[1] }} light">{{ etat[0] }}</a>{% else %}<span class="badge badge-{{ etat[1] }} light">{{ etat[0] }}</span>{% endif %}</td>
@@ -63,7 +80,7 @@
                 <td class="text-end"><a href="{{ path('appel_edit', {id: a.id}) }}" class="btn btn-primary shadow btn-xs sharp" title="Modifier" aria-label="Modifier l'appel de {{ a.nomComplet }}"><i class="fas fa-pencil-alt"></i></a></td>
             </tr>
         {% else %}
-            <tr><td colspan="14"><div class="empty-state"><i class="fas fa-phone-alt"></i>Aucun appel{{ filtres.q or filtres.vue != 'tous' or filtres.camion or filtres.chauffeur or filtres.expedition ? ' pour ces critères' }}.</div></td></tr>
+            <tr><td colspan="16"><div class="empty-state"><i class="fas fa-phone-alt"></i>Aucun appel{{ filtres.q or filtres.vue != 'tous' or filtres.camion or filtres.chauffeur or filtres.expedition ? ' pour ces critères' }}.</div></td></tr>
         {% endfor %}
         </tbody>
     </table>

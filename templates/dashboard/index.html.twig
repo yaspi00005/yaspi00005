@@ -54,7 +54,7 @@
     {% else %}
         {{ m.stat('fas fa-box-open', 'primary', totalColis, estRamassage ? 'Mes colis' : 'Colis au total', path('colis_index', {tous: 1})) }}
         {{ m.stat('fas fa-truck-loading', 'warning', parStatut['en_preparation']|default(0), 'En préparation', path('colis_index', {statut: 'en_preparation'})) }}
-        {{ m.stat('fas fa-plane', 'info', (parStatut['expedie']|default(0)) + (parStatut['en_transit']|default(0)) + (parStatut['retenu_douane']|default(0)), 'En route', estRamassage ? path('colis_index', {statut: 'en_transit'}) : path('expedition_index')) }}
+        {{ m.stat('fas fa-plane', 'info', (parStatut['expedie']|default(0)) + (parStatut['en_transit']|default(0)) + (parStatut['arrive_dakar']|default(0)) + (parStatut['transit_bamako']|default(0)) + (parStatut['retenu_douane']|default(0)), 'En route', estRamassage ? path('colis_index', {statut: 'en_transit'}) : path('expedition_index')) }}
         {{ m.stat('fas fa-map-marker-alt', 'secondary', parStatut['arrive']|default(0), 'À retirer en agence', path('colis_index', {statut: 'arrive'})) }}
     {% endif %}
 

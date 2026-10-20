@@ -71,14 +71,15 @@ class AppelController extends AbstractController
 
         if ('csv' === $request->query->get('export')) {
             return $excel->reponse('registre-appels-'.date('Y-m-d').'.xlsx', 'Registre des appels',
-                ['Date appel', 'Date conteneur', 'Camion', 'Nom', 'Téléphone', 'Code postal', 'Ville', 'Adresse', 'Estimation', 'Utilisateur', 'Confirmé', 'État', 'Commentaire'],
+                ['Date appel', 'Date conteneur', 'Camion', 'Ordre de passage', 'Nom', 'Téléphone', 'Code postal', 'Ville', 'Adresse', 'Estimation', 'Payé', 'Utilisateur', 'Confirmé', 'État', 'Commentaire'],
                 (function () use ($qb) {
                     foreach ($qb->getQuery()->toIterable() as $a) {
                         /* @var Appel $a */
                         yield [
-                            $a->getDateAppel()->format('d/m/Y'), $a->getDateConteneurPrevue()?->format('d/m/Y'), $a->getCamion()?->getNom(),
+                            $a->getDateAppel()->format('d/m/Y'), $a->getDateConteneurPrevue()?->format('d/m/Y'), $a->getCamion()?->getNom(), $a->getOrdreTournee(),
                             $a->getNomComplet(), $a->getTelephone(), $a->getCodePostal(), $a->getVille(), $a->getAdresse(),
-                            null !== $a->getEstimation() ? Csv::montant($a->getEstimation()) : null, $a->getUtilisateur()?->getPrenom(),
+                            null !== $a->getEstimation() ? Csv::montant($a->getEstimation()) : null,
+                            $a->getMontantPaye() ? Csv::montant($a->getMontantPaye()) : null, $a->getUtilisateur()?->getPrenom(),
                             $a->isConfirme() ? 'Oui' : 'Non', $a->getEtat()[0], $a->getCommentaire(),
                         ];
                     }
@@ -170,6 +171,17 @@ class AppelController extends AbstractController
             $appel->setConfirme(!$appel->isConfirme());
             $this->registre->enregistrer($appel, $appel->getRamassage()?->getDatePrevue(), $this->getUser());
             $this->addFlash('success', $appel->getNomComplet().' : '.($appel->isConfirme() ? 'confirmé.' : 'remis en attente.'));
+        }
+
+        return $this->redirect($this->retour($request));
+    }
+
+    /** Ordre de passage du camion : ce client avant ou après le précédent / le suivant. */
+    #[Route('/{id}/deplacer', name: 'appel_deplacer', requirements: ['id' => self::ID], methods: ['POST'])]
+    public function deplacer(Request $request, Appel $appel): Response
+    {
+        if ($this->isCsrfTokenValid('deplacer-appel-'.$appel->getId(), $request->getPayload()->getString('_token'))) {
+            $this->registre->deplacer($appel, 'haut' === $request->getPayload()->getString('sens'));
         }
 
         return $this->redirect($this->retour($request));

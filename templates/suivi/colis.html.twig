@@ -14,10 +14,15 @@
         {s: 'en_preparation', l: 'Reçu', i: 'fa-box'},
         {s: 'expedie', l: 'Expédié', i: 'fa-plane-departure'},
         {s: 'en_transit', l: 'En transit', i: 'fa-route'},
+        {s: 'arrive_dakar', l: 'Arrivé à Dakar', i: 'fa-anchor', dakar: true},
+        {s: 'transit_bamako', l: 'Transit Dakar → Bamako', i: 'fa-truck', dakar: true},
         {s: 'arrive', l: 'Arrivé', i: 'fa-map-marker-alt'},
         {s: 'recupere', l: 'Remis', i: 'fa-check'},
     ] %}
-    {% set rangActuel = colis.statut.rang %}
+    {# Étapes de Dakar : conteneur (maritime) pour le Mali, débarqué à Dakar puis acheminé par la route. #}
+{% set viaDakar = (colis.expedition and colis.expedition.destination.value == 'mali' and colis.expedition.modeTransport.value == 'maritime') or colis.statut.value in ['arrive_dakar', 'transit_bamako'] %}
+{% set etapes = etapes|filter(e => not e.dakar|default(false) or viaDakar) %}
+{% set rangActuel = colis.statut.rang %}
     <div class="suivi-etapes mb-4">
         {% for e in etapes %}
             {% set rang = enum('App\\Enum\\StatutColis').from(e.s).rang %}

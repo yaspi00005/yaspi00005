@@ -81,6 +81,15 @@ class Appel
     #[Assert\PositiveOrZero(message: "L'estimation ne peut pas être négative.")]
     private ?int $estimation = null;
 
+    /** Montant déjà payé par le client, en centimes (null : rien de payé). */
+    #[ORM\Column(nullable: true)]
+    #[Assert\PositiveOrZero(message: 'Le montant payé ne peut pas être négatif.')]
+    private ?int $montantPaye = null;
+
+    /** Ordre de passage du camion chez ce client (1 = premier) ; null : pas encore placé, en fin de tournée. */
+    #[ORM\Column(nullable: true)]
+    private ?int $ordreTournee = null;
+
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     #[Assert\Length(max: 2000)]
     private ?string $commentaire = null;
@@ -265,13 +274,6 @@ class Appel
         return $this->camion;
     }
 
-    public function setCamion(?Camion $camion): static
-    {
-        $this->camion = $camion;
-
-        return $this;
-    }
-
     public function getEstimation(): ?int
     {
         return $this->estimation;
@@ -350,6 +352,51 @@ class Appel
         }
 
         return null !== $this->dateConteneur && $this->dateConteneur < new \DateTimeImmutable('today');
+    }
+
+    public function getMontantPaye(): ?int
+    {
+        return $this->montantPaye;
+    }
+
+    public function setMontantPaye(?int $montantPaye): static
+    {
+        $this->montantPaye = $montantPaye ?: null;
+
+        return $this;
+    }
+
+    /** @return array{string, string} libellé et couleur : Non payé, Acompte, Payé */
+    public function getEtatPaiement(): array
+    {
+        return match (true) {
+            !$this->montantPaye => ['Non payé', 'danger'],
+            null !== $this->estimation && $this->montantPaye < $this->estimation => ['Acompte', 'warning'],
+            default => ['Payé', 'success'],
+        };
+    }
+
+    public function getOrdreTournee(): ?int
+    {
+        return $this->ordreTournee;
+    }
+
+    public function setOrdreTournee(?int $ordreTournee): static
+    {
+        $this->ordreTournee = $ordreTournee;
+
+        return $this;
+    }
+
+    public function setCamion(?Camion $camion): static
+    {
+        // Autre camion : la place dans la tournée de l'ancien ne vaut plus.
+        if ($camion !== $this->camion) {
+            $this->ordreTournee = null;
+        }
+        $this->camion = $camion;
+
+        return $this;
     }
 
     public function getEtat(): array

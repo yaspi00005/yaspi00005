@@ -229,7 +229,9 @@
                 <form method="post" action="{{ path('expedition_statut', {id: expedition.id}) }}" data-confirm="Le nouveau statut sera appliqué à tous les colis de l'expédition (sauf ceux déjà remis)." data-confirm-titre="Changer le statut ?" data-confirm-type="primary" data-confirm-bouton="Oui, mettre à jour">
                     <input type="hidden" name="_token" value="{{ csrf_token('statut-expedition-' ~ expedition.id) }}">
                     <select name="statut" class="form-select form-control mb-2" aria-label="Nouveau statut">
-                        {% for s in statuts %}<option value="{{ s.value }}" {{ s == expedition.statut ? 'selected' }}>{{ s.label }}</option>{% endfor %}
+                        {# Étapes de Dakar : seulement pour un conteneur à destination du Mali. #}
+                        {% set viaDakar = expedition.destination.value == 'mali' and expedition.modeTransport.value == 'maritime' %}
+                        {% for s in statuts|filter(s => viaDakar or s.value not in ['arrivee_dakar', 'transit_bamako'] or s == expedition.statut) %}<option value="{{ s.value }}" {{ s == expedition.statut ? 'selected' }}>{{ s.label }}</option>{% endfor %}
                     </select>
                     <div class="form-check mb-3">
                         <input class="form-check-input" type="checkbox" name="notifier" value="1" id="notifier" checked>

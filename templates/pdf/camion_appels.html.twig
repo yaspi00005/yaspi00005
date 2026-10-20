@@ -26,7 +26,7 @@
             {% if logo_data_uri() %}<img src="{{ logo_data_uri() }}" alt="" style="height:62px;float:left;margin-right:12px">{% endif %}
             <h1 class="vert">{{ app_nom }}</h1>
             <div style="font-size:14px;font-weight:bold;margin-top:4px">Clients du camion {{ camion.nom }}{% if camion.chauffeur %} — chauffeur {{ camion.chauffeur.nomComplet }}{% endif %}</div>
-            <div class="petit">Appels en cours affectés à ce camion (hors archives), classés par code postal</div>
+            <div class="petit">Appels en cours affectés à ce camion (hors archives), dans l'ordre de passage</div>
         </td>
         <td style="text-align:right;vertical-align:top">
             <strong style="font-size:14px">{{ appels|length }}</strong> client{{ appels|length > 1 ? 's' }}<br>
@@ -38,36 +38,35 @@
 <table class="liste">
     <thead>
         <tr>
-            <th style="width:17%">Client</th>
-            <th style="width:12%">Téléphone</th>
-            <th style="width:27%">Adresse</th>
-            <th style="width:10%">Ramassage</th>
+            <th style="width:4%">N°</th>
+            <th style="width:16%">Client</th>
+            <th style="width:11%">Téléphone</th>
+            <th style="width:24%">Adresse</th>
+            <th style="width:9%">Ramassage</th>
             <th style="width:8%" class="num">Estimation</th>
-            <th style="width:20%">Commentaire</th>
-            <th style="width:6%">Fait</th>
+            <th style="width:9%">Payé</th>
+            <th style="width:15%">Commentaire</th>
+            <th style="width:4%">Fait</th>
         </tr>
     </thead>
     <tbody>
-    {% set zone = null %}
     {% for a in appels %}
-        {% if a.codePostal|slice(0, 2) != zone %}
-            {% set zone = a.codePostal|slice(0, 2) %}
-            <tr class="zone"><td colspan="7">Département {{ zone }}</td></tr>
-        {% endif %}
         <tr>
+            <td><strong style="font-size:12px">{{ loop.index }}</strong></td>
             <td><strong>{{ a.nomComplet }}</strong>{% if not a.confirme %}<br><span class="petit">non confirmé</span>{% endif %}</td>
             <td>{{ a.telephone|tel }}</td>
             <td>{{ a.adresse ? a.adresse ~ ', ' }}{{ a.codePostal }} {{ a.ville }}</td>
             <td>{{ a.ramassage ? a.ramassage.datePrevue|date('d/m H:i') : '—' }}</td>
             <td class="num">{{ a.estimation is not null ? a.estimation|money : '—' }}</td>
+            <td>{{ a.etatPaiement[0] }}{% if a.montantPaye %}<br><strong>{{ a.montantPaye|money }}</strong>{% endif %}</td>
             <td>{{ a.commentaire|u.truncate(120, '…') }}</td>
             <td><span class="coche"></span></td>
         </tr>
     {% else %}
-        <tr><td colspan="7" style="text-align:center;padding:30px;color:#999">Aucun client affecté à ce camion.</td></tr>
+        <tr><td colspan="9" style="text-align:center;padding:30px;color:#999">Aucun client affecté à ce camion.</td></tr>
     {% endfor %}
     {% if appels %}
-        <tr class="total"><td colspan="4">Total</td><td class="num">{{ appels|reduce((t, a) => t + (a.estimation ?? 0), 0)|money }}</td><td colspan="2"></td></tr>
+        <tr class="total"><td colspan="5">Total</td><td class="num">{{ appels|reduce((t, a) => t + (a.estimation ?? 0), 0)|money }}</td><td>{{ appels|reduce((t, a) => t + (a.montantPaye ?? 0), 0)|money }}</td><td colspan="2"></td></tr>
     {% endif %}
     </tbody>
 </table>

@@ -81,6 +81,9 @@ class AppelRepository extends ServiceEntityRepository
         }
         if ($filtres['camion'] ?? null) {
             $qb->andWhere('cam.id = :camion')->setParameter('camion', $filtres['camion']);
+            // Tournée d'un camion : dans l'ordre de passage choisi, les clients pas encore placés à la fin.
+            $qb->addSelect('CASE WHEN a.ordreTournee IS NULL THEN 1 ELSE 0 END AS HIDDEN sansOrdre')
+                ->orderBy('sansOrdre', 'ASC')->addOrderBy('a.ordreTournee', 'ASC')->addOrderBy('a.codePostal', 'ASC')->addOrderBy('a.id', 'ASC');
         }
         if ($filtres['chauffeur'] ?? null) {
             $qb->andWhere('ch.id = :chauffeur')->setParameter('chauffeur', $filtres['chauffeur']);
@@ -140,12 +143,10 @@ class AppelRepository extends ServiceEntityRepository
         return null;
     }
 
-    /** @return Appel[] appels en cours d'un camion, pour la feuille de tournée (par code postal puis ville) */
+    /** @return Appel[] appels en cours d'un camion, dans l'ordre de passage (feuille de tournée) */
     public function enCoursDuCamion(int $camion): array
     {
-        return $this->filtreQb(['vue' => 'en_cours', 'camion' => $camion])
-            ->orderBy('a.codePostal', 'ASC')->addOrderBy('a.ville', 'ASC')->addOrderBy('a.nom', 'ASC')
-            ->getQuery()->getResult();
+        return $this->filtreQb(['vue' => 'en_cours', 'camion' => $camion])->getQuery()->getResult();
     }
 
     public function pourRamassage(Ramassage $ramassage): ?Appel
