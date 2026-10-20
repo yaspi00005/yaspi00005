@@ -1,0 +1,21 @@
+{# Cloche de l'en-tête : ce qui attend l'utilisateur (calculé à chaque page, voir App\Service\ATraiter). #}
+{% set lignes = a_traiter() %}
+{% set total = lignes|reduce((t, l) => t + l.nombre, 0) %}
+<li class="nav-item dropdown d-flex align-items-center">
+    <a class="btn btn-light btn-rounded btn-sm position-relative" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" title="À traiter" aria-label="À traiter : {{ total }}">
+        <i class="fas fa-bell"></i>
+        {% if total %}<span class="badge rounded-pill bg-danger a-traiter-badge">{{ total > 99 ? '99+' : total }}</span>{% endif %}
+    </a>
+    <div class="dropdown-menu dropdown-menu-end a-traiter-menu">
+        <h6 class="dropdown-header">À traiter</h6>
+        {% for l in lignes %}
+            <a class="dropdown-item d-flex align-items-center gap-2" href="{{ l.url }}">
+                <i class="fas {{ l.icone }} text-{{ l.couleur }} fa-fw"></i>
+                <span class="flex-grow-1 text-wrap">{{ l.libelle }}</span>
+                <span class="badge badge-{{ l.couleur }} light">{{ l.nombre }}</span>
+            </a>
+        {% else %}
+            <span class="dropdown-item-text text-muted"><i class="fas fa-check-circle text-success me-1"></i> Rien à traiter pour le moment.</span>
+        {% endfor %}
+    </div>
+</li>

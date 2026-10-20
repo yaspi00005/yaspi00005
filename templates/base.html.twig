@@ -62,10 +62,11 @@
                                 <a href="{{ path('colis_new') }}" class="btn btn-primary btn-rounded btn-sm"><i class="fas fa-plus me-1"></i> Nouveau colis</a>
                             </li>
                             {% endif %}
+                            {% include 'partials/_a_traiter.html.twig' %}
                             {% if push_cle_publique %}
                             <li class="nav-item d-flex align-items-center">
                                 <button type="button" class="btn btn-outline-primary btn-rounded btn-sm js-push-bouton d-none" title="Recevoir les rappels des ramassages dans ce navigateur">
-                                    <i class="fas fa-bell"></i> <span class="js-push-libelle d-none d-xxl-inline">Activer les notifications</span>
+                                    <i class="fas fa-mobile-alt"></i> <span class="js-push-libelle d-none d-xxl-inline">Activer les notifications</span>
                                 </button>
                             </li>
                             {% endif %}
@@ -106,6 +107,7 @@
 
         {% include 'partials/_modal_erreurs.html.twig' %}
         {% include 'partials/_modal_confirmation.html.twig' %}
+        {% include 'partials/_recapitulatif_connexion.html.twig' %}
 
         <div class="footer">
             <div class="copyright">

@@ -190,6 +190,9 @@ final class RegistreAppelsTest extends WebTestCase
             'date' => $crawler->filter('input[name="date"]')->attr('value'), 'colis' => '3 cartons',
         ]);
         $this->assertResponseRedirects('/ramassage/merci');
+        // L'équipe est prévenue par e-mail (administrateurs et agents de ramassage ayant une adresse).
+        $this->assertGreaterThanOrEqual(1, \count($this->getMailerMessages()));
+        $this->assertEmailHtmlBodyContains($this->getMailerMessages()[0], 'Valider le rendez-vous');
 
         $appel = $this->appel();
         $this->assertSame(Appel::SOURCE_SITE, $appel->getSource());

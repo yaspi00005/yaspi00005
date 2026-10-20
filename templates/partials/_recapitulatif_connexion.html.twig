@@ -1,0 +1,29 @@
+{# Fenêtre affichée une seule fois, juste après la connexion, s'il y a quelque chose à traiter. #}
+{% if recapitulatif_connexion() %}
+{% set lignes = a_traiter() %}
+{% if lignes %}
+<div class="modal fade" id="modal-a-traiter" tabindex="-1" aria-labelledby="modal-a-traiter-titre" aria-hidden="true" data-afficher="1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modal-a-traiter-titre"><i class="fas fa-bell text-primary me-2"></i>Bonjour {{ app.user.prenom }}, voici ce qui vous attend</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <div class="list-group">
+                    {% for l in lignes %}
+                        <a href="{{ l.url }}" class="list-group-item list-group-item-action d-flex align-items-center gap-3">
+                            <span class="stat-icon bgl-{{ l.couleur }} text-{{ l.couleur }}"><i class="fas {{ l.icone }}"></i></span>
+                            <span class="flex-grow-1">{{ l.libelle }}</span>
+                            <strong class="fs-18 text-{{ l.couleur }}">{{ l.nombre }}</strong>
+                        </a>
+                    {% endfor %}
+                </div>
+                <p class="text-muted small mt-3 mb-0">Cette liste reste disponible à tout moment sous la cloche <i class="fas fa-bell"></i>, en haut de la page.</p>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-primary" data-bs-dismiss="modal">J'ai compris</button></div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endif %}

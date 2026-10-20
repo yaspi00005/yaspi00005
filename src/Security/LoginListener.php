@@ -14,6 +14,8 @@ use Symfony\Component\Security\Http\Event\LogoutEvent;
 /** Dernière connexion de l'utilisateur, et journal des connexions (réussies, refusées) et déconnexions. */
 final class LoginListener
 {
+    public const RECAPITULATIF = 'recapitulatif_a_traiter';
+
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly Journaliseur $journal,
@@ -33,6 +35,10 @@ final class LoginListener
             $user->setDerniereConnexion(new \DateTimeImmutable());
             $this->em->flush();
             $this->journal->ecrire($this->em, Journal::CONNEXION, 'Connexion', 'Utilisateur', $user->getId(), utilisateur: $user);
+            // Première page après la connexion : récapitulatif de ce qui est à traiter (voir base.html.twig).
+            if ($event->getRequest()->hasSession()) {
+                $event->getRequest()->getSession()->set(self::RECAPITULATIF, true);
+            }
         }
     }
 

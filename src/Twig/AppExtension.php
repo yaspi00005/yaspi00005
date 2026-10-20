@@ -24,6 +24,8 @@ final class AppExtension extends AbstractExtension
         #[Autowire('%kernel.project_dir%/public/images/logo-sotrama.png')] private readonly string $cheminLogo,
         private readonly Security $security,
         private readonly \App\Security\CspNonce $nonce,
+        private readonly \App\Service\ATraiter $aTraiter,
+        private readonly \Symfony\Component\HttpFoundation\RequestStack $requests,
     ) {
     }
 
@@ -31,6 +33,9 @@ final class AppExtension extends AbstractExtension
     {
         return [
             new TwigFunction('csp_nonce', fn () => $this->nonce->get()),
+            // Ce qui attend l'utilisateur connecté (cloche de l'en-tête, récapitulatif à la connexion).
+            new TwigFunction('a_traiter', fn () => $this->aTraiter->pour(($u = $this->security->getUser()) instanceof User ? $u : null)),
+            new TwigFunction('recapitulatif_connexion', $this->recapitulatifConnexion(...)),
             new TwigFunction('aide_section', fn (?string $route) => \App\Controller\AideController::section($route, ($u = $this->security->getUser()) instanceof User && Perimetre::estRepresentant($u))),
             new TwigFunction('hid', fn (?int $id) => null === $id ? '' : $this->chiffreur->encode($id)),
             // Logo de l'entreprise : public/images/logo-sotrama.png (facultatif, sinon icône par défaut).
@@ -39,6 +44,18 @@ final class AppExtension extends AbstractExtension
             new TwigFunction('carte_osm', $this->carteOsm(...)),
             new TwigFunction('logo_data_uri', fn () => is_file($this->cheminLogo) ? 'data:image/png;base64,'.base64_encode((string) file_get_contents($this->cheminLogo)) : null),
         ];
+    }
+
+    /** Vrai une seule fois, sur la première page affichée après la connexion. */
+    private function recapitulatifConnexion(): bool
+    {
+        $session = $this->requests->getMainRequest()?->hasSession() ? $this->requests->getMainRequest()->getSession() : null;
+        if (!$session || !$session->get(\App\Security\LoginListener::RECAPITULATIF)) {
+            return false;
+        }
+        $session->remove(\App\Security\LoginListener::RECAPITULATIF);
+
+        return true;
     }
 
     public function getFilters(): array

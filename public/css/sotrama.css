@@ -165,3 +165,8 @@ ol.etapes li { margin-bottom: .35rem; }
 .photo-colis-bloc { position: relative; }
 .photo-colis-bloc form { position: absolute; top: .5rem; right: .5rem; }
 .js-photo .photo-apercu.me-2 { display: inline-block; }
+
+/* Cloche « À traiter » */
+.a-traiter-badge { position: absolute; top: -6px; right: -8px; font-size: .65rem; }
+.a-traiter-menu { min-width: 300px; max-width: 360px; }
+.a-traiter-menu .dropdown-item { white-space: normal; }

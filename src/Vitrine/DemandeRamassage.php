@@ -11,6 +11,10 @@ use App\Enum\StatutRamassage;
 use App\Repository\UserRepository;
 use App\Service\Doublons;
 use App\Service\NotificationPush;
+use Symfony\Component\Mime\Address;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Bridge\Twig\Mime\TemplatedEmail;
+use App\Entity\Notification;
 use App\Service\RegistreAppels;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -45,6 +49,9 @@ final class DemandeRamassage
         private readonly UrlGeneratorInterface $urls,
         private readonly Vitrine $vitrine,
         private readonly LoggerInterface $logger,
+        private readonly MailerInterface $mailer,
+        private readonly string $emailExpediteur,
+        private readonly string $appNom,
     ) {
     }
 
@@ -186,11 +193,12 @@ final class DemandeRamassage
         return preg_match('/^\d{4}-\d{2}-\d{2}$/', $valeur) ? (\DateTimeImmutable::createFromFormat('!Y-m-d', $valeur) ?: null) : null;
     }
 
-    /** Notification sur le téléphone des administrateurs et agents de ramassage (si activée). */
+    /** Administrateurs et agents de ramassage prévenus : notification du téléphone (si activée) et e-mail. */
     private function prevenirEquipe(Ramassage $ramassage): void
     {
         $url = $this->vitrine->urlApplication().$this->urls->generate('ramassage_edit', ['id' => $ramassage->getId()]);
-        $corps = $ramassage->getClient()->getNomComplet().' — '.\App\Util\DateFr::jour($ramassage->getDatePrevue()).' (heure à confirmer) — '.$ramassage->getAdresse();
+        $client = $ramassage->getClient();
+        $corps = $client->getNomComplet().' — '.\App\Util\DateFr::jour($ramassage->getDatePrevue()).' (heure à confirmer) — '.$ramassage->getAdresse();
         foreach ($this->users->findBy(['actif' => true]) as $user) {
             if (!array_intersect([User::ROLE_ADMIN, User::ROLE_RAMASSAGE], $user->getRoles())) {
                 continue;
@@ -200,6 +208,25 @@ final class DemandeRamassage
             } catch (\Throwable $e) {
                 $this->logger->warning('Notification de demande de ramassage non envoyée : '.$e->getMessage());
             }
+            if (!$user->getEmail()) {
+                continue;
+            }
+            $sujet = 'Nouvelle demande de ramassage en ligne — '.$client->getNomComplet();
+            $log = new Notification(Notification::CANAL_EMAIL, $user->getEmail(), $sujet);
+            try {
+                $this->mailer->send((new TemplatedEmail())
+                    ->from(new Address($this->emailExpediteur, $this->appNom))
+                    ->to($user->getEmail())
+                    ->subject($sujet)
+                    ->htmlTemplate('email/demande_ramassage.html.twig')
+                    ->context(['ramassage' => $ramassage, 'agent' => $user, 'lien' => $url, 'app_nom' => $this->appNom]));
+                $log->setSucces(true);
+            } catch (\Throwable $e) {
+                $log->setErreur($e->getMessage());
+                $this->logger->warning('E-mail de demande de ramassage non envoyé : '.$e->getMessage());
+            }
+            $this->em->persist($log);
         }
+        $this->em->flush();
     }
 }

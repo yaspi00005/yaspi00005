@@ -835,3 +835,13 @@
     ville.addEventListener('blur', chercher);
     cp.addEventListener('input', function () { delete cp.dataset.auto; aide.textContent = ''; });
 })();
+
+/* ---------- Récapitulatif « À traiter » à la connexion ---------- */
+(function () {
+    'use strict';
+    const el = document.getElementById('modal-a-traiter');
+    if (!el || typeof bootstrap === 'undefined') { return; }
+    // Après l'écran de chargement du thème, sinon il masque la fenêtre.
+    const afficher = () => setTimeout(() => bootstrap.Modal.getOrCreateInstance(el).show(), 400);
+    if (document.readyState === 'complete') { afficher(); } else { window.addEventListener('load', afficher, { once: true }); }
+})();
