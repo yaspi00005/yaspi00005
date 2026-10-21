@@ -107,4 +107,37 @@ final class PhotoColisTest extends WebTestCase
         $this->assertFileDoesNotExist($chemin);
         $this->assertCount(2, static::getContainer()->get(ColisRepository::class)->find($colis->getId())->getPhotos());
     }
+
+    /** Pare-feu de l'hébergeur : photos envoyées en texte (base64) dans un envoi simple, retransformées en fichiers. */
+    public function testPhotosEnvoyeesEnTexte(): void
+    {
+        $client = static::createClient();
+        $client->loginUser(static::getContainer()->get(UserRepository::class)->findOneBy(['username' => 'ramassage']));
+        $crawler = $client->request('GET', '/colis/nouveau');
+        $valeurs = $crawler->selectButton('Enregistrer le colis')->form()->getPhpValues();
+        $valeurs['colis']['client'] = static::getContainer()->get(ClientRepository::class)->findOneBy([])->getId();
+        $valeurs['colis']['destinataireNom'] = 'Photo Texte';
+        $valeurs['colis']['destinataireTelephone'] = '76 00 00 09';
+        $valeurs['colis']['expedition'] = static::getContainer()->get(ExpeditionRepository::class)->findOneBy(['statut' => StatutExpedition::EnPreparation])->getId();
+        $valeurs['colis']['typeExpedition'] = 'standard';
+        $valeurs['colis']['articles'] = [['typeMarchandise' => 'Divers', 'quantite' => '1', 'prix' => '10']];
+        $png = 'data:image/png;base64,'.base64_encode((string) file_get_contents($this->image()->getPathname()));
+        $valeurs['__photos'] = [
+            json_encode(['champ' => 'colis[photoFile]', 'nom' => 'colis.png', 'data' => $png]),
+            json_encode(['champ' => 'colis[photosFiles][]', 'nom' => 'a.png', 'data' => $png]),
+            json_encode(['champ' => 'colis[photosFiles][]', 'nom' => 'b.png', 'data' => $png]),
+            json_encode(['champ' => 'colis[articles][0][photoFile]', 'nom' => 'article.png', 'data' => $png]),
+            // Rejetés : pas une image, nom de champ invalide.
+            json_encode(['champ' => 'colis[photosFiles][]', 'nom' => 'x.php', 'data' => 'data:image/png;base64,'.base64_encode('<?php echo 1;')]),
+            json_encode(['champ' => 'colis[a b]', 'nom' => 'c.png', 'data' => $png]),
+        ];
+        $client->request('POST', '/colis/nouveau', $valeurs);
+        $this->assertResponseRedirects();
+
+        $colis = static::getContainer()->get(ColisRepository::class)->findOneBy(['destinataireNom' => 'Photo Texte']);
+        $this->assertNotNull($colis->getPhoto());
+        $this->assertCount(2, $colis->getPhotos());
+        $this->assertNotNull($colis->getArticles()->first()->getPhoto());
+        $this->assertFileExists(static::getContainer()->get(PhotoUploader::class)->chemin($colis->getPhotos()->first()->getFichier()));
+    }
 }

@@ -879,25 +879,78 @@
     if (document.readyState === 'complete') { afficher(); } else { window.addEventListener('load', afficher, { once: true }); }
 })();
 
-/* ---------- Envoi des formulaires : champs photo vides retirés ---------- */
+/* ---------- Envoi des formulaires : jamais d'envoi « avec fichiers » (pare-feu de l'hébergeur) ---------- */
 (function () {
     'use strict';
-    // Un champ fichier laissé vide part quand même comme « fichier sans nom » : le pare-feu de l'hébergeur bloque
-    // certains de ces envois (réponse 403 vide, « ERR_INVALID_RESPONSE »). On ne les envoie donc pas : désactivés
-    // le temps de constituer l'envoi, puis réactivés (si l'envoi est annulé, le formulaire reste utilisable).
-    // Le pare-feu bloque aussi tout envoi « avec fichiers » (multipart) : sans photo, le formulaire part donc en
-    // envoi simple, qui passe ; avec des photos, l'envoi avec fichiers reste nécessaire.
+    // Le pare-feu de l'hébergeur bloque tout envoi « multipart/form-data » (réponse 403 vide, « ERR_INVALID_RESPONSE »).
+    // Les formulaires partent donc toujours en envoi simple :
+    //  - champs photo vides : non envoyés ;
+    //  - photos choisies : transformées en texte (base64) dans des champs « __photos[] », que le serveur retransforme
+    //    en fichiers (App\EventListener\PhotosEncodeesListener).
+    const lire = file => new Promise(function (resolve, reject) {
+        const r = new FileReader();
+        r.onload = () => resolve(r.result);
+        r.onerror = () => reject(r.error);
+        r.readAsDataURL(file);
+    });
+
+    const preparer = function (form, champs) {
+        form.querySelectorAll('.js-photos-encodees').forEach(el => el.remove());
+        const zone = document.createElement('div');
+        zone.className = 'js-photos-encodees d-none';
+        form.appendChild(zone);
+        const taches = [];
+        champs.forEach(function (input) {
+            Array.from(input.files).forEach(function (file) {
+                taches.push(lire(file).then(function (data) {
+                    const champ = document.createElement('input');
+                    champ.type = 'hidden';
+                    champ.name = '__photos[]';
+                    champ.value = JSON.stringify({ champ: input.name, nom: file.name || 'photo.jpg', data: data });
+                    zone.appendChild(champ);
+                }));
+            });
+        });
+        return Promise.all(taches);
+    };
+
+    // Une photo changée après préparation : à relire au prochain envoi.
+    document.addEventListener('change', function (e) {
+        if (e.target.matches && e.target.matches('input[type="file"]') && e.target.form) {
+            delete e.target.form.dataset.photosPretes;
+            e.target.form.querySelectorAll('.js-photos-encodees').forEach(el => el.remove());
+        }
+    }, true);
+
     document.addEventListener('submit', function (e) {
         const form = e.target;
         const champs = Array.from(form.querySelectorAll('input[type="file"]:not([disabled])'));
-        const vides = champs.filter(i => !i.files || i.files.length === 0);
-        vides.forEach(i => { i.disabled = true; });
-        const avecFichiers = (form.getAttribute('enctype') || '').toLowerCase() === 'multipart/form-data';
-        const sansPhoto = avecFichiers && vides.length === champs.length;
-        if (sansPhoto) { form.setAttribute('enctype', 'application/x-www-form-urlencoded'); }
+        if (!champs.length) { return; }
+        const remplis = champs.filter(i => i.files && i.files.length > 0);
+        if (remplis.length && form.dataset.photosPretes !== '1') {
+            // Lecture des photos (asynchrone), puis nouvel envoi du formulaire.
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            const bouton = e.submitter;
+            if (bouton) { bouton.disabled = true; }
+            if (window.toastr) { toastr.info('Préparation des photos…'); }
+            preparer(form, remplis).then(function () {
+                form.dataset.photosPretes = '1';
+                if (bouton) { bouton.disabled = false; }
+                form.requestSubmit ? form.requestSubmit(bouton || undefined) : form.submit();
+            }).catch(function () {
+                if (bouton) { bouton.disabled = false; }
+                if (window.toastr) { toastr.error('Impossible de lire les photos. Réessayez ou choisissez-les à nouveau.'); }
+            });
+            return;
+        }
+        // Champs fichier retirés de l'envoi (les photos sont dans « __photos[] »), envoi simple.
+        champs.forEach(i => { i.disabled = true; });
+        const enctype = form.getAttribute('enctype');
+        form.setAttribute('enctype', 'application/x-www-form-urlencoded');
         setTimeout(function () {
-            vides.forEach(i => { i.disabled = false; });
-            if (sansPhoto) { form.setAttribute('enctype', 'multipart/form-data'); }
+            champs.forEach(i => { i.disabled = false; });
+            if (enctype) { form.setAttribute('enctype', enctype); } else { form.removeAttribute('enctype'); }
         }, 0);
     }, true);
 })();
