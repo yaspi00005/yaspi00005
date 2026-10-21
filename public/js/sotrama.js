@@ -878,3 +878,16 @@
     const afficher = () => setTimeout(() => bootstrap.Modal.getOrCreateInstance(el).show(), 400);
     if (document.readyState === 'complete') { afficher(); } else { window.addEventListener('load', afficher, { once: true }); }
 })();
+
+/* ---------- Envoi des formulaires : champs photo vides retirés ---------- */
+(function () {
+    'use strict';
+    // Un champ fichier laissé vide part quand même comme « fichier sans nom » : le pare-feu de l'hébergeur bloque
+    // certains de ces envois (réponse 403 vide, « ERR_INVALID_RESPONSE »). On ne les envoie donc pas : désactivés
+    // le temps de constituer l'envoi, puis réactivés (si l'envoi est annulé, le formulaire reste utilisable).
+    document.addEventListener('submit', function (e) {
+        const vides = Array.from(e.target.querySelectorAll('input[type="file"]:not([disabled])')).filter(i => !i.files || i.files.length === 0);
+        vides.forEach(i => { i.disabled = true; });
+        setTimeout(() => vides.forEach(i => { i.disabled = false; }), 0);
+    }, true);
+})();
